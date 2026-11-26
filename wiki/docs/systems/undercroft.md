@@ -83,6 +83,11 @@ Shotgun.
 **Smuggled Tech Crates** open outside the Undercroft for two rolls of: 4 to 10 gun parts, a Bolt Rifle, a Plasma
 Lance, 2,000 to 8,000 Tokens, or a Plasma Cutter, Coolant Loop or Overcharger module.
 
+## Scrap parts
+
+Downing a player has a 25% chance of a [scrap part](rare-drops.md#scrap-parts), and every smuggling run that gets
+contraband out has 60%. The Military Relay part, needed for the Overcharger and Singularity Core, only comes from here.
+
 ## Bounties
 
 Each kill adds 250 Credits (at the killer's grade) to the killer's bounty. A bounty tag is worth 400 Credits at the

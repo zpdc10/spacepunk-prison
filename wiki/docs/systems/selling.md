@@ -18,8 +18,8 @@ The Exchange (east wing of the station) has **Sell** and **Cargo** terminals.
 
 - It starts at **500 units** and grows ×1.5 per upgrade, up to level 12 (about 64,900 units).
 - Upgrade cost from level L to L+1 = **1,500 × 2.4^L** Credits.
-- When it's full, mining stops filling it and you get a "cargo hold full" warning every 4 seconds. The cargo boss
-  bar turns yellow at 60% and red at 90%.
+- When it's full, mining stops filling it and you get a "cargo hold full" warning every 4 seconds. The cargo bar
+  on your sidebar turns yellow at 60% and red at 90%.
 - Cargo upgrades are **kept through prestige**. The ore inside is not.
 
 | Level | Capacity (units) | Cost of the next level |
@@ -46,7 +46,7 @@ A one-time cargo upgrade that sells ore the moment you mine it, so you never fil
 - Pays **90%** of the normal price (a small cut for the convenience).
 - Toggle it on and off any time with `/autosell` or in `/cargo`.
 
-The **Magnet Coil** drill module also auto-sells everything you mine, at full price, but stops Token drops.
+The **Magnet Coil** drill module also auto-sells everything you mine, at full price plus 3%, but cuts your Tokens by 70%.
 
 ## Sell price
 

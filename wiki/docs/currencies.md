@@ -71,7 +71,7 @@ at P20.
 **Other sources:**
 
 - **Token Siphon** (drill enchant): +0.015% find chance per level, so level 10 is about +25% Tokens, capped at +250%.
-- **Token Condenser** module: Tokens ×1.5. The **Magnet Coil** module turns mining Token drops off.
+- **Token Condenser** module: Tokens +30%. The **Magnet Coil** module cuts mining Tokens by 70%.
 - **Salvage Sense** Token caches while mining, scaled the same way.
 - Fishing Token Pouch treasure (20 to 50, scaled).
 - Quests, contracts and Contract Track tiers.

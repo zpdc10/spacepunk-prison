@@ -131,16 +131,49 @@ Workshop payouts are server income, like selling ore. A running full chain adds 
 
 ## The Assembly Bench
 
-Turn components and Credits into a [drill module](drill.md) of your choice:
+Build [drill modules](drill.md#3-modules-and-the-module-rig) from **schematics you know** (decode blueprint fragments
+in `/salvage`; everyone starts with Servo Actuator and Ore Sifter). Each build takes goods from your **Bay Locker**,
+working or pristine [scrap parts](rare-drops.md#scrap-parts) from your inventory, and Credits.
 
-| Module | Grade | Credits | Components |
+| Module | Grade | Credits | Bay goods | Scrap parts |
+| --- | --- | --- | --- | --- |
+| Servo Actuator | 1 | 8K | 64 Crushed Steel | 2 Servo Motor, 2 Copper Wiring |
+| Ore Sifter | 1 | 8K | 64 Crushed Copper | 2 Circuit Board, 1 Copper Wiring |
+| Cryo Coolant Loop | 4 | 40K | 48 Copper Concentrate | 2 Capacitor, 2 Copper Wiring |
+| Heat Sink Fins | 4 | 40K | 48 Steel Concentrate | 3 Copper Wiring |
+| Magnet Coil | 8 | 250K | 32 Copper Ingot, 16 Steel Ingot | 4 Copper Wiring, 2 Capacitor, 1 Power Cell |
+| Scavenger Rig | 10 | 600K | 32 Steel Ingot, 16 Graphite Rod | 3 Servo Motor, 2 Circuit Board, 1 Sonar Array |
+| Arc Capacitor | 10 | 600K | 24 Conduit Filament | 4 Capacitor, 1 Power Cell |
+| Thermal Recycler | 12 | 1.5M | 12 Conductive Alloy | 2 Power Cell, 2 Capacitor, 1 Gyro Stabilizer |
+| Plasma Cutter | 15 | 8M | 16 Hardened Steel, 8 Circuit Alloy | 4 Power Cell, 1 Seismic Sensor, 1 Logic Chip |
+| Seismic Dampener | 16 | 12M | 8 Wiring Harness, 4 Armor Plate | 2 Seismic Sensor, 4 Servo Motor |
+| Graviton Lens | 17 | 16M | 2 Focusing Array, 4 Induction Coil | 2 Gyro Stabilizer, 1 Sonar Array |
+| Token Condenser | 20 | 30M | 2 Void Capacitor, 8 Wiring Harness | 3 Logic Chip, 1 Encrypted Data Core |
+| Overcharger | 22 | 120M | 1 Reactor Core, 8 Induction Coil | 3 Military Relay, 6 Power Cell, 1 Quantum Core |
+| Quantum Sorter | 23 | 200M | 1 Reactor Core, 4 Void Capacitor | 1 Quantum Core, 2 Encrypted Data Core, 4 Logic Chip |
+| Singularity Core | 24 | 300M | 2 Reactor Core, 4 Cryo Coil | 1 Quantum Core, 2 Military Relay, 3 Seismic Sensor |
+
+Signature parts tie modules to activities: a Scavenger Rig needs a Sonar Array from fishing, a Thermal Recycler a Gyro
+Stabilizer from parkour, a Token Condenser a Logic Chip from your own workshop.
+
+## The Refurbisher
+
+Repairs **fried** scrap parts into working ones, for Credits and Bay Locker goods depending on the part's tier. Each
+repair has a chance to come out **Pristine** instead. Upgrade the Refurbisher in the workshop menu for better odds.
+
+| Part tier | Repair cost |
+| --- | --- |
+| Common | 1,000 Credits + 16 Slag Dust |
+| Uncommon | 5,000 Credits + 16 Crushed Copper |
+| Rare | 30,000 Credits + 12 Copper Concentrate |
+| Epic | 200,000 Credits + 12 Steel Ingot |
+| Legendary | 2,000,000 Credits + 8 Conductive Alloy |
+
+| Refurbisher | Pristine chance | Upgrade cost | Grade |
 | --- | --- | --- | --- |
-| Magnet Coil | 10 | 250K | 16 Wiring Harness, 4 Induction Coil |
-| Cryo Coolant Loop | 13 | 1.5M | 4 Cryo Coil, 4 Armor Plate |
-| Scavenger Rig | 15 | 3M | 4 Circuit Board, 8 Armor Plate |
-| Plasma Cutter | 18 | 8M | 4 Focusing Array, 6 Circuit Board |
-| Seismic Dampener | 20 | 20M | 2 Weapon Receiver, 8 Induction Coil |
-| Token Condenser | 22 | 50M | 2 Reactor Core, 4 Void Capacitor |
+| Mk I | 5% | | 1 |
+| Mk II | 10% | 150K Credits + 32 Copper Ingot | 6 |
+| Mk III | 18% | 4M Credits + 24 Conductive Alloy + 16 Hardened Steel | 14 |
 
 ## Bay levels
 
@@ -161,12 +194,13 @@ Conveyors don't count toward the machine limit.
 
 - Your bay runs every second **while you're online**.
 - When you log back in, it **catches up on up to 4 hours** you were away, at **50% speed**.
-- While you're online and the bay is processing, it has a 6% chance each minute of a **Token find** (4 to 7, scaled
+- While you're online and the bay is processing, it has a 5% chance each minute of a **scrap part** (Logic Chips
+  only come from here) and a 6% chance of a **Token find** (4 to 7, scaled
   by grade and prestige, about 20 an hour at grade 1). Offline catch-up never pays Tokens.
 
 ## How it ties into progression
 
 - Bays, machines and everything in your locker **survive prestige**, so a bay you build is yours for good.
-- The workshop is the main source of components for building drill modules.
+- The workshop builds every drill module (Assembly Bench) and repairs the scrap parts they need (Refurbisher).
 - Processed goods are worth trading on the [Black Market](black-market.md).
 - Processing counts for [contracts](quests.md) and [gang contracts](gangs.md) (goods processed).
