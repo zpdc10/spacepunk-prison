@@ -238,8 +238,8 @@ final class HudManager implements HudService, Listener {
                 if (left <= 0) break;
                 long n = Math.min(left, en.getValue());
                 left -= n;
-                String id = en.getKey().getKey().toString();
-                String name = prog == null ? itemName(id) : prog.itemName(id);
+                String itemId = en.getKey().getKey().toString();
+                String name = prog == null ? itemName(itemId) : prog.itemName(itemId);
                 long prev = s.gainItems.getOrDefault(name, 0L);
                 s.gainItems.remove(name);
                 s.gainItems.put(name, prev + n); // re-insert so it counts as most recent
