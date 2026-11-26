@@ -1,11 +1,11 @@
 # Your HUD
 
-The station shows your progress on screen with no mods: a sidebar, the action bar, a boss bar and the tab list.
+The station shows your progress on screen with no mods: a sidebar, the action bar and the tab list. Some zones add a boss bar of their own.
 
 ## Sidebar
 
 The scoreboard on the right shows your grade, prestige, Credits, Tokens and Shards, your current mine, your
-**tracked quest** (click a quest in `/quests` to track it), and a footer with the main commands. `/hud`
+cargo bar, your **tracked quest** (click a quest in `/quests` to track it), and a footer with the main commands. `/hud`
 (`/sidebar`) hides or shows it.
 
 ## Action bar
@@ -15,10 +15,10 @@ The scoreboard on the right shows your grade, prestige, Credits, Tokens and Shar
 - **Flash notices:** enchant procs, vents, heat warnings and other short messages, for 2 seconds.
 - Zones use it too: the parkour clock, gun ammo and reloads, workshop power and jams, and the fishing bite alert.
 
-## Cargo boss bar
+## Cargo bar
 
-While you mine (and for 20 seconds after) a boss bar shows how full your cargo hold is. It turns yellow at 60% and
-red at 90%. When full, an alarm repeats every 4 seconds.
+Your sidebar shows how full your cargo hold is as a bar. It turns yellow at 60% and red at 90%. When the hold is
+full, an alarm repeats every 4 seconds while you keep mining.
 
 ## Tab list
 

@@ -51,6 +51,9 @@ grade, and they count as server income.
 | Rare: Shards | | | | 3 Shards (1%) | 5 Shards (2%) |
 | Rare: module (1%) | Coolant Loop | Magnet Coil | Scavenger Rig | Plasma Cutter | Token Condenser |
 
+Every rewarded run also gives **2 [scrap parts](rare-drops.md#scrap-parts)**. The Gyro Stabilizer part only comes from
+parkour.
+
 Rare rolls are announced to the server.
 
 ## How it ties into progression

@@ -76,6 +76,9 @@ Tokens at grade 1, scaled by grade and prestige), bait crates, lost lures, or ve
 
 **Junk** (bolts, cable, rations, visors, spent cells) sells for 1 to 3 Credits and guts for nothing.
 
+**Scrap parts.** Every catch has a 5% chance of a [scrap part](rare-drops.md#scrap-parts), and every sea creature
+kill 30%. The Sonar Array part only comes from fishing.
+
 ## Selling or gutting
 
 At the Fish Market you choose:
