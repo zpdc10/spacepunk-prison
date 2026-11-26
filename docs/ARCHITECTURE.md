@@ -1,0 +1,87 @@
+# Architecture
+
+One Paper plugin, split into feature modules that each own one package. Modules never import each
+other's packages; they talk only through `dev.spacepunk.prison.api` (services + events). That lets
+several people (or agents) work in parallel with few merge conflicts.
+
+Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2CK9ygxJhHukC
+
+## Platform
+
+- Paper **26.3** (`io.papermc.paper:paper-api:26.3.build.262-stable`), Java **25**.
+- Vanilla clients only. Custom visuals come from the required server resource pack, using the
+  `minecraft:item_model` data component (and custom model data where useful). No client mods.
+- Commands use Paper Brigadier `BasicCommand`, registered via `SpacepunkPrison#addCommand(...)` from a
+  module's `enable()`. Do not add commands to `plugin.yml`.
+- Text uses MiniMessage via `util.Text`. Item names/lore: `Text.item(...)` (non-italic).
+- Persistence: SQLite via `data.ProfileStorage`. Per-player module state goes in
+  `PlayerProfile.moduleData("<module id>")` as a JSON string you (de)serialize with Gson.
+  Call `ProfileService.markDirty(uuid)` after changes. Read profiles after `ProfileLoadedEvent`, not on join.
+- Global (non-player) module state: your own YAML/JSON file in the plugin data folder, or your own
+  SQLite table created in your module with its own connection.
+- Main thread for all Bukkit/profile access. Heavy work (mine refills, file IO) off-thread.
+
+## Ownership
+
+| Package / path | Owner workstream | Provides |
+| --- | --- | --- |
+| `api/`, `core/`, `data/`, `economy/`, `util/`, `SpacepunkPrison.java`, `build.gradle.kts` | core (main thread) | Services registry, profiles, 3-currency economy, `/balance`, `/eco` |
+| `mines/` + `mines.yml` | mines | `MineService`, fires `MineBlocksBrokenEvent`, mine refills, `/mine` |
+| `progression/` + `progression.yml` | progression | `ProgressionService`, grades 1-25, prestige, cargo hold, selling, `/rankup` `/prestige` `/sell` |
+| `drill/` + `drill.yml` | drill | The drill item, frames, enchants, modules, heat, drill menu |
+| `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
+
+Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
+in your PR description. If you need something from another module, add an interface method or event in
+`api/` rather than reaching into their package.
+
+Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
+(`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
+Load order: resourcepack, mines, progression, drill. Missing classes are skipped, so each module can
+land independently.
+
+## Event flow when a player mines
+
+1. Player breaks a block in a mine. Mines module cancels vanilla drops, removes the block, and fires
+   `MineBlocksBrokenEvent(cause=HAND, ores={material: 1})`.
+2. Drill (NORMAL priority): applies Yield (multiplies `ores`), adds heat, rolls Tokens, and may proc
+   area enchants, which call `MineService.breakBlocks(..., ENCHANT)`. That fires another
+   `MineBlocksBrokenEvent` with cause ENCHANT (drill must not proc enchants again on non-HAND causes).
+3. Progression (HIGHEST): adds `ores` to the cargo hold, or auto-sells (price × `sellMultiplier`).
+
+## Currencies
+
+`CREDITS` (sell ore → grade rank-ups), `TOKENS` (mining drops → enchants), `SHARDS` (prestige → frames,
+permanent bonuses). Use `EconomyService`; it fires `CurrencyChangeEvent`.
+
+## Balance targets
+
+- 25 grades over 5 decks (5 grades each). Grade cost grows ~45% per grade (tune in config).
+- 50 to 100 hours of active play from grade 1 to first prestige.
+- All numbers in YAML config, never hard-coded.
+
+## Asset keys (contract between drill/mines/progression and the resource pack)
+
+Items reference models as `spacepunk:<path>` through the `item_model` component. The resource pack
+workstream must provide every key below; other workstreams should use only these keys (add new ones
+here in the same PR that needs them, and the pack falls back to a vanilla look until it exists).
+
+| Key | Used for |
+| --- | --- |
+| `spacepunk:drill/rusted` | Drill, Rusted frame |
+| `spacepunk:drill/salvaged` | Drill, Salvaged frame |
+| `spacepunk:drill/industrial` | Drill, Industrial frame |
+| `spacepunk:drill/military` | Drill, Military frame |
+| `spacepunk:drill/prototype` | Drill, Prototype frame |
+| `spacepunk:module/<module_id>` | Drill modules (e.g. `magnet_coil`, `plasma_cutter`, `scavenger_rig`) |
+| `spacepunk:ui/<name>` | Menu icons and filler panes (e.g. `ui/panel`, `ui/back`, `ui/heat_gauge`) |
+| `spacepunk:currency/token` | Token item/icon |
+| `spacepunk:currency/shard` | Prestige Shard icon |
+
+Mine blocks are vanilla blocks; the pack retextures them (e.g. stone → slag, copper ore → copper scrap)
+so the mines look grungy for everyone.
+
+## Branches and PRs
+
+Each workstream works on its own branch and opens a PR into `main`. CI (`.github/workflows/build.yml`)
+must be green. Keep PRs inside your package; rebase on `main` before merging.

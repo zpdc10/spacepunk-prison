@@ -1,0 +1,9 @@
+name: SpacepunkPrison
+version: '${version}'
+main: dev.spacepunk.prison.SpacepunkPrison
+api-version: '26.3'
+description: Spacepunk prison core gameplay
+softdepend: [FastAsyncWorldEdit, WorldEdit, LuckPerms]
+permissions:
+  spacepunk.admin:
+    default: op
