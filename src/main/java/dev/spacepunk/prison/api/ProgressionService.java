@@ -26,6 +26,9 @@ public interface ProgressionService {
     /** Display name of the deck a grade belongs to as MiniMessage, e.g. "&lt;#9c8a6e&gt;Scrapyard". */
     String deckName(int grade);
 
+    /** Display name of a mined item by id, e.g. "minecraft:coal_ore" -> "Carbon Slag" (plain text). */
+    String itemName(String itemId);
+
     /** True if mined ore is sold on pickup by the Auto-Seller instead of stored in the cargo hold. */
     boolean autoSelling(UUID player);
 

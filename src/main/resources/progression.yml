@@ -109,6 +109,53 @@ selling:
     # Processed goods from the future workshop use custom ids, e.g.:
     # "spacepunk:copper_ingot": 40
 
+  # Station names for mined items, shown in the HUD and the cargo hold. They match the resource
+  # pack's retextures (stone looks like slag, redstone ore like conduit wiring...). Unlisted items fall back to
+  # their vanilla name. Keys like prices: material names or namespaced ids.
+  names:
+    STONE: "Slag"
+    COBBLESTONE: "Slag Rubble"
+    ANDESITE: "Ash Rock"
+    COAL_ORE: "Carbon Slag"
+    DEEPSLATE_COAL_ORE: "Plated Carbon"
+    COPPER_ORE: "Copper Scrap"
+    IRON_ORE: "Steel Scrap"
+    RAW_COPPER_BLOCK: "Copper Scrap Bale"
+    DEEPSLATE: "Hull Plating"
+    TUFF: "Vent Ash"
+    DEEPSLATE_COPPER_ORE: "Plated Copper Scrap"
+    DEEPSLATE_IRON_ORE: "Plated Steel Scrap"
+    REDSTONE_ORE: "Conduit Ore"
+    DEEPSLATE_REDSTONE_ORE: "Plated Conduit"
+    RAW_IRON_BLOCK: "Steel Scrap Bale"
+    GOLD_ORE: "Brass Nodule"
+    DEEPSLATE_GOLD_ORE: "Plated Brass"
+    RAW_GOLD_BLOCK: "Brass Bale"
+    PACKED_ICE: "Cryo Panel"
+    CALCITE: "Rime Stone"
+    BLUE_ICE: "Deep Cryo Panel"
+    LAPIS_ORE: "Cobalt Crystal"
+    DEEPSLATE_LAPIS_ORE: "Plated Cobalt"
+    AMETHYST_BLOCK: "Void Crystal"
+    LAPIS_BLOCK: "Cobalt Cell"
+    DIAMOND_ORE: "Cryo Crystal"
+    DEEPSLATE_DIAMOND_ORE: "Plated Cryo Crystal"
+    BLACKSTONE: "Breach Rock"
+    BASALT: "Scorched Basalt"
+    NETHER_QUARTZ_ORE: "Frost Quartz"
+    GILDED_BLACKSTONE: "Gilded Breach Rock"
+    OBSIDIAN: "Void Glass"
+    QUARTZ_BLOCK: "Quartz Hull"
+    EMERALD_ORE: "Verdant Crystal"
+    DEEPSLATE_EMERALD_ORE: "Plated Verdant"
+    CRYING_OBSIDIAN: "Weeping Void Glass"
+    EMERALD_BLOCK: "Verdant Core"
+    SMOOTH_BASALT: "Foundry Slag"
+    NETHER_GOLD_ORE: "Brass Vein"
+    ANCIENT_DEBRIS: "Neutronium"
+    DIAMOND_BLOCK: "Cryo Core"
+    NETHERITE_BLOCK: "Dense Neutronium"
+
 cargo:
   # Ore units the hold carries at level 0; each level multiplies it by capacity-growth.
   base-capacity: 500

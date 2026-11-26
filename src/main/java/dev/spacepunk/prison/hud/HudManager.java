@@ -80,8 +80,8 @@ final class HudManager implements HudService, Listener {
         // Rolling mining summary.
         long gainUntil;
         long gainUnits;
-        String gainItem;
-        boolean gainMixed;
+        /** Item name -> units in this window, most recently mined last. */
+        final LinkedHashMap<String, Long> gainItems = new LinkedHashMap<>();
         long gainCredits;
         long gainTokens;
         boolean gainSold;
@@ -209,10 +209,12 @@ final class HudManager implements HudService, Listener {
         Material best = null;
         long bestPrice = -1;
         ProgressionService prog = progression().orElse(null);
+        Map<Material, Long> mined = new LinkedHashMap<>();
         for (Map.Entry<Material, Long> en : e.ores().entrySet()) {
             long n = en.getValue() == null ? 0 : en.getValue();
             if (n <= 0) continue;
             units += n;
+            mined.put(en.getKey(), n);
             long price = prog == null ? 0 : prog.sellPrice(en.getKey());
             if (price > bestPrice) {
                 bestPrice = price;
@@ -228,9 +230,20 @@ final class HudManager implements HudService, Listener {
 
         if (shown > 0 && best != null) {
             if (now > s.gainUntil) resetGain(s);
-            String name = itemName(best.getKey().toString());
-            if (s.gainItem == null) s.gainItem = name;
-            else if (!s.gainItem.equals(name)) s.gainMixed = true;
+            // When the hold overflowed, only part of this break was stored; credit the most valuable item first.
+            long left = shown;
+            List<Map.Entry<Material, Long>> byValue = new ArrayList<>(mined.entrySet());
+            if (prog != null) byValue.sort((a, b) -> Long.compare(prog.sellPrice(b.getKey()), prog.sellPrice(a.getKey())));
+            for (Map.Entry<Material, Long> en : byValue) {
+                if (left <= 0) break;
+                long n = Math.min(left, en.getValue());
+                left -= n;
+                String itemId = en.getKey().getKey().toString();
+                String name = prog == null ? itemName(itemId) : prog.itemName(itemId);
+                long prev = s.gainItems.getOrDefault(name, 0L);
+                s.gainItems.remove(name);
+                s.gainItems.put(name, prev + n); // re-insert so it counts as most recent
+            }
             s.gainUnits += shown;
             s.gainSold |= auto;
             s.gainUntil = now + c.gainMillis();
@@ -261,8 +274,7 @@ final class HudManager implements HudService, Listener {
 
     private static void resetGain(State s) {
         s.gainUnits = 0;
-        s.gainItem = null;
-        s.gainMixed = false;
+        s.gainItems.clear();
         s.gainCredits = 0;
         s.gainTokens = 0;
         s.gainSold = false;
@@ -334,8 +346,21 @@ final class HudManager implements HudService, Listener {
     private static String gainText(State s) {
         StringBuilder sb = new StringBuilder();
         if (s.gainUnits > 0) {
-            sb.append("<#c8743a>⛏ +").append(Numbers.shortFormat(s.gainUnits)).append("</#c8743a> <white>")
-                    .append(s.gainMixed ? "ore" : s.gainItem).append("</white>");
+            // Up to three item types, most recent first, e.g. "⛏ +1 Carbon Slag  +4 Slag  +2 more".
+            List<Map.Entry<String, Long>> items = new ArrayList<>(s.gainItems.entrySet());
+            sb.append("<#c8743a>⛏</#c8743a>");
+            long rest = 0;
+            for (int i = items.size() - 1, shownTypes = 0; i >= 0; i--) {
+                Map.Entry<String, Long> it = items.get(i);
+                if (shownTypes < 3) {
+                    sb.append(shownTypes == 0 ? " " : "  ").append("<#c8743a>+").append(Numbers.shortFormat(it.getValue()))
+                            .append("</#c8743a> <white>").append(it.getKey()).append("</white>");
+                    shownTypes++;
+                } else {
+                    rest += it.getValue();
+                }
+            }
+            if (rest > 0) sb.append("  <gray>+").append(Numbers.shortFormat(rest)).append(" more</gray>");
             sb.append(s.gainSold ? " <dark_gray>→</dark_gray> <gray>sold" : " <dark_gray>→</dark_gray> <gray>hold");
         }
         if (s.gainCredits > 0) {
