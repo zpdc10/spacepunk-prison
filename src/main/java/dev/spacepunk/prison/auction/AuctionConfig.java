@@ -29,6 +29,8 @@ final class AuctionConfig {
     int maxClaims;
     boolean announceBigSales;
     long announceThreshold;
+    /** From this grade on a player can't buy or bid (0 = off). */
+    int spendLockGrade;
     final Set<Material> blockedMaterials = EnumSet.noneOf(Material.class);
 
     static AuctionConfig load(YamlConfiguration y) {
@@ -64,6 +66,7 @@ final class AuctionConfig {
         }
         c.announceBigSales = y.getBoolean("announce.big-sales", true);
         c.announceThreshold = y.getLong("announce.threshold", 1_000_000);
+        c.spendLockGrade = y.getInt("prestige-lock.spend-lock-grade", 21);
         for (String m : y.getStringList("blocked-materials")) {
             Material mat = Material.matchMaterial(m);
             if (mat != null) c.blockedMaterials.add(mat);

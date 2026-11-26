@@ -34,6 +34,13 @@ The Exchange has **Black Market** and **Auction Claims** terminals.
 - **No sniping:** a bid in the last 60 seconds pushes the end out to 60 seconds from now.
 - If you're outbid, your Credits come back to you.
 
+## Prestige lock
+
+From **Grade 21** (Core Foundry) you can't buy or bid until you prestige. You can still list and sell. Prestige
+wipes Credits, and this stops anyone from overpaying for a friend's junk listing to park Credits with them first.
+It's the same grade as the gang bank and [trading](trading.md) locks. You also can't prestige while you're the top
+bidder on an auction.
+
 ## Big sales
 
 Any sale of **1,000,000 Credits** or more is announced to the whole server.
