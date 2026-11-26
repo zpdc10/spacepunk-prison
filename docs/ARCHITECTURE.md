@@ -90,8 +90,10 @@ missing-model cube, so add new keys here and ask the resource pack workstream (o
 Mine blocks are vanilla blocks; the pack retextures them so the mines look grungy for everyone:
 stone → slag, cobblestone → slag rubble, deepslate → hull plating, every ore (stone and deepslate variants)
 → scrap/conduit/crystal versions, packed and blue ice → cryo panels, amethyst block → void crystal,
-obsidian → void glass, ancient debris and netherite block → neutronium, plus raw iron/copper and coal
-blocks. The matching drop items (coal, raw copper, diamond, ...) are retextured too. Prefer these blocks
+obsidian and crying obsidian → void glass, ancient debris and netherite block → neutronium, andesite/tuff/
+calcite/blackstone/basalt/quartz/gem blocks, raw ore blocks, plus every deck shell block in `mines.yml`
+(wall, rim and light per deck: cut copper, polished stones, blackstone bricks, froglights, sea lantern,
+shroomlight). The matching drop items (coal, raw copper, diamond, ...) are retextured too. Prefer these blocks
 when building mines.
 
 The pack is built from `/resourcepack` by Gradle (`resourcePackZip`), embedded in the jar, and served by the

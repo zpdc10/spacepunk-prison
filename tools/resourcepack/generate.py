@@ -323,6 +323,18 @@ def flicker_strip(make, levels):
     return stack([make(l) for l in levels])
 
 
+def void_glass_frame(seed, f) -> Canvas:
+    c = Canvas(seed=seed)
+    c.noise([VOID_D, VOID_D, VOID, (20, 14, 34)], [5, 3, 2, 2])
+    rng = random.Random(seed + 1)
+    for _ in range(7):
+        x, y = rng.randrange(16), rng.randrange(16)
+        c.set((x + f) % 16, y, VIOLET_L if rng.random() < 0.5 else WHITE)
+    for i in range(16):
+        c.set(i, (i + 3) % 16, (40, 30, 70))  # glass streak
+    return c
+
+
 def blocks():
     out = MC / "textures" / "block"
     slag(1).save(out / "stone.png")
@@ -375,17 +387,7 @@ def blocks():
     animate(out / "amethyst_block.png", 10, interpolate=True)
 
     # Obsidian becomes void glass: black glass with drifting star glints.
-    def void_glass(f):
-        c = Canvas(seed=70)
-        c.noise([VOID_D, VOID_D, VOID, (20, 14, 34)], [5, 3, 2, 2])
-        rng = random.Random(71)
-        for _ in range(7):
-            x, y = rng.randrange(16), rng.randrange(16)
-            c.set((x + f) % 16, y, VIOLET_L if rng.random() < 0.5 else WHITE)
-        for i in range(16):
-            c.set(i, (i + 3) % 16, (40, 30, 70))  # glass streak
-        return c
-    stack([void_glass(f) for f in range(8)]).save(out / "obsidian.png")
+    stack([void_glass_frame(70, f) for f in range(8)]).save(out / "obsidian.png")
     animate(out / "obsidian.png", 6)
 
     # Ancient debris + netherite become neutronium: dense black alloy with molten seams.
@@ -886,6 +888,194 @@ def pack_meta():
     written.append(ROOT / "pack.png")
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Extra mine blocks + deck shell blocks (walls, rims, lights) used by the mines module (mines.yml)
+# ---------------------------------------------------------------------------------------------------------------
+
+def tinted(c: Canvas, tint, t) -> Canvas:
+    for y in range(c.h):
+        for x in range(c.w):
+            p = c.px[x, y]
+            if p[3]:
+                c.set(x, y, mix(p[:3], tint, t))
+    return c
+
+
+def void_rock(seed) -> Canvas:
+    c = Canvas(seed=seed)
+    c.noise([VOID_D, (26, 22, 30), (38, 32, 44), SOOT], [4, 4, 2, 2])
+    for _ in range(3):
+        c.blob(c.rng.randrange(16), c.rng.randrange(16), 1, [(48, 40, 58), (38, 32, 44)])
+    c.speckle(VOID, 5)
+    return c
+
+
+def plate(seed, hi, mid, lo, grid=8, rivets=True) -> Canvas:
+    """Clean deck plating: panels with a lit top-left edge and a dark seam."""
+    c = Canvas(seed=seed)
+    c.noise([mid, mid, shade(mid, 0.92), shade(mid, 1.06)], [5, 3, 2, 2])
+    for y in range(16):
+        for x in range(16):
+            if x % grid == grid - 1 or y % grid == grid - 1:
+                c.set(x, y, lo)
+            elif x % grid == 0 or y % grid == 0:
+                c.set(x, y, hi)
+    if rivets:
+        for ox in range(0, 16, grid):
+            for oy in range(0, 16, grid):
+                c.set(ox + 1, oy + 1, hi)
+                c.set(ox + grid - 3, oy + grid - 3, lo)
+    return c
+
+
+def grate(seed, bar, gap) -> Canvas:
+    c = Canvas(seed=seed)
+    c.fill(gap)
+    for y in range(16):
+        for x in range(16):
+            if x % 4 == 0 or y % 4 == 0:
+                c.set(x, y, bar if (x + y) % 2 else shade(bar, 1.15))
+    c.speckle(RUST_D, 4)
+    return c
+
+
+def lamp(seed, glow_lo, glow, glow_hi, frame=0) -> Canvas:
+    """Caged industrial light: steel frame, glowing core behind bars."""
+    c = Canvas(seed=seed)
+    rng = random.Random(seed * 31 + frame)
+    for y in range(16):
+        for x in range(16):
+            d = max(abs(x - 7.5), abs(y - 7.5))
+            t = 1 - d / 7.5
+            c.set(x, y, mix(glow_lo, glow_hi, max(0.0, min(1.0, t * 1.4 + rng.uniform(-0.08, 0.08)))))
+    for i in range(16):
+        c.set(i, 0, GUN); c.set(0, i, GUN); c.set(i, 15, GUN_D); c.set(15, i, GUN_D)
+        c.set(i, 1, GUN_D); c.set(1, i, GUN_D)
+    for x in (5, 10):
+        for y in range(2, 14):
+            c.set(x, y, GUN_D)
+    for y in (5, 10):
+        for x in range(2, 14):
+            c.set(x, y, GUN_D)
+    for p in ((0, 0), (15, 0), (0, 15), (15, 15)):
+        c.set(*p, STEEL)
+    return c
+
+
+def mine_extras():
+    out = MC / "textures" / "block"
+
+    tinted(slag(600), (120, 118, 112), 0.25).save(out / "andesite.png")
+    tinted(slag(601), (70, 96, 70), 0.3).save(out / "tuff.png")
+    c = frost_panel(602)
+    tinted(c, WHITE, 0.35).save(out / "calcite.png")
+    c = hull(603, (BRASS_D, BRASS, GRIME)); c.speckle(BRASS_L, 6); c.save(out / "raw_gold_block.png")
+
+    plate(604, LAPIS_L, LAPIS, (20, 30, 90)).save(out / "lapis_block.png")
+    c = plate(605, CYAN_L, CYAN_D, (10, 60, 70)); c.speckle(CYAN, 6); c.save(out / "diamond_block.png")
+    c = plate(606, (160, 255, 170), GREEN_D, (20, 60, 20)); c.speckle(GREEN, 6); c.save(out / "emerald_block.png")
+
+    void_rock(610).save(out / "blackstone.png")
+    void_rock(611).save(out / "blackstone_top.png")
+    ore(void_rock(612), crystal_clump, (WHITE, FROST_L, FROST), n=4, r=(1,), seed=613).save(out / "nether_quartz_ore.png")
+    ore(void_rock(614), scrap_clump, (BRASS_L, BRASS, BRASS_D), n=5, seed=615).save(out / "gilded_blackstone.png")
+    base = Canvas(seed=616)
+    base.noise([(60, 22, 18), (44, 16, 14), RUST_D, SOOT], [4, 3, 2, 1])
+    ore(base, blob_clump, (BRASS_L, BRASS, BRASS_D), n=6, r=(1,), seed=617).save(out / "nether_gold_ore.png")
+
+    # Basalt: dark ribbed alloy columns.
+    c = Canvas(seed=620)
+    c.noise([SOOT, (38, 36, 40), GUN_D], [3, 3, 2])
+    for x in range(0, 16, 4):
+        for y in range(16):
+            c.set(x, y, OIL); c.set(x + 1, y, GUN)
+    c.save(out / "basalt_side.png")
+    c = Canvas(seed=621)
+    c.noise([SOOT, (38, 36, 40)], [1, 1])
+    for r in (2, 5):
+        for a in range(0, 360, 10):
+            c.set(round(7.5 + r * math.cos(math.radians(a))), round(7.5 + r * math.sin(math.radians(a))), GUN)
+    c.save(out / "basalt_top.png")
+    hull(622, (SOOT, GUN_D, OIL)).save(out / "smooth_basalt.png")
+
+    for name, seed in (("quartz_block_side", 630), ("quartz_block_top", 631), ("quartz_block_bottom", 632)):
+        plate(seed, WHITE, (196, 198, 196), (130, 132, 134)).save(out / f"{name}.png")
+
+    def crying(f):
+        c = void_glass_frame(640, f)
+        rng = random.Random(641)
+        for _ in range(4):
+            x, y0 = rng.randrange(16), rng.randrange(16)
+            for k in range(3):
+                c.set(x, (y0 + f + k) % 16, VIOLET_L if k == 2 else VIOLET)
+        return c
+    stack([crying(f) for f in range(8)]).save(out / "crying_obsidian.png")
+    animate(out / "crying_obsidian.png", 4)
+
+    # --- Deck shells (walls / rims) ---
+    c = plate(650, COPPER_L, RUST, RUST_D)
+    c.speckle(VERDI, 10); c.speckle((40, 110, 90), 5)
+    c.save(out / "weathered_cut_copper.png")
+    grate(651, STEEL, OIL).save(out / "polished_andesite.png")
+    c = plate(652, GUN_L, GUN_D, OIL, grid=16)
+    for y in range(3, 13, 3):
+        for x in range(2, 14):
+            c.set(x, y, SOOT)
+    c.save(out / "polished_deepslate.png")
+    c = plate(653, OLIVE_L, OLIVE, OLIVE_D)
+    for i in range(16):
+        if (i // 2) % 2 == 0:
+            c.set(i, 15, HAZ); c.set(i, 14, HAZ)
+    c.save(out / "polished_tuff.png")
+    plate(654, WHITE, (178, 192, 200), FROST_D).save(out / "polished_diorite.png")
+    plate(655, STEEL_L, STEEL, GUN, rivets=False).save(out / "smooth_stone.png")
+    plate(656, STEEL_L, STEEL, GUN, rivets=False).save(out / "smooth_stone_slab_side.png")
+
+    def bricks(seed, cracked):
+        c = Canvas(seed=seed)
+        c.noise([(30, 26, 36), (38, 34, 46), SOOT], [3, 3, 2])
+        for y in range(16):
+            for x in range(16):
+                off = 4 if (y // 4) % 2 else 0
+                if y % 4 == 3 or (x + off) % 8 == 7:
+                    c.set(x, y, VOID_D)
+                elif y % 4 == 0:
+                    c.set(x, y, (54, 48, 64))
+        if cracked:
+            for _ in range(3):
+                c.crack(c.rng.randrange(16), c.rng.randrange(16), 7, VOID_D, VIOLET)
+        return c
+    bricks(660, False).save(out / "polished_blackstone_bricks.png")
+    bricks(661, True).save(out / "cracked_polished_blackstone_bricks.png")
+    plate(662, (54, 48, 64), (34, 30, 40), VOID_D).save(out / "polished_blackstone.png")
+
+    c = Canvas(seed=663)
+    c.noise([SOOT, (40, 36, 36)], [2, 1])
+    for x in range(16):
+        for y in range(16):
+            if x in (0, 15):
+                c.set(x, y, OIL)
+            elif x in (3, 12):
+                c.set(x, y, MAGMA_D if y % 4 else MAGMA)
+    c.save(out / "polished_basalt_side.png")
+    c = plate(664, GUN, SOOT, OIL, grid=16)
+    c.blob(8, 8, 2, [MAGMA, MAGMA_D, SOOT], wrap=False)
+    c.save(out / "polished_basalt_top.png")
+
+    # --- Deck lights ---
+    for name, cols in (("ochre_froglight", ((120, 70, 10), HAZ, (255, 236, 150))),
+                       ("verdant_froglight", ((20, 80, 30), GREEN, (210, 255, 190))),
+                       ("pearlescent_froglight", ((70, 30, 90), VIOLET, (250, 220, 255)))):
+        lamp(670 + len(name), *cols).save(out / f"{name}_side.png")
+        lamp(680 + len(name), *cols).save(out / f"{name}_top.png")
+    lamp(690, (90, 30, 6), MAGMA, MAGMA_L).save(out / "shroomlight.png")
+    # Sea lantern is animated in vanilla, so ship our own strip + .mcmeta (a lone 16x16 would break it).
+    frames = [lamp(691, CYAN_D, CYAN, CYAN_L, f) for f in range(5)]
+    frames[3] = lamp(691, (10, 50, 60), CYAN_D, CYAN, 3)  # flicker dip
+    stack(frames).save(out / "sea_lantern.png")
+    animate(out / "sea_lantern.png", 5, [0, 1, 2, 0, 1, 2, 0, 4, 3, 0, 1, 2])
+
+
 def main():
     if not ROOT.exists():
         sys.exit(f"missing {ROOT}")
@@ -899,6 +1089,7 @@ def main():
     modules()
     ui()
     currency()
+    mine_extras()
     pack_meta()
     print(f"wrote {len(written)} files under {ROOT}")
 

@@ -28,7 +28,7 @@ Commands: `/resourcepack` (alias `/rp`) re-sends the pack to you; `/resourcepack
 - `assets/spacepunk/items/**` item model definitions for every key in `docs/ARCHITECTURE.md`
   (drills, modules, UI icons, currency). Use them through the `minecraft:item_model` component.
 - `assets/minecraft/textures/block/**` mine block retextures (slag, hull plating, conduit ore, cryo panels,
-  void glass, neutronium) and `assets/minecraft/textures/item/**` the matching drop items.
+  void glass, neutronium), the deck wall/rim/light blocks from `mines.yml`, and `assets/minecraft/textures/item/**` the matching drop items.
 - Animated textures: conduit (redstone) ore flicker, neutronium glow, void glass glints, the Prototype
   drill, Military drill indicator, Token and Shard icons.
 
