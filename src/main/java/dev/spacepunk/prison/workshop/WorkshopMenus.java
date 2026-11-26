@@ -435,6 +435,7 @@ final class WorkshopMenus {
             return;
         }
         Gui g = new Gui(6, "<dark_gray>Bay Locker");
+        g.live = true;
         g.bottomClick = e -> {
             ItemStack it = e.getCurrentItem();
             if (it != null && ws.items.goodKey(it) != null && ws.deposit(p, it)) g.render();

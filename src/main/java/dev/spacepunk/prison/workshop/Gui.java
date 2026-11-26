@@ -43,11 +43,25 @@ final class Gui implements InventoryHolder {
         return this;
     }
 
+    /** While rendering, slots are drawn here first and only changed slots are written to the inventory. */
+    private ItemStack[] staging;
+
     void render() {
         actions.clear();
         ItemStack filler = filler();
-        for (int i = 0; i < inventory.getSize(); i++) inventory.setItem(i, filler);
-        if (renderer != null) renderer.accept(this);
+        staging = new ItemStack[inventory.getSize()];
+        java.util.Arrays.fill(staging, filler);
+        try {
+            if (renderer != null) renderer.accept(this);
+        } finally {
+            ItemStack[] next = staging;
+            staging = null;
+            // Write only what changed, so live menus (redrawn every second) don't resend every slot.
+            for (int i = 0; i < next.length; i++) {
+                ItemStack cur = inventory.getItem(i);
+                if (next[i] == null ? cur != null : !next[i].equals(cur)) inventory.setItem(i, next[i]);
+            }
+        }
     }
 
     void open(Player p) {
@@ -59,7 +73,7 @@ final class Gui implements InventoryHolder {
 
     void set(int slot, ItemStack item, Consumer<InventoryClickEvent> action) {
         if (slot < 0 || slot >= inventory.getSize()) return;
-        inventory.setItem(slot, item);
+        if (staging != null) staging[slot] = item; else inventory.setItem(slot, item);
         if (action != null) actions.put(slot, action); else actions.remove(slot);
     }
 
