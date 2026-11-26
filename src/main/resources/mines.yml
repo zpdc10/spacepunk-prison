@@ -7,6 +7,8 @@ world:
   create-if-missing: true
   # Make the first mine's spawn the mines world spawn after /mineadmin generate.
   set-spawn-to-first-mine: true
+  # Until there is a hub world, send every joining player to the mines world spawn.
+  send-players-on-join: true
 
 # Auto layout used by /mineadmin generate: one row per deck (north to south), one column per mine.
 layout:

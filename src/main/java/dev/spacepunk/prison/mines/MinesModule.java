@@ -39,6 +39,10 @@ public final class MinesModule implements FeatureModule {
 
         listener = new MineListener(manager);
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
+        if (org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(cfgFile)
+                .getBoolean("world.send-players-on-join", true)) {
+            plugin.getServer().getPluginManager().registerEvents(new JoinToMines(), plugin);
+        }
 
         MineCommands commands = new MineCommands(this);
         plugin.addCommand("mine", "Teleport to a mine", List.of(), commands.mine());
@@ -63,6 +67,17 @@ public final class MinesModule implements FeatureModule {
         if (manager != null) {
             manager.hideAllBars();
             manager.refiller().shutdown();
+        }
+    }
+
+    /** Until there is a hub, everyone who joins outside the mines world is sent to the mines world spawn. */
+    private final class JoinToMines implements org.bukkit.event.Listener {
+        @org.bukkit.event.EventHandler
+        public void onJoin(org.bukkit.event.player.PlayerJoinEvent e) {
+            String name = manager.config().settings().world();
+            World w = plugin.getServer().getWorld(name);
+            if (w == null || e.getPlayer().getWorld().equals(w)) return;
+            e.getPlayer().teleportAsync(w.getSpawnLocation().add(0.5, 0, 0.5));
         }
     }
 
