@@ -26,6 +26,11 @@ pack-file: ""
 # a world change while the prompt is open closes it, and the client never answers.
 send-delay-ticks: 40
 
+# If the client sends no answer at all (its prompt was closed by a world change or teleport), re-send the pack
+# after this many seconds, up to max-retries times. A world change while waiting also triggers a re-send.
+retry-seconds: 15
+max-retries: 3
+
 # Log every pack send with its URL.
 debug: false
 
