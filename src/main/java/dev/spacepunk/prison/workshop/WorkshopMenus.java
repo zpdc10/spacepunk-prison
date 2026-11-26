@@ -298,7 +298,7 @@ final class WorkshopMenus {
 
         g.set(43, Gui.icon(Material.SHEARS, "workshop/ui/pickup", "<#e0562e>Pick Up", List.of(
                 "<gray>Returns the machine (with its mark) to you.",
-                "<gray>Buffered items go to the Bay Locker.", "", "<yellow>Shift-click to pick up")), e -> {
+                "<gray>Buffered items go to the Bay Locker.", "<dark_gray>Or sneak + right-click the machine in the bay.", "", "<yellow>Shift-click to pick up")), e -> {
             if (!e.getClick().isShiftClick()) { Gui.deny(p); return; }
             ws.pickup(p, bay, m);
         });

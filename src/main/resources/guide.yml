@@ -472,6 +472,7 @@ chapters:
         hint:
           - "Keep ore in your <white>cargo hold</white>: the Intake pulls it in by itself while you're online."
           - "Click a machine to see what it's doing, rotate it or upgrade it."
+          - "Placed one wrong? <white>Sneak + right-click</white> a machine or conveyor to pick it back up."
     done: "Your line is running. Sell goods from the <white>Bay Locker</white> at the market in the terminal, or add a <white>Trade Chute</white> later. Next: Heat Sinks, Sludge Washer, Arc Furnace. <white>/guide workshop</white>"
     board:
       - "<#c8743a><bold>HULL BAY · YOUR FIRST LINE</bold>"
@@ -512,7 +513,7 @@ chapters:
 
         The next machine (or a <em>conveyor</em>) must sit on that block.
 
-        Click a machine to rotate, toggle or upgrade it.
+        Click a machine to rotate, toggle or upgrade it. <em>Sneak + right-click</em> a machine or conveyor to pick it up.
       - |
         <h>THE CHAIN</h>
 

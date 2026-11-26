@@ -121,6 +121,10 @@ final class WorkshopListener implements Listener {
                 Text.send(p, "<gray>Only " + plot.name + " and their crew can use these machines.");
                 return;
             }
+            if (p.isSneaking()) {
+                ws.pickup(p, bay, m);
+                return;
+            }
             menus.machine(p, bay, m);
             return;
         }
@@ -139,6 +143,7 @@ final class WorkshopListener implements Listener {
         // Conveyors: no delay clicking.
         if (clicked.getType() == Material.REPEATER && (hand == null || !hand.getType().isBlock() || !p.isSneaking())) {
             e.setCancelled(true);
+            if (p.isSneaking() && e.getHand() == EquipmentSlot.HAND) ws.pickupConveyor(p, plot, clicked);
             return;
         }
 
