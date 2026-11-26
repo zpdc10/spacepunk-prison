@@ -8,10 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Auto layout for a fresh test server: one row per deck, one column per mine in that deck, each mine a pit
- * with walls, floor, a walkway rim with a low parapet, wall lights, and a spawn on the north rim.
+ * Auto layout for a fresh test server: one row per deck, one column per mine in that deck. Each mine is a pit
+ * with walls, floor and wall lights, a walkway around it with a lit landing pad at the spawn on the north side,
+ * and (by default) a closed room around it all: outer walls and a lit ceiling.
  */
 final class MineLayout {
+    /** Bump when the generated structure changes; placed auto-layout mines are rebuilt on the next start. */
+    static final int VERSION = 2;
+
     private MineLayout() {}
 
     /** Region a mine gets in the auto layout. */
@@ -63,7 +67,7 @@ final class MineLayout {
                 set(world, x1, y, z, lightLayer && z % 4 == 0 ? light : wall);
             }
         }
-        // Rim walkway at the top layer, parapet one block up on the outer edge, lights on the corners
+        // Rim walkway at the top layer, with its support layer underneath.
         int ox0 = x0 - rim, ox1 = x1 + rim, oz0 = z0 - rim, oz1 = z1 + rim;
         for (int x = ox0; x <= ox1; x++) {
             for (int z = oz0; z <= oz1; z++) {
@@ -71,16 +75,75 @@ final class MineLayout {
                 if (inPit) continue;
                 set(world, x, r.maxY(), z, rimMat);
                 set(world, x, r.maxY() - 1, z, wall);
-                boolean edge = x == ox0 || x == ox1 || z == oz0 || z == oz1;
-                if (edge) {
-                    boolean corner = (x == ox0 || x == ox1) && (z == oz0 || z == oz1);
-                    set(world, x, r.maxY() + 1, z, corner ? light : wall);
-                }
             }
         }
         // Top of the pit walls flush with the rim
         for (int x = x0; x <= x1; x++) { set(world, x, r.maxY(), z0, rimMat); set(world, x, r.maxY(), z1, rimMat); }
         for (int z = z0; z <= z1; z++) { set(world, x0, r.maxY(), z, rimMat); set(world, x1, r.maxY(), z, rimMat); }
+
+        Location spawn = spawnFor(cfg, r, world);
+        int sx = spawn.getBlockX(), sz = spawn.getBlockZ();
+        // Landing pad: a lit 3x3 under the spawn so the entry point is easy to find.
+        for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) set(world, sx + dx, r.maxY(), sz + dz, light);
+
+        if (!cfg.settings().enclosed()) {
+            // Open pit: low parapet on the outer edge with lights on the corners.
+            for (int x = ox0; x <= ox1; x++) for (int z = oz0; z <= oz1; z++) {
+                boolean edge = x == ox0 || x == ox1 || z == oz0 || z == oz1;
+                if (!edge) continue;
+                boolean corner = (x == ox0 || x == ox1) && (z == oz0 || z == oz1);
+                set(world, x, r.maxY() + 1, z, corner ? light : wall);
+            }
+            return;
+        }
+        buildRoom(cfg, r, world, ox0, ox1, oz0, oz1, sx, wall, rimMat, light);
+    }
+
+    /**
+     * Closes the mine into a room: outer walls from the walkway up to a ceiling over the whole pit, with support
+     * pillars, a light band, ceiling beams and a grid of ceiling lights. If a parkour catwalk already leads away
+     * from the north wall at the spawn, its 3x2 doorway is left open so the course stays reachable.
+     */
+    private static void buildRoom(MinesConfig cfg, Region r, World world, int ox0, int ox1, int oz0, int oz1, int sx,
+                                  Material wall, Material trim, Material light) {
+        int floorY = r.maxY();
+        int ceilY = floorY + cfg.settings().roomHeight();
+        int bandY = floorY + Math.max(2, cfg.settings().roomHeight() / 2);
+        boolean doorway = false;
+        for (int dx = -1; dx <= 1 && !doorway; dx++) {
+            int y = floorY;
+            if (y >= world.getMinHeight() && y < world.getMaxHeight()
+                    && !world.getBlockAt(sx + dx, y, oz0 - 1).getType().isAir()) doorway = true;
+        }
+        // Outer walls
+        for (int y = floorY + 1; y < ceilY; y++) {
+            for (int x = ox0; x <= ox1; x++) {
+                boolean door = doorway && Math.abs(x - sx) <= 1 && y <= floorY + 2;
+                if (!door) set(world, x, y, oz0, roomWall(x - ox0, y, floorY, bandY, wall, trim, light));
+                set(world, x, y, oz1, roomWall(x - ox0, y, floorY, bandY, wall, trim, light));
+            }
+            for (int z = oz0 + 1; z < oz1; z++) {
+                set(world, ox0, y, z, roomWall(z - oz0, y, floorY, bandY, wall, trim, light));
+                set(world, ox1, y, z, roomWall(z - oz0, y, floorY, bandY, wall, trim, light));
+            }
+        }
+        // Ceiling with a light grid, and beams one block below it every 8 blocks
+        for (int x = ox0; x <= ox1; x++) {
+            for (int z = oz0; z <= oz1; z++) {
+                boolean lamp = (x - ox0) % 6 == 3 && (z - oz0) % 6 == 3;
+                set(world, x, ceilY, z, lamp ? light : wall);
+                boolean beam = (z - oz0) % 8 == 0 && x > ox0 && x < ox1 && z > oz0 && z < oz1;
+                if (beam) set(world, x, ceilY - 1, z, trim);
+            }
+        }
+    }
+
+    /** Wall block: pillars of trim every 6 blocks, a light band at mid height, a trim skirting row at the floor. */
+    private static Material roomWall(int along, int y, int floorY, int bandY, Material wall, Material trim, Material light) {
+        boolean pillar = along % 6 == 0;
+        if (y == bandY) return pillar ? light : trim;
+        if (pillar || y == floorY + 1) return trim;
+        return wall;
     }
 
     private static void set(World w, int x, int y, int z, Material m) {

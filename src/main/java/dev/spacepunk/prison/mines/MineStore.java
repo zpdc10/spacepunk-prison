@@ -30,6 +30,14 @@ final class MineStore {
 
     void reload() { yaml = YamlConfiguration.loadConfiguration(file); }
 
+    /** Version of the auto layout the generated mines were last built with (0 = never recorded). */
+    int layoutVersion() { return yaml.getInt("layout-version", 0); }
+
+    void layoutVersion(int v) {
+        yaml.set("layout-version", v);
+        save();
+    }
+
     ConfigurationSection custom() { return yaml.getConfigurationSection("custom"); }
 
     Region region(String id) {
