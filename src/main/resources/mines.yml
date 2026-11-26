@@ -19,6 +19,7 @@ layout:
   rim-width: 4        # walkway around the top of each pit
   enclosed: true      # build each mine as a closed room: walls and a lit ceiling over the pit and walkway
   room-height: 9      # blocks from the walkway up to the ceiling
+  ladders-per-wall: 3 # ladders set into each pit wall, floor to walkway, so nobody gets stuck at the bottom
 
 refill:
   mined-fraction: 0.65      # refill once 65% of a mine's blocks are gone
