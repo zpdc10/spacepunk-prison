@@ -36,6 +36,9 @@ jobs:
     # Every green build of main is published as the "latest" pre-release, which the server downloads on restart.
     needs: plugin
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: publish-latest
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -50,6 +53,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
-          gh release create latest SpacepunkPrison.jar spacepunk-pack.zip spacepunk-pack.zip.sha1 --repo "$GITHUB_REPOSITORY" --prerelease \
-            --title "Latest build" --notes "Automatic build of main at $GITHUB_SHA" --target "$GITHUB_SHA"
+          # Replace assets in place (never delete first): the server downloads the jar on every restart,
+          # so the asset must never be missing, even for a few seconds.
+          FILES="SpacepunkPrison.jar spacepunk-pack.zip spacepunk-pack.zip.sha1"
+          NOTES="Automatic build of main at $GITHUB_SHA"
+          if gh release view latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/latest" -f sha="$GITHUB_SHA" -F force=true >/dev/null
+            gh release upload latest $FILES --repo "$GITHUB_REPOSITORY" --clobber
+            gh release edit latest --repo "$GITHUB_REPOSITORY" --notes "$NOTES"
+          else
+            gh release create latest $FILES --repo "$GITHUB_REPOSITORY" --prerelease \
+              --title "Latest build" --notes "$NOTES" --target "$GITHUB_SHA"
+          fi
