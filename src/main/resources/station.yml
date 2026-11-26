@@ -1,0 +1,48 @@
+# Station hub module. The hub itself is drawn in code (station/HubLayout.java) so it is versioned in the repo;
+# this file holds what the terminals do and a few world settings. /stationadmin reload applies changes.
+
+# Placeholder station name shown over the reactor core (MiniMessage).
+name: "<#c8743a><bold>SPACEPUNK</bold> <gray>STATION"
+
+world:
+  name: station
+  # Build the hub on startup whenever the code's layout version is newer than the one built.
+  auto-build: true
+  # Time of day held in the station world (18000 = midnight, a dark starry sky). -1 lets time run.
+  lock-time: 18000
+  blocks-per-tick: 60000
+
+join:
+  send-to-hub: true       # everyone who joins starts on the concourse
+  respawn-at-hub: true    # respawn on the concourse (zone modules may override)
+
+board-title: "Shuttle Board"
+
+# What each terminal does. Steps separated by "|": the first usable one runs.
+#   warp:ID        WarpService warp (skipped while nothing registered that id)
+#   board:CAT,CAT  shuttle board listing warps in those categories
+#   command:LINE   runs a command as the player
+#   hub            back to the hub spawn
+terminals:
+  lift-best: "command:mine"
+  lift-scrapyard: "command:mine scrapyard-1"
+  lift-reactor: "command:mine reactor-6"
+  lift-cryo: "command:mine cryo-11"
+  lift-hull: "command:mine hull-16"
+  lift-foundry: "command:mine foundry-21"
+  mine-directory: "command:mines"
+  parkour: "command:parkour"
+  sell: "command:sell"
+  cargo: "command:cargo"
+  drill: "command:drill"
+  rankup: "command:rankup"
+  grades: "command:grades"
+  auction: "command:ah"
+  auction-claims: "command:ah claims"
+  salvage: "command:salvage"
+  quests: "command:quests"
+  contracts: "command:contracts"
+  gang: "command:gang"
+  shuttle-board: "board:planetside,danger"
+  workshop: "warp:workshop|command:workshop"
+  undercroft: "warp:undercroft"

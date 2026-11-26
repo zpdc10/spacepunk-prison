@@ -27,6 +27,7 @@ public final class SpacepunkPrison extends JavaPlugin {
     private static final List<String> MODULE_CLASSES = List.of(
             "dev.spacepunk.prison.resourcepack.ResourcePackModule",
             "dev.spacepunk.prison.mines.MinesModule",
+            "dev.spacepunk.prison.station.StationModule",
             "dev.spacepunk.prison.progression.ProgressionModule",
             "dev.spacepunk.prison.drill.DrillModule",
             "dev.spacepunk.prison.gangs.GangsModule",

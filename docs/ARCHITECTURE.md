@@ -34,6 +34,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
 | `raredrops/` + `raredrops.yml` | rare drops | Tiered finds while mining, relic collections (sell bonus via `OreSellEvent`), salvage caches, blueprint fragments → drill modules, `/salvage` |
 | `auction/` + `auction.yml` | auction house | The Black Market: buy-it-now + escrowed auctions, fees/tax sink, `auctions.json`, `/ah`; blocks prestige while the player leads a bid (`PrestigeAttemptEvent`) |
+| `station/` + `station.yml` | station | Hub world + layout, `WarpService` (warps, hub spawn), terminals, `/hub` `/warp` `/warps` `/stationadmin`. See `docs/STATION.md` |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
 in your PR description. If you need something from another module, add an interface method or event in
@@ -41,7 +42,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, progression, drill, gangs, hud, raredrops, auction. Missing classes are skipped, so each module can
+Load order: resourcepack, mines, station, progression, drill, gangs, hud, raredrops, auction. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -80,6 +81,13 @@ other), `registerContractObjective` + `addContractProgress` to feed weekly gang 
 `addPoints` for the weekly leaderboard, `setTerritoryOwner` + `depositFromServer` for Undercroft labs. Gang bank
 moves use reasons `gang:deposit` / `gang:withdraw`, so they never count as server income for prestige.
 `GangMembershipEvent` fires on join/leave/rank/disband/recolor so tags can refresh.
+
+## Places and warps
+
+The station hub is the main hub (world `station`); everything else lives in its own area and is reached by a
+warp. Register destinations with `WarpService` (category `planetside`/`danger` show on the hub Shuttle Board,
+`private` for per-player places) and listen to `PlayerWarpEvent` to gate trips. Hub terminals and what they run
+are listed in `docs/STATION.md`.
 
 ## Currencies
 
