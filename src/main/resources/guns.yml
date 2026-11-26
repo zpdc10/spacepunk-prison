@@ -1,0 +1,170 @@
+# Guns module. Guns fire only where the Undercroft allows PvP (its rings) and in the worlds listed under
+# extra-worlds. Everything that hits a player goes through normal damage events, so mines and safe zones stay
+# protected. All numbers are tunable here; /gun admin reload applies changes.
+
+item-models: true              # use the resource pack models (spacepunk:gun/<id>, spacepunk:ammo/<id>)
+gun-material: CARROT_ON_A_STICK  # base item for guns (any item with a right-click works)
+ammo-material: PAPER
+parts-material: PAPER
+extra-worlds: []               # worlds (besides the Undercroft rings) where guns may fire
+hit-mobs-anywhere: false       # allow shooting mobs outside PvP zones (target practice)
+tracers: true                  # particle trail on every shot
+hit-memory-seconds: 8          # how long a hit counts toward naming the weapon in kill messages
+
+# Gunsmith prices grow with your grade, like ore values: price x growth^(grade - 1).
+gunsmith:
+  price-grade-growth: 1.21
+
+ammo:
+  pistol:
+    name: "<#c9a46a>Rivet Rounds"
+    lore: "Hand-pressed rivets in brass jackets."
+    pack: 24           # rounds per gunsmith purchase
+    price: 300         # Credits per pack at grade 1
+  rifle:
+    name: "<#b0b8c0>Bolt Slugs"
+    lore: "Long tungsten slugs. Heavy, loud, final."
+    pack: 10
+    price: 700
+  shell:
+    name: "<#c8743a>Breach Shells"
+    lore: "Scrap-packed shells. Hull-door rated."
+    pack: 12
+    price: 500
+  cell:
+    name: "<#6fe3ff>Plasma Cells"
+    lore: "Humming. Do not lick."
+    pack: 8
+    price: 1500
+
+parts:
+  name: "<#d6a640>Gun Parts"
+  lore: "Springs, pins and stolen firing groups."
+
+# damage: hit points per pellet (a player has 20). headshot: multiplier above the neck.
+# fire-delay: ticks between shots (20 ticks = 1 second). burst: shots per trigger pull, burst-delay ticks apart.
+# spread / sneak-spread: cone half-angle in degrees. recoil: degrees the view kicks up per shot (yaw jitter is a third).
+# falloff-start: blocks before damage starts dropping, down to falloff-min of full damage at max range.
+# pierce: extra targets a shot passes through. zoom: slowness level applied while sneaking (0 = no scope).
+# sound: a sound key (minecraft namespace). gunsmith: price in Credits at grade 1, gun parts and minimum prestige to buy one.
+guns:
+  rivet_pistol:
+    name: "<#c9a46a>Rivet Pistol"
+    lore: "Nail gun with ambitions. Reliable, cheap, everywhere."
+    ammo: pistol
+    damage: 4.5
+    headshot: 1.6
+    fire-delay: 5
+    burst: 1
+    burst-delay: 0
+    magazine: 12
+    reload-ticks: 28
+    range: 40
+    spread: 1.6
+    sneak-spread: 0.6
+    recoil: 2.0
+    pellets: 1
+    pierce: 0
+    falloff-start: 18
+    falloff-min: 0.5
+    zoom: 0
+    sound: entity.firework_rocket.blast
+    pitch: 1.6
+    tracer: "#f0c070"
+    gunsmith: { price: 15000, parts: 0, prestige: 0 }
+  scrap_smg:
+    name: "<#9aa0a6>Scrap SMG"
+    lore: "Sprays rivets faster than it should. Kicks like a mule."
+    ammo: pistol
+    damage: 2.6
+    headshot: 1.4
+    fire-delay: 4
+    burst: 3
+    burst-delay: 1
+    magazine: 30
+    reload-ticks: 40
+    range: 30
+    spread: 4.0
+    sneak-spread: 2.5
+    recoil: 1.2
+    pellets: 1
+    pierce: 0
+    falloff-start: 12
+    falloff-min: 0.4
+    zoom: 0
+    sound: entity.firework_rocket.blast
+    pitch: 2.0
+    tracer: "#e0e0e0"
+    gunsmith: { price: 60000, parts: 4, prestige: 0 }
+  breach_shotgun:
+    name: "<#c8743a>Breach Shotgun"
+    lore: "Built to open hull doors. Works on people too."
+    ammo: shell
+    damage: 2.4
+    headshot: 1.3
+    fire-delay: 18
+    burst: 1
+    burst-delay: 0
+    magazine: 6
+    reload-ticks: 50
+    range: 18
+    spread: 7.0
+    sneak-spread: 5.0
+    recoil: 6.0
+    pellets: 8
+    pierce: 0
+    falloff-start: 5
+    falloff-min: 0.25
+    zoom: 0
+    sound: entity.generic.explode
+    pitch: 1.8
+    tracer: "#ff9a50"
+    gunsmith: { price: 90000, parts: 6, prestige: 0 }
+  bolt_rifle:
+    name: "<#b0b8c0>Bolt Rifle"
+    lore: "One slug, one problem solved. Sneak to scope."
+    ammo: rifle
+    damage: 13.0
+    headshot: 1.75
+    fire-delay: 30
+    burst: 1
+    burst-delay: 0
+    magazine: 4
+    reload-ticks: 60
+    range: 90
+    spread: 3.5
+    sneak-spread: 0.05
+    recoil: 7.0
+    pellets: 1
+    pierce: 1
+    falloff-start: 60
+    falloff-min: 0.8
+    zoom: 3
+    sound: entity.lightning_bolt.thunder
+    pitch: 2.0
+    tracer: "#ffffff"
+    gunsmith: { price: 150000, parts: 10, prestige: 0 }
+  plasma_lance:
+    name: "<#6fe3ff>Plasma Lance"
+    lore: "Prototype hull cutter. Burns through two people and a wall's worth of regret."
+    ammo: cell
+    damage: 8.0
+    headshot: 1.5
+    fire-delay: 14
+    burst: 1
+    burst-delay: 0
+    magazine: 8
+    reload-ticks: 45
+    range: 55
+    spread: 0.8
+    sneak-spread: 0.2
+    recoil: 3.0
+    pellets: 1
+    pierce: 2
+    falloff-start: 40
+    falloff-min: 0.7
+    zoom: 1
+    sound: block.beacon.deactivate
+    pitch: 2.0
+    tracer: "#6fe3ff"
+    gunsmith: { price: 400000, parts: 24, prestige: 1 }
