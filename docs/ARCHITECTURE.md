@@ -31,6 +31,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `drill/` + `drill.yml` | drill | The drill item, frames, enchants, modules, heat, drill menu |
 | `hud/` + `hud.yml` | hud | `HudService` (shared action bar), sidebar, tab list, cargo boss bar, per-break feedback, `/hud` |
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
+| `station/` + `station.yml` | station | Hub world + layout, `WarpService` (warps, hub spawn), terminals, `/hub` `/warp` `/warps` `/stationadmin`. See `docs/STATION.md` |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
 in your PR description. If you need something from another module, add an interface method or event in
@@ -38,7 +39,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, progression, drill, hud. Missing classes are skipped, so each module can
+Load order: resourcepack, mines, station, progression, drill, hud. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -60,6 +61,13 @@ use `HudService#flash` for a short notice, or `HudService#segment(player, key, t
 The sidebar uses a per-player scoreboard, so any future nametag/team feature must add its teams to each
 player's board (ask the hud module for a hook) instead of the main scoreboard. Boss bars: mines shows the
 current mine's fill, hud shows the cargo hold while mining.
+
+## Places and warps
+
+The station hub is the main hub (world `station`); everything else lives in its own area and is reached by a
+warp. Register destinations with `WarpService` (category `planetside`/`danger` show on the hub Shuttle Board,
+`private` for per-player places) and listen to `PlayerWarpEvent` to gate trips. Hub terminals and what they run
+are listed in `docs/STATION.md`.
 
 ## Currencies
 
