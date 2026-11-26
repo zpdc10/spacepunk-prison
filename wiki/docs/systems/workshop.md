@@ -131,9 +131,9 @@ Workshop payouts are server income, like selling ore. A running full chain adds 
 
 ## The Assembly Bench
 
-Build [drill](drill.md#3-modules-and-the-module-rig), [rod](fishing.md#the-rod-rig) and [weapon](guns.md#weapon-rigs)
-modules from **schematics you know** (decode blueprint fragments in `/salvage`; everyone starts with Servo Actuator,
-Ore Sifter, Reel Servo and Extended Mag). Each build takes goods from your **Bay Locker**,
+Build [drill](drill.md#3-modules-and-the-module-rig), [rod](fishing.md#the-rod-rig), [weapon](guns.md#weapon-rigs) and
+[exo](exo-rig.md) modules from **schematics you know** (decode blueprint fragments in `/salvage`; everyone starts with
+Servo Actuator, Ore Sifter, Reel Servo, Extended Mag and Servo Greaves). Each build takes goods from your **Bay Locker**,
 working or pristine [scrap parts](rare-drops.md#scrap-parts) from your inventory, and Credits.
 
 **Drill modules**
@@ -181,6 +181,21 @@ working or pristine [scrap parts](rare-drops.md#scrap-parts) from your inventory
 | Long Barrel | 15 | 8M | 16 Hardened Steel | 2 Military Relay, 1 Gyro Stabilizer |
 | Hollow-Point Press | 16 | 12M | 6 Armor Plate, 8 Conductive Alloy | 2 Military Relay, 3 Servo Motor |
 | Smart Targeter | 23 | 200M | 1 Reactor Core, 6 Induction Coil | 1 Quantum Core, 2 Encrypted Data Core, 2 Logic Chip |
+
+**Exo modules**
+
+| Module | Grade | Credits | Bay goods | Scrap parts |
+| --- | --- | --- | --- | --- |
+| Servo Greaves | 5 | 40K | 64 Crushed Steel | 2 Servo Motor |
+| Ceramic Plate | 5 | 40K | 48 Steel Concentrate | 2 Copper Wiring |
+| Shock Absorbers | 8 | 250K | 24 Steel Ingot | 1 Gyro Stabilizer, 2 Servo Motor |
+| Bio-Monitor | 9 | 400K | 24 Copper Ingot, 8 Graphite Rod | 1 Encrypted Data Core, 2 Circuit Board |
+| Grapple Launcher | 9 | 400K | 32 Steel Ingot | 3 Servo Motor, 1 Power Cell |
+| Trader Uplink | 10 | 600K | 16 Conduit Filament | 1 Logic Chip, 3 Circuit Board |
+| Scanner Pulse | 12 | 1.5M | 12 Conductive Alloy | 2 Sonar Array, 2 Circuit Board |
+| Reactive Mesh | 16 | 12M | 8 Armor Plate, 4 Wiring Harness | 2 Military Relay, 4 Capacitor |
+| Stim Injector | 17 | 16M | 4 Induction Coil, 8 Circuit Alloy | 4 Power Cell, 1 Encrypted Data Core |
+| Phase Cloak | 24 | 300M | 2 Reactor Core, 4 Void Capacitor | 1 Quantum Core, 3 Military Relay, 3 Logic Chip |
 
 Signature parts tie modules to activities: a Scavenger Rig needs a Sonar Array from fishing, a Thermal Recycler a Gyro
 Stabilizer from parkour, a Token Condenser a Logic Chip from your own workshop.
@@ -230,6 +245,6 @@ Conveyors don't count toward the machine limit.
 ## How it ties into progression
 
 - Bays, machines and everything in your locker **survive prestige**, so a bay you build is yours for good.
-- The workshop builds every drill, rod and weapon module (Assembly Bench) and repairs the scrap parts they need (Refurbisher).
+- The workshop builds every drill, rod, weapon and exo module (Assembly Bench) and repairs the scrap parts they need (Refurbisher).
 - Processed goods are worth trading on the [Black Market](black-market.md).
 - Processing counts for [contracts](quests.md) and [gang contracts](gangs.md) (goods processed).

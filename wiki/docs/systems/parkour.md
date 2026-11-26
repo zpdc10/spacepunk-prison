@@ -59,4 +59,5 @@ Rare rolls are announced to the server.
 ## How it ties into progression
 
 Five minutes a day per mine for Credits, Tokens and a shot at modules and Shards. Finishing runs also counts toward
-[contracts](quests.md) and [gang contracts](gangs.md).
+[contracts](quests.md) and [gang contracts](gangs.md). Every reward roll also has a 12% chance at an
+[Exo-Rig](exo-rig.md) module.

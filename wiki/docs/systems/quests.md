@@ -93,5 +93,6 @@ Contract points add up on a **monthly track of 30 tiers** (40 to 1,200 points), 
 ## How it ties into progression
 
 Quest and contract Credits are server income, so they count like selling. Contracts push you to try every system,
-the track is a steady source of Shards and modules, and finished quests count toward your
+the track is a steady source of Shards and modules, every finished contract has a 6% chance at an [Exo-Rig](exo-rig.md)
+module, and finished quests count toward your
 [gang's](gangs.md) weekly contracts.

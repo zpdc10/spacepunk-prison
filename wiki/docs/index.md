@@ -28,6 +28,7 @@ better tools.
 <a class="card" href="systems/selling/"><strong>Cargo and selling</strong><span>Your hold, sell prices and the Auto-Seller</span></a>
 <a class="card" href="systems/prestige/"><strong>Prestige</strong><span>Reset at grade 25 for Shards and a permanent bonus</span></a>
 <a class="card" href="systems/drill/"><strong>The drill</strong><span>Frames, enchants, modules and heat</span></a>
+<a class="card" href="systems/exo-rig/"><strong>Exo-Rig</strong><span>Body modules, stats and gadgets</span></a>
 <a class="card" href="systems/station/"><strong>Station hub</strong><span>Terminals, wings and shuttle warps</span></a>
 <a class="card" href="systems/hud/"><strong>Your HUD</strong><span>Sidebar, action bar, cargo bar and tab list</span></a>
 <a class="card" href="systems/rare-drops/"><strong>Rare drops</strong><span>Salvage caches, relics and module blueprints</span></a>

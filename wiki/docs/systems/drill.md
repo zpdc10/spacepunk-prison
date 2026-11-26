@@ -139,8 +139,8 @@ about +8% heat.
 - **Daily parkour** rare rolls, **fishing** treasure (Sealed Module Cases), **Undercroft** Smuggled Tech Crates,
   and the **Contract Track** (Coolant Loop at 600 points, Magnet Coil at 1,200).
 
-Your fishing rod and each gun model have rigs of their own that work the same way, with their own modules: see the
-[Rod Rig](fishing.md#the-rod-rig) and [Weapon Rigs](guns.md#weapon-rigs).
+Your fishing rod, each gun model and your body have rigs of their own that work the same way, with their own modules:
+see the [Rod Rig](fishing.md#the-rod-rig), [Weapon Rigs](guns.md#weapon-rigs) and [Exo-Rig](exo-rig.md).
 
 Modules, schematics and scrap parts are kept through prestige and can be traded (`/trade` or the
 [Black Market](black-market.md)).
