@@ -453,6 +453,7 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
         p.playSound(target.getLocation(), Sound.BLOCK_ANVIL_PLACE, 0.5f, 1.4f);
         showOutput(p, m);
         save(p.getUniqueId());
+        Objectives.report(p, ObjectiveTypes.MACHINE_UPGRADE, 1, "machine:" + type, "placed");
         return true;
     }
 

@@ -1,0 +1,962 @@
+# The in-game guide: /guide (also /help, /tutorial), first-visit briefings, checklists on a boss bar, and info boards.
+# This file ships inside the plugin jar and is read from there, so guide updates always reach the server. To change
+# something on one server only, put a guide.yml in plugins/SpacepunkPrison/ with just the keys you want to override
+# (for example settings.wiki-url), then /guideadmin reload.
+#
+# Events (used by chapter "triggers" and checklist step "on"):
+#   join                    first time the player joins (after join-delay-seconds)
+#   world:<name>            arriving in a world (mines, workshop, station_waters, undercroft, station)
+#   warp:<id>               going through a station warp; * works as a wildcard (warp:parkour-*)
+#   command:/a,/b           typing one of these commands
+#   menu:<text>             opening a station menu whose class name contains <text> (drill., CargoMenu, workshop.,
+#                           fishing., auction., gangs., guns., quests., raredrops., parkour., undercroft.)
+#   objective:<type>        a quest objective report (see api/ObjectiveTypes): mine_blocks, sell_credits, earn_tokens,
+#                           rank_up, enchant_upgrade, catch_fish, process_item, machine_upgrade, rare_drop, ...
+#                           Steps can add target: (any of) and amount: (objective amounts add up).
+#   grade:<n> / prestige:<n> reaching that grade / prestige level
+#   region:<world>:<x1>:<z1>:<x2>:<z2>   walking into that box
+#   guide                   opening any guide book
+# Each chapter's triggers fire once per player: the title + chat briefing, and its checklist (if any) starts.
+#
+# Book pages: MiniMessage, about 14 short lines per page. Extra tags: <h> heading, <em> highlight, <cmd> a command,
+# <note> grey note, <bad> warning. [[/cmd]] is a clickable command; [[~/cmd ]] puts it in the chat box instead.
+
+settings:
+  # The player wiki (wiki/ in the repo). LAN address for the test server; set the public one when there is one.
+  wiki-url: "http://10.0.0.101:8085"
+  join-delay-seconds: 8
+  popup-gap-seconds: 4
+  popups: true
+  checklist-bar: true
+  board-refresh-seconds: 5
+
+chapters:
+  basics:
+    name: "Getting Started"
+    color: "<#c8743a>"
+    icon: COMPASS
+    bar-color: YELLOW
+    wiki: "getting-started/"
+    summary: ["Mine ore, sell it, rank up.", "The loop everything else builds on."]
+    triggers: [join]
+    title: ["<#c8743a><bold>WELCOME, INMATE", "<gray>Mine. Sell. Rank up. <white>/guide</white> explains everything."]
+    brief:
+      - "<gray>You start at <white>Grade 1</white> with a soulbound <white>drill</white> that's yours for good."
+      - "<gray>Mine ore, sell it for <#e0b354>Credits</#e0b354>, and buy higher grades to reach richer mines."
+      - "<gray>The <white>checklist bar</white> at the top of your screen walks you through your first steps."
+      - "<gray>New places and systems brief you the first time you find them. <white>/guide</white> has them all."
+    steps:
+      - on: objective:mine_blocks
+        amount: 25
+        text: "Mine 25 blocks"
+        hint:
+          - "Type <white>/mine</white> (or take a Mine Lift in the north wing) and break the blocks in the pit."
+          - "Ore goes into your <white>cargo hold</white>, not your inventory."
+      - on: menu:CargoMenu
+        text: "Open your cargo hold"
+        hint: ["<white>/cargo</white> shows what you're carrying and how full you are."]
+      - on: objective:sell_credits
+        text: "Sell your cargo"
+        hint: ["<white>/sell</white> sells the whole hold, or use the <white>Sell</white> console in the Exchange (east wing)."]
+      - on: menu:drill.
+        text: "Open the drill bay"
+        hint:
+          - "<white>Shift + right-click</white> your drill (or <white>/drill</white>)."
+          - "Enchants cost <#7fd65a>Tokens</#7fd65a>, which you find now and then while mining."
+      - on: objective:rank_up
+        text: "Rank up to Grade 2"
+        hint: ["Grade 2 costs 4,000 Credits. <white>/rankup</white> buys it and opens the next mine."]
+    done: "That's the core loop. Every other system briefs you when you first reach it, and <white>/guide</white> explains them all."
+    pages:
+      - |
+        <h>STATION GUIDE</h>
+
+        You're an inmate on a derelict penal station. Work pays: mine ore, sell it, and buy clearance grades to reach richer decks.
+
+        Every page has clickable commands like [[/guide]].
+      - |
+        <h>THE LOOP</h>
+
+        1. [[/mine]] go mine
+        2. Ore fills your <em>cargo hold</em>
+        3. [[/sell]] for Credits
+        4. [[/rankup]] next grade
+        5. Upgrade your drill: shift + right-click it
+
+        Repeat, deeper.
+      - |
+        <h>CURRENCIES</h>
+
+        <em>Credits</em> selling. Grades, gear. Wiped on prestige.
+        <em>Tokens</em> found while mining, fishing, working. Drill enchants.
+        <em>Shards</em> from prestige. The biggest upgrades.
+        <em>Scales</em> fishing upgrades.
+
+        [[/bal]] your balances
+      - |
+        <h>YOUR SCREEN</h>
+
+        <em>Sidebar</em> grade, money, tracked quest. [[/hud]] hides it.
+        <em>Action bar</em> what you just mined, drill heat.
+        <em>Boss bars</em> mine fill, cargo hold, this guide's checklist.
+      - |
+        <h>WHAT'S NEXT</h>
+
+        [[/quests]] story and tutorials
+        [[/contracts]] daily jobs
+        [[/parkour]] daily runs
+        [[/ws]] your workshop
+        [[/waters]] fishing
+
+        <note>Each one briefs you the first time you go.</note>
+
+  station:
+    name: "The Station"
+    color: "<#e0b354>"
+    icon: LODESTONE
+    model: "ui/info"
+    wiki: "systems/station/"
+    summary: ["The hub. Four wings, consoles", "to everything. /hub comes back here."]
+    triggers: ["region:station:-18:31:18:60"]
+    brief:
+      - "<gray><white>Shuttle Bay</white>: the <white>Shuttle Board</white> flies you planetside, the airlocks lead to <white>fishing</white> and your <white>workshop</white>."
+      - "<gray>The <red>Guard Checkpoint</red> to the east is the way down to the Undercroft (PvP)."
+    pages:
+      - |
+        <h>THE STATION</h>
+
+        The hub of everything. You arrive and respawn on the concourse.
+
+        Right-click a <em>console</em> (lodestone and button) to use it.
+
+        [[/hub]] back here
+        [[/warps]] Shuttle Board
+      - |
+        <h>THE WINGS</h>
+
+        <em>North</em> Mine Lifts, parkour
+        <em>East</em> Exchange: sell, cargo, drill, rank up, Black Market, salvage
+        <em>West</em> Crew Deck: quests, contracts, gangs
+        <em>South</em> Shuttle Bay: shuttles, fishing, workshop, Undercroft
+      - |
+        <h>HANDY</h>
+
+        [[/hub]] concourse
+        [[/warps]] all trips
+        [[~/warp ]] a trip by id
+        [[/bal]] balances
+        [[/hud]] sidebar on/off
+        [[/rp]] resend textures
+        [[/guide]] this guide
+
+  mining:
+    name: "Mines and Decks"
+    color: "<#c8743a>"
+    icon: IRON_PICKAXE
+    model: "ui/rank"
+    wiki: "systems/mines/"
+    summary: ["25 mines over 5 decks, one", "per grade. Shared and safe."]
+    triggers: ["world:mines"]
+    title: ["<#c8743a><bold>THE MINES", "<gray>Break the pit. Ore goes to your cargo hold."]
+    brief:
+      - "<gray>Mines are shared and safe: no PvP, no fall damage. Only the pit can be broken."
+      - "<gray>Your drill <white>heats up</white> as you mine. Press <white>Q</white> with it in hand to <white>vent</white>: best between 75% and 95% for a speed burst."
+      - "<gray>The boss bar shows the ore left. At 65% mined the mine refills and moves you clear."
+      - "<gray>The doorway in the north wall leads to this mine's daily <white>maintenance run</white> (parkour)."
+    board:
+      - "<#c8743a><bold>ⓘ THE MINES</bold>"
+      - "<gray>Break the pit. Ore fills your <white>cargo hold</white>."
+      - "<gray><white>Q</white> vents drill heat. <white>/sell</white> when the hold is full."
+      - "<gray>North doorway: daily maintenance run"
+      - "<dark_gray>/guide mining"
+    pages:
+      - |
+        <h>THE MINES</h>
+
+        Every grade has its own mine; you can use any mine at or below your grade.
+
+        [[/mine]] your best mine
+        [[/mines]] list, click to go
+        [[~/mine ]] a mine by id or grade
+      - |
+        <h>THE DECKS</h>
+
+        <em>1 Scrapyard</em> G1-5
+        <em>2 Reactor Ducts</em> G6-10
+        <em>3 Cryo Vaults</em> G11-15
+        <em>4 Hull Breach</em> G16-20
+        <em>5 Core Foundry</em> G21-25
+
+        Deeper ore sells for more. Drill heat grows deeper too.
+      - |
+        <h>HOW A MINE WORKS</h>
+
+        Shared with everyone. PvP off, no fall damage.
+
+        A boss bar shows ore left. At 65% mined (or every 10 min) it <em>refills</em>; you get 3 seconds of warning.
+
+        Ladders climb every pit wall.
+      - |
+        <h>DRILL HEAT</h>
+
+        Each block heats your drill. At 100% it <bad>stalls</bad> for 3 s.
+
+        Press <em>Q</em> to vent: dumps the heat for a speed burst. Vent at <em>75-95%</em> for a perfect vent (double burst).
+
+  selling:
+    name: "Cargo and Selling"
+    color: "<#e0b354>"
+    icon: BARREL
+    model: "ui/cargo"
+    wiki: "systems/selling/"
+    summary: ["Ore fills your cargo hold.", "Sell it for Credits."]
+    triggers: ["objective:sell_credits"]
+    brief:
+      - "<gray>Sold! Upgrade your hold in <white>/cargo</white> so you mine longer between trips."
+      - "<gray>At <white>Grade 8</white> the <white>Auto-Seller</white> sells as you mine (90% price). Your sell price grows with grade and prestige."
+    pages:
+      - |
+        <h>CARGO HOLD</h>
+
+        Mined ore goes into your hold, measured in units. Starts at 500.
+
+        Full hold = mining stops filling it. The boss bar turns yellow at 60%, red at 90%.
+
+        [[/cargo]] open it
+      - |
+        <h>SELLING</h>
+
+        [[/sell]] sells everything.
+        Or the <em>Sell</em> console in the Exchange.
+
+        Price = base price x your multiplier: +2% per grade, +10% per prestige, plus relic sets and gang perks.
+      - |
+        <h>UPGRADES</h>
+
+        <em>Bigger hold</em> in [[/cargo]], x1.5 each level. Kept through prestige.
+
+        <em>Auto-Seller</em> Grade 8, 50,000 Credits. Sells as you mine at 90%.
+        [[/autosell]] toggles it.
+      - |
+        <h>OR PROCESS IT</h>
+
+        Ore is worth more as goods. A <em>Cargo Intake</em> in your workshop pulls straight from your hold.
+
+        [[/guide workshop]]
+
+  drill:
+    name: "Your Drill"
+    color: "<#7fd65a>"
+    icon: DIAMOND_PICKAXE
+    model: "ui/enchant"
+    bar-color: GREEN
+    wiki: "systems/drill/"
+    summary: ["Enchants, frames, modules and heat.", "Shift + right-click it."]
+    triggers: ["objective:earn_tokens", "menu:drill."]
+    title: ["<#7fd65a><bold>DRILL BAY", "<gray>Spend Tokens on enchants: <white>shift + right-click</white> your drill"]
+    brief:
+      - "<gray><#7fd65a>Tokens</#7fd65a> turn up while you mine, fish and run your workshop. They buy <white>drill enchants</white>."
+      - "<gray>In the drill bay: <white>left-click</white> +1 level, <white>right-click</white> +10, <white>shift-click</white> as many as you can afford."
+      - "<gray>Start with <white>Bore Speed</white> (faster) and <white>Yield</white> (more ore per block)."
+    steps:
+      - on: objective:enchant_upgrade
+        text: "Buy an enchant level"
+        hint: ["<white>Shift + right-click</white> your drill and click an enchant you can afford. Bore Speed starts at 15 Tokens."]
+    done: "Your frame caps each enchant. The <white>Salvaged</white> frame (Grade 10) raises the caps and adds a module socket."
+    pages:
+      - |
+        <h>YOUR DRILL</h>
+
+        Soulbound: you can't drop or lose it, and you keep it through prestige.
+
+        <em>Shift + right-click</em> it, or [[/drill]], for the drill bay.
+        <em>Q</em> vents heat.
+      - |
+        <h>ENCHANTS</h>
+
+        Bought with <em>Tokens</em>, one level at a time.
+
+        Bore Speed: faster
+        Yield: more ore
+        Token Siphon: more Tokens
+        Shaped Charge, Cutting Laser, Jackhammer: blast many blocks
+      - |
+        <h>MORE ENCHANTS</h>
+
+        Overclock: speed bursts
+        Coolant System: more heat room
+        Salvage Sense: rare drops and modules
+
+        Each costs a little more per level.
+      - |
+        <h>FRAMES</h>
+
+        The frame caps every enchant and adds module sockets. Kept forever.
+
+        <em>Rusted</em> start
+        <em>Salvaged</em> G10, 175K Credits
+        <em>Industrial</em> P1, 5 Shards
+        <em>Military</em> P5, 30 Shards
+        <em>Prototype</em> P15, 120 Shards
+      - |
+        <h>MODULES</h>
+
+        Rare parts you slot into frame sockets in the drill bay. Each has an upside and a downside.
+
+        Found: mining salvage, blueprint fragments ([[/salvage]]), the workshop Assembly Bench, parkour, fishing and Undercroft loot.
+      - |
+        <h>HEAT</h>
+
+        Every block adds heat. At 100% the drill stalls for 3 s.
+
+        <em>Q</em> vents: heat to zero plus a speed burst. A <em>perfect vent</em> at 75-95% doubles the burst.
+
+        Deeper decks run hotter.
+
+  ranks:
+    name: "Grades and Rank-ups"
+    color: "<#e0b354>"
+    icon: IRON_DOOR
+    model: "ui/rank"
+    wiki: "systems/mines/"
+    summary: ["25 clearance grades.", "Each one opens a richer mine."]
+    triggers: ["objective:rank_up"]
+    brief:
+      - "<gray>Each grade opens a new mine; every 5 grades is a new <white>deck</white>. <white>/grades</white> lists the costs."
+      - "<gray>Each rank-up costs about 45% more than the last. At <white>Grade 25</white> you can <white>prestige</white>."
+    pages:
+      - |
+        <h>CLEARANCE GRADES</h>
+
+        25 grades over 5 decks. Credits buy them.
+
+        [[/rankup]] next grade
+        [[/grades]] every grade and cost
+        [[/mine]] your best mine
+      - |
+        <h>COSTS</h>
+
+        Grade 2 costs 4,000 Credits. Each grade costs about 45% more than the one before.
+
+        A first run to Grade 25 takes around 70 hours of play. Workshop, fishing and contracts speed it up.
+      - |
+        <h>WHAT A GRADE GIVES</h>
+
+        A new mine with better ore
+        +2% sell price
+        New systems: cargo upgrades, the Auto-Seller (G8), the Salvaged frame (G10), workshop machines
+
+  prestige:
+    name: "Prestige"
+    color: "<#ff5a3c>"
+    icon: NETHER_STAR
+    model: "ui/prestige"
+    bar-color: RED
+    wiki: "systems/prestige/"
+    summary: ["At Grade 25: reset for Shards", "and permanent bonuses."]
+    triggers: ["grade:25"]
+    title: ["<#ff5a3c><bold>GRADE 25", "<gray>You can prestige. <white>/guide prestige</white> first."]
+    brief:
+      - "<gray>Prestige resets you to Grade 1 and <red>wipes your Credits</red>, for <white>Prestige Shards</white> and permanent bonuses."
+      - "<gray>You keep your drill, enchants, frames, Tokens, workshop, cargo upgrades and fishing gear. Spend your Credits first."
+    pages:
+      - |
+        <h>PRESTIGE</h>
+
+        At Grade 25: back to Grade 1, for good bonuses.
+
+        [[/prestige]] see what you get
+        <note>Then /prestige confirm.</note>
+      - |
+        <h>YOU LOSE</h>
+
+        <bad>All Credits</bad>
+        Your grade
+        Ore in your hold
+
+        <h>YOU KEEP</h>
+
+        Drill, enchants, frames, modules, Tokens, Shards, workshop, cargo upgrades, fishing gear
+      - |
+        <h>YOU GET</h>
+
+        <em>10 + 2 x P Shards</em>
+        <em>+10% sell price</em> per level
+        <em>+15% Tokens</em> per level
+        Unlocks: Industrial frame (P1), gangs (P1), deeper Undercroft rings
+
+        Rank-ups cost 50% more per level.
+
+  workshop:
+    name: "Workshop"
+    color: "<#c8743a>"
+    icon: BLAST_FURNACE
+    model: "workshop/ui/bay"
+    bar-color: YELLOW
+    wiki: "systems/workshop/"
+    summary: ["Your own hull bay. Machines turn", "ore into goods worth more."]
+    triggers: ["world:workshop"]
+    title: ["<#c8743a><bold>YOUR HULL BAY", "<gray>Turn ore into goods worth more. Read the board."]
+    brief:
+      - "<gray>This bay is yours. <white>Machines</white> take ore from your cargo hold and process it into goods worth more than raw ore."
+      - "<gray>The <white>terminal</white> on the wall behind you opens the workshop menu: <white>Machine Shop</white>, <white>Bay Locker</white>, market."
+      - "<gray>The checklist on the bar walks you through your first production line."
+    steps:
+      - on: menu:workshop.
+        text: "Open the workshop terminal"
+        hint: ["Right-click the lodestone <white>terminal</white> on the wall behind you (or <white>/ws menu</white>)."]
+      - on: objective:machine_upgrade
+        target: "machine:intake"
+        text: "Place a Cargo Intake"
+        hint:
+          - "Buy one in the <white>Machine Shop</white> (1,500 Credits), hold it and <white>right-click the floor</white>."
+          - "Machines push out of their <white>front</white>: the way you face when you place them."
+      - on: objective:machine_upgrade
+        target: "machine:crusher"
+        text: "Place a Jaw Crusher in front of the Intake"
+        hint: ["Stand behind the Intake, face the same way, and place the Crusher on the block it pushes into. 3,000 Credits."]
+      - on: objective:machine_upgrade
+        target: "machine:depot"
+        text: "Place a Depot Hatch in front of the Crusher"
+        hint: ["It drops whatever reaches it into your <white>Bay Locker</white>. 1,000 Credits."]
+      - on: objective:machine_upgrade
+        target: "machine:generator"
+        text: "Place a Slag Burner for power"
+        hint:
+          - "Anywhere in the bay. It burns slag dust (the Crusher makes it) and stone from your locker. 2,500 Credits."
+          - "Short on power, every machine runs slower."
+      - on: objective:process_item
+        text: "Process your first goods"
+        hint:
+          - "Keep ore in your <white>cargo hold</white>: the Intake pulls it in by itself while you're online."
+          - "Click a machine to see what it's doing, rotate it or upgrade it."
+    done: "Your line is running. Sell goods from the <white>Bay Locker</white> at the market in the terminal, or add a <white>Trade Chute</white> later. Next: Heat Sinks, Sludge Washer, Arc Furnace. <white>/guide workshop</white>"
+    board:
+      - "<#c8743a><bold>HULL BAY · YOUR FIRST LINE</bold>"
+      - "<gray>Ore in, goods out. Goods sell for more than ore."
+      - ""
+      - "<white>1 </white><gray>Terminal on the wall behind you</gray> <white>→ Machine Shop"
+      - "<white>2 </white><gray>Place in a row, each facing the next:"
+      - "<white>   Cargo Intake → Jaw Crusher → Depot Hatch"
+      - "<white>3 </white><gray>A <white>Slag Burner</white> anywhere for power"
+      - "<white>4 </white><gray>Keep ore in your cargo hold. It runs itself."
+      - ""
+      - "<gray>Machines push out their <white>front</white> (the way you faced)."
+      - "<dark_gray>/guide workshop · /ws menu"
+    pages:
+      - |
+        <h>YOUR WORKSHOP</h>
+
+        A private hull bay where machines turn ore into goods worth more than raw ore.
+
+        [[/ws]] go to your bay
+        [[/ws menu]] the terminal menu
+
+        <note>Bays survive prestige.</note>
+      - |
+        <h>FIRST LINE</h>
+
+        Buy at the <em>Machine Shop</em> (terminal). Place in a row:
+
+        <em>Cargo Intake</em> pulls ore from your hold
+        <em>Jaw Crusher</em> ore to grit
+        <em>Depot Hatch</em> into your locker
+        + a <em>Slag Burner</em> for power
+      - |
+        <h>FACING</h>
+
+        Machines push out of their <em>front</em>: the way you faced when you placed them.
+
+        The next machine (or a <em>conveyor</em>) must sit on that block.
+
+        Click a machine to rotate, toggle or upgrade it.
+      - |
+        <h>THE CHAIN</h>
+
+        Intake
+        > Crusher (grit)
+        > Sludge Washer (G4)
+        > Arc Furnace (G6): ingots
+        > Alloy Forge (G11)
+        > Fabricator (G16): components
+
+        Each step multiplies the value.
+      - |
+        <h>POWER, HEAT</h>
+
+        <em>Slag Burners</em> make power from fuel. Too little: slower machines.
+
+        Running machines heat up, more when they touch. At 100 a machine <bad>jams</bad>. A <em>Heat Sink</em> next to it cools it.
+
+        Washers and forges need a <em>Coolant Pump</em>.
+      - |
+        <h>SELLING GOODS</h>
+
+        Goods collect in your <em>Bay Locker</em>. Sell them at the <em>market</em> in the terminal: prices change daily, three priority goods pay x1.5.
+
+        A <em>Trade Chute</em> (G6) sells automatically at 90%.
+      - |
+        <h>BEYOND</h>
+
+        Expand your bay for more machines.
+        Upgrade machines to Mk II and III: faster, with a chance of Refined and Pristine goods.
+        The <em>Assembly Bench</em> builds drill modules from components.
+
+        Runs while online; catches up 4 h at half speed.
+
+  fishing:
+    name: "Fishing"
+    color: "<#5fb4c8>"
+    icon: FISHING_ROD
+    model: "fishing/waters"
+    bar-color: BLUE
+    wiki: "systems/fishing/"
+    summary: ["A second income. Fish for Credits,", "gut them for Scales, fight sea creatures."]
+    triggers: ["world:station_waters"]
+    title: ["<#5fb4c8><bold>STATION WATERS", "<gray>Cast, hook, reel. <white>Hold sneak</white> to keep the line tight."]
+    brief:
+      - "<gray><white>/rod</white> gets you a rod. Cast into a pool; when the <white>action bar flashes</white>, right-click to hook."
+      - "<gray>Better fish <white>fight</white>: your XP bar becomes the line tension. <white>Hold sneak</white> to pull, let go to ease, keep it in the middle."
+      - "<gray>Sell or gut fish at the <white>Fish Market</white> (<white>/fish</white>). Gutting gives <white>Scales</white> for rod upgrades."
+    steps:
+      - on: objective:catch_fish
+        text: "Catch a fish"
+        hint: ["<white>/rod</white> if you have no rod. Cast, wait for the flash, right-click."]
+      - on: objective:catch_fish
+        amount: 5
+        text: "Catch 5 more fish"
+        hint: ["When the XP bar turns into a tension meter, hold <white>sneak</white> to keep it in the middle band."]
+      - on: menu:fishing.
+        text: "Visit the Fish Market"
+        hint: ["<white>/fish</white>: sell fish for Credits or gut them for Scales."]
+    done: "Each pool has its own fish and sea creatures. Spend Scales on rod tiers and enchants in <white>/rod</white>."
+    board:
+      - "<#5fb4c8><bold>ⓘ STATION WATERS</bold>"
+      - "<gray><white>/rod</white> for a rod. Cast, wait for the flash, right-click."
+      - "<gray>Fish fight back: <white>hold sneak</white> to keep the XP bar"
+      - "<gray>(line tension) in the middle."
+      - "<gray>Pools run east, one per deck."
+      - "<#e0b354>Right-click the ⓘ for the full guide"
+    pages:
+      - |
+        <h>FISHING</h>
+
+        A second way to earn, next to mining.
+
+        [[/waters]] the pools
+        [[/rod]] your rod / rod bay
+        [[/fish]] Fish Market, bait, collections
+
+        Safe: no PvP, you keep your stuff.
+      - |
+        <h>CATCHING</h>
+
+        Cast into a pool. A bite takes 5-15 s.
+
+        When the <em>action bar flashes</em>, right-click to hook.
+
+        Commons land at once. Better fish <em>fight</em>.
+      - |
+        <h>REELING IN</h>
+
+        Your <em>XP bar</em> is the line tension; the level number is your catch %.
+
+        <em>Hold sneak</em> to pull, let go to ease. Keep it in the middle band (30-70%). Too tight or slack and it slips.
+      - |
+        <h>SELL OR GUT</h>
+
+        At the <em>Fish Market</em>:
+        <em>Sell</em> for Credits
+        <em>Gut</em> for Scales
+
+        Scales buy rod tiers and rod enchants: faster bites, rarer fish, a wider reel zone.
+      - |
+        <h>MORE</h>
+
+        Five pools, one per deck, each with its own fish.
+        <em>Sea creatures</em> (3.5% of bites) fight; bosses drop the best loot.
+        Treasure, bait, lures, collections and a weekly biggest-catch board.
+
+  quests:
+    name: "Quests and Contracts"
+    color: "<#8fd3ff>"
+    icon: WRITABLE_BOOK
+    bar-color: BLUE
+    wiki: "systems/quests/"
+    summary: ["A story, tutorials, daily and weekly", "contracts, and a monthly track."]
+    triggers: ["region:station:-54:-14:-31:14", "menu:quests."]
+    title: ["<#8fd3ff><bold>CREW DECK", "<gray>Quests, contracts and gangs. Talk to the crew."]
+    brief:
+      - "<gray>The crew here hand out the story, <white>The Warden's Ledger</white>. <white>Right-click</white> anyone for your quest log."
+      - "<gray><white>/contracts</white>: three daily and three weekly jobs. Their points climb the monthly <white>Contract Track</white>."
+      - "<gray>Click a quest in the log to <white>track</white> it on your sidebar."
+    steps:
+      - on: menu:quests.
+        text: "Open your quest log"
+        hint: ["<white>/quests</white>, or right-click one of the crew here."]
+      - on: objective:contract_complete
+        text: "Finish a contract"
+        hint: ["<white>/contracts</white> shows today's three. Finish all three for a daily bonus."]
+    done: "Claim Contract Track tiers in <white>/quests track</white>. The track resets on the 1st of each month."
+    pages:
+      - |
+        <h>QUESTS</h>
+
+        [[/quests]] your quest log
+        [[/contracts]] daily and weekly jobs
+        [[/quests track]] monthly track
+
+        Click a quest to track it on your sidebar.
+      - |
+        <h>THE STORY</h>
+
+        <em>The Warden's Ledger</em>: five chapters, one per deck, told by the crew on the Crew Deck.
+
+        One step at a time. Progress is kept forever, through prestige too.
+      - |
+        <h>TUTORIALS</h>
+
+        One per system, starting when you unlock it. Small rewards for trying each one.
+
+        <note>Delivery quests take ore from your cargo hold when you click them.</note>
+      - |
+        <h>CONTRACTS</h>
+
+        <em>3 daily</em> (reset at midnight)
+        <em>3 weekly</em> (reset Monday)
+
+        Credits, Tokens and <em>points</em>. Points climb the monthly <em>Contract Track</em>: 30 tiers of rewards, including Shards and modules.
+
+  parkour:
+    name: "Maintenance Runs"
+    color: "<#7fd65a>"
+    icon: CHAINMAIL_BOOTS
+    wiki: "systems/parkour/"
+    summary: ["A parkour run at every mine.", "One reward roll per run per day."]
+    triggers: ["warp:parkour-*", "menu:parkour.", "objective:parkour_complete", "command:/parkour,/pk,/runs"]
+    brief:
+      - "<gray>Every mine has a <white>maintenance run</white> through the doorway in its north wall."
+      - "<gray>Step on the <white>iron plate</white> to start the clock. <white>Gold plates</white> are checkpoints; fall and you go back to the last one."
+      - "<gray>Finishing pays a <white>reward roll</white> once a day per run: Credits, Tokens, sometimes modules or Shards."
+    pages:
+      - |
+        <h>MAINTENANCE RUNS</h>
+
+        A parkour course next to every mine, through its north doorway.
+
+        [[/parkour]] runs, times, click to go
+        [[/parkour cp]] last checkpoint
+        [[/parkour leave]] quit
+      - |
+        <h>HOW</h>
+
+        <em>Iron plate</em> starts the clock.
+        <em>Gold plates</em> are checkpoints and the finish.
+
+        Fall and you're put back on the last checkpoint.
+      - |
+        <h>REWARDS</h>
+
+        One reward roll per run per day. Deeper decks: harder runs, better loot, with rare Token caches, modules and Shards.
+
+        Best times and records are kept.
+
+  salvage:
+    name: "Salvage and Relics"
+    color: "<#b07cff>"
+    icon: AMETHYST_SHARD
+    bar-color: PURPLE
+    wiki: "systems/rare-drops/"
+    summary: ["Rare finds while mining: caches,", "relics and module blueprints."]
+    triggers: ["objective:rare_drop", "menu:raredrops."]
+    title: ["<#b07cff><bold>SALVAGE FIND", "<gray>Right-click caches to open. <white>/salvage</white> for relics and blueprints."]
+    brief:
+      - "<gray>Mining sometimes digs something up. <white>Caches</white>: right-click to open for Credits and Tokens."
+      - "<gray><white>Relics</white> fill collections for a permanent sell bonus. <white>Blueprint fragments</white> assemble into drill modules."
+      - "<gray>All of it lives in <white>/salvage</white>. Anything that doesn't fit your inventory goes to your stash there."
+    pages:
+      - |
+        <h>SALVAGE</h>
+
+        Each block you break by hand has a small chance of a find. <em>Salvage Sense</em> raises it.
+
+        [[/salvage]] collections, blueprints, stash
+      - |
+        <h>CACHES</h>
+
+        Right-click to open. Credits and Tokens scale with the grade of whoever opens it, so open them any time.
+
+        Scrap Cache > Supply Crate > Strongbox > Vault Core
+      - |
+        <h>RELICS</h>
+
+        Collect sets of relics in [[/salvage]]. Each finished set gives a permanent sell bonus and a payout.
+      - |
+        <h>BLUEPRINTS</h>
+
+        5 fragments of one rarity (4 Legendary) assemble a random drill module of that rarity in [[/salvage]].
+
+        Spare finds sell on the Black Market.
+
+  blackmarket:
+    name: "The Black Market"
+    color: "<#b07cff>"
+    icon: GOLD_INGOT
+    wiki: "systems/black-market/"
+    summary: ["Player auction house. Sell and", "buy anything you can hold."]
+    triggers: ["menu:auction."]
+    brief:
+      - "<gray>Hold an item and <white>/ah sell PRICE</white> for buy-it-now, or <white>/ah auction START</white> for a timed auction."
+      - "<gray>Bought items, unsold items and your earnings wait in <white>/ah claims</white>. A 5% tax comes off each sale."
+    pages:
+      - |
+        <h>BLACK MARKET</h>
+
+        The player auction house. Modules, relics, goods, fish, gun parts...
+
+        [[/ah]] browse
+        [[/ah mine]] your listings
+        [[/ah claims]] collect
+      - |
+        <h>SELLING</h>
+
+        Hold the item, then:
+        [[~/ah sell ]] PRICE
+        [[~/ah auction ]] START
+
+        Add hours (6/12/24/48) at the end.
+        Listing fee up front, 5% tax on the sale.
+      - |
+        <h>BUYING</h>
+
+        Click a listing to buy or bid. A bid must beat the top bid by 5%; late bids extend the auction to stop sniping.
+
+        Outbid? Your Credits come back.
+      - |
+        <h>RULES</h>
+
+        Stalls: 3, +1 per prestige.
+        Soulbound items can't be sold.
+        Sales are player money: they don't count as earned income for quests or gangs.
+
+  gangs:
+    name: "Gangs"
+    color: "<#ff5a3c>"
+    icon: WHITE_BANNER
+    wiki: "systems/gangs/"
+    summary: ["Crews with a bank, upgrades, contracts", "and Undercroft turf. Prestige 1."]
+    triggers: ["menu:gangs.", "prestige:1"]
+    brief:
+      - "<gray><white>Gangs</white> unlock at Prestige 1: a shared bank, upgrades, weekly gang contracts, crew chat and Undercroft turf."
+      - "<gray><white>/gang</white> opens the crew terminal (also on the Crew Deck). Founding costs 25,000 Credits."
+    pages:
+      - |
+        <h>GANGS</h>
+
+        Crews of players. Unlock at <em>Prestige 1</em>.
+
+        [[/gang]] crew terminal
+        [[~/gc ]] crew chat
+        [[/gang chat]] chat mode
+      - |
+        <h>JOINING</h>
+
+        Found one for 25,000 Credits, or accept an invite (they last 5 minutes).
+
+        Ranks: Leader, Officer, Member, Recruit.
+        Gangmates can't hurt each other.
+      - |
+        <h>POINTS</h>
+
+        Everything the crew does earns points: mining, income, rank-ups, prestige, contracts, Undercroft labs and kills.
+
+        Points level the gang (unlocking upgrades) and rank it weekly: top 3 win bank Credits.
+      - |
+        <h>THE BANK</h>
+
+        Members deposit, officers withdraw.
+
+        <bad>Credits in the bank don't survive your prestige.</bad> The bank rules stop parking money through a reset.
+
+  undercroft:
+    name: "The Undercroft"
+    color: "<#ff5a3c>"
+    icon: IRON_SWORD
+    bar-color: RED
+    wiki: "systems/undercroft/"
+    summary: ["The only PvP zone. Hot ore, drug labs,", "bounties. Get your loot out alive."]
+    triggers: ["region:station:20:44:30:58", "world:undercroft", "warp:undercroft"]
+    title: ["<red><bold>UNDERCROFT", "<gray>PvP past the gate. You drop everything but your drill."]
+    brief:
+      - "<gray>The lower hull is the <red>only PvP zone</red>. If you die there you drop <white>everything except your drill</white>."
+      - "<gray>Leaving the checkpoint gives a few seconds of <white>grace</white>. Hits <white>combat-tag</white> you: logging out while tagged kills you."
+      - "<gray>Mine glowing <white>hot ore</white>, cook <white>stims</white> at labs, grab supply drops, then get out through the checkpoint and sell at <white>/fence</white>."
+    board:
+      - "<red><bold>ⓘ UNDERCROFT</bold>"
+      - "<gray>PvP on. You drop everything but your drill."
+      - "<gray>Grace on exit. Combat tag 15 s. Logging out tagged = death."
+      - "<gray>Out only through this checkpoint. Sell loot at <white>/fence</white>."
+      - "<#e0b354>Right-click the ⓘ for the full guide"
+    pages:
+      - |
+        <h>THE UNDERCROFT</h>
+
+        The lawless lower hull and the <bad>only PvP zone</bad>. Optional: nothing in the main loop needs it.
+
+        [[/undercroft]] go to the checkpoint
+        [[/undercroft leave]] leave
+        [[/fence]] sell contraband
+      - |
+        <h>THE RULES</h>
+
+        <em>Grace</em>: 10 s (30 s for new players) after leaving the checkpoint.
+        <em>Combat tag</em>: 15 s after a hit. Most commands blocked; logging out kills you.
+        <em>Death</em>: you drop everything but your drill.
+      - |
+        <h>THE RINGS</h>
+
+        Walk east from the checkpoint.
+
+        <em>Outer Bilge</em> any grade
+        <em>Smuggler's Run</em> Prestige 1
+        <em>The Sump</em> Prestige 3
+
+        Richer and deadlier the deeper you go.
+      - |
+        <h>CONTRABAND</h>
+
+        <em>Hot ore</em> from glowing veins
+        <em>Stims</em> cooked at drug labs (stay close until done)
+        <em>Bounty tags</em> from players you down
+        <em>Tech crates</em> from supply drops
+
+        Sell at [[/fence]], outside.
+      - |
+        <h>GETTING OUT</h>
+
+        The only way out is the checkpoint: its gate terminal or [[/undercroft leave]] there.
+
+        Teleports from the rings are blocked. A scan at the gate checks for contraband; a bribe or a Smuggler's Lining helps.
+
+  guns:
+    name: "Guns"
+    color: "<#ff5a3c>"
+    icon: CROSSBOW
+    wiki: "systems/guns/"
+    summary: ["Server-side guns for the Undercroft.", "They only fire in PvP zones."]
+    triggers: ["menu:guns.", "command:/gun,/gunsmith,/guns"]
+    brief:
+      - "<gray>Guns only fire in <red>PvP zones</red>. <white>Right-click</white> fires, <white>Q</white> or <white>F</white> reloads, <white>sneak</white> aims (and zooms scoped guns)."
+      - "<gray>Buy guns and ammo at <white>/gunsmith</white>. Bigger guns also need <white>gun parts</white> from Undercroft supply drops."
+    pages:
+      - |
+        <h>GUNS</h>
+
+        Only fire in PvP zones (the Undercroft). They drop on death like other gear.
+
+        [[/gunsmith]] buy guns and ammo
+        [[/gun]] quick help
+      - |
+        <h>CONTROLS</h>
+
+        <em>Right-click</em> fire (hold for SMG bursts)
+        <em>Q</em> or <em>F</em> reload
+        <em>Sneak</em> tighter aim; scoped guns zoom
+
+        Headshots hit harder; damage falls off with range. Jumping spreads shots.
+      - |
+        <h>THE GUNS</h>
+
+        Rivet Pistol: cheap
+        Scrap SMG: bursts
+        Breach Shotgun: close
+        Bolt Rifle: scoped
+        Plasma Lance: P1
+
+        Bigger ones need <em>gun parts</em> from supply drops and tech crates.
+
+# Info boards. Text floats above a clickable ⓘ (right-click or hit it for the chapter's book). Boards are not saved
+# into the world: they appear whenever their chunk is loaded, so editing this list moves them.
+# Place more in game with /guideadmin board add CHAPTER (saved to guide-boards.yml), remove with /guideadmin board remove.
+boards:
+  fixed:
+    concourse:
+      chapter: basics
+      world: station
+      x: 4.5
+      y: 64
+      z: 8.5
+      lines:
+        - "<#c8743a><bold>ⓘ NEW HERE?</bold>"
+        - "<gray>Mine ore, sell it, rank up."
+        - "<gray>The bar at the top of your screen shows your next step."
+        - "<#e0b354>Right-click the ⓘ · <white>/guide</white> any time"
+    mine-lifts:
+      chapter: mining
+      world: station
+      x: 6.5
+      y: 64
+      z: -35.5
+      lines:
+        - "<#c8743a><bold>ⓘ MINE LIFTS</bold>"
+        - "<gray>One lift per deck, plus your best mine."
+        - "<gray>Each grade opens a richer mine. <white>/mine</white> works anywhere."
+        - "<#e0b354>Right-click the ⓘ for the full guide"
+    exchange:
+      chapter: selling
+      world: station
+      x: 36.5
+      y: 64
+      z: -8.5
+      lines:
+        - "<#e0b354><bold>ⓘ THE EXCHANGE</bold>"
+        - "<gray>Sell ore · cargo upgrades · drill bay · rank up"
+        - "<gray>Black Market · auction claims · salvage"
+        - "<#e0b354>Right-click the ⓘ for the full guide"
+    crew-deck:
+      chapter: quests
+      world: station
+      x: -35.5
+      y: 64
+      z: -6.5
+      lines:
+        - "<#8fd3ff><bold>ⓘ CREW DECK</bold>"
+        - "<gray>Right-click the crew for your quest log."
+        - "<gray>Contracts board · gang terminal"
+        - "<#e0b354>Right-click the ⓘ for the full guide"
+    shuttle-bay:
+      chapter: station
+      world: station
+      x: -8.5
+      y: 64
+      z: 35.5
+      lines:
+        - "<#ff7a5a><bold>ⓘ SHUTTLE BAY</bold>"
+        - "<gray>Shuttle Board: planetside trips"
+        - "<gray>Airlocks: <white>fishing</white> · <white>your workshop</white>"
+        - "<gray>East: Guard Checkpoint, the Undercroft (PvP)"
+        - "<#e0b354>Right-click the ⓘ for the full guide"
+    checkpoint:
+      chapter: undercroft
+      world: station
+      x: 22.5
+      y: 64
+      z: 47.5
+  # Boards a few blocks in front of a world's spawn (the way the spawn faces). up = height above the spawn.
+  world-spawns:
+    - {chapter: fishing, world: station_waters, forward: 3, side: 2, up: 0}
+    - {chapter: undercroft, world: undercroft, forward: 3, side: 2, up: 0}
+  # A text board above every mine's landing pad, facing the pit.
+  mines:
+    enabled: true
+    chapter: mining
+    forward: 4
+    up: 2.6
+    side: 0
+    clickable: false
+  # In each player's own workshop bay, until they finish the workshop checklist: the chapter's board lines, seen only
+  # by the owner. offset = x, y, z from where they arrive (they arrive facing +z).
+  workshop-bay:
+    enabled: true
+    offset: [0, 2.6, 4.5]
+    scale: 0.8

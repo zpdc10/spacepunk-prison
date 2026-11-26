@@ -22,6 +22,7 @@ file in `plugins/SpacepunkPrison/` and reload without a restart.
 | Undercroft | `undercroft.yml` | `/undercroft admin generate / regrow / reload / tp / drop [ring] / give / lab` |
 | Guns | `guns.yml` | `/gun admin give/ammo/parts <player> ... / reload` |
 | Resource pack | `resourcepack.yml` | `/resourcepack reload` |
+| In-game guide | `guide.yml` (ships in the jar; a server copy only overrides keys) | `/guideadmin board add CHAPTER / board remove / board list / reset PLAYER [CHAPTER] / show PLAYER CHAPTER / reload` |
 
 ## Fresh server setup
 

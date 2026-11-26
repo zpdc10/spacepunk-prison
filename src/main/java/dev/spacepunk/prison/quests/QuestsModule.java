@@ -68,7 +68,10 @@ public final class QuestsModule implements FeatureModule {
             }
             java.util.Set<String> loaded = new java.util.HashSet<>();
             plugin.modules().forEach(m -> loaded.add(m.id()));
-            if (loaded.contains("workshop")) manager.registerObjectiveType(ObjectiveTypes.PROCESS_ITEM, "Process workshop goods");
+            if (loaded.contains("workshop")) {
+                manager.registerObjectiveType(ObjectiveTypes.PROCESS_ITEM, "Process workshop goods");
+                manager.registerObjectiveType(ObjectiveTypes.MACHINE_UPGRADE, "Place workshop machines");
+            }
             if (loaded.contains("raredrops")) manager.registerObjectiveType(ObjectiveTypes.RARE_DROP, "Find rare drops");
             if (loaded.contains("auction")) {
                 manager.registerObjectiveType(ObjectiveTypes.AUCTION_SELL, "Sell on the auction house");

@@ -103,6 +103,10 @@ final class QuestManager implements QuestService {
     @Override
     public void progress(Player player, String type, long amount, String... targets) {
         if (player == null || amount <= 0 || type == null) return;
+        if (dev.spacepunk.prison.api.event.ObjectiveProgressEvent.getHandlerList().getRegisteredListeners().length > 0) {
+            org.bukkit.Bukkit.getPluginManager().callEvent(new dev.spacepunk.prison.api.event.ObjectiveProgressEvent(
+                    player, type.toLowerCase(Locale.ROOT), amount, targets == null ? List.of() : java.util.Arrays.asList(targets)));
+        }
         QuestData d = data.get(player.getUniqueId());
         if (d == null) return;
         String t = type.toLowerCase(Locale.ROOT);
