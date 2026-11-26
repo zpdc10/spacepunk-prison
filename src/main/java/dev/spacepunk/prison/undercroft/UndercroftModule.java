@@ -48,6 +48,11 @@ public final class UndercroftModule implements FeatureModule {
         menus = new Menu.Listen();
         plugin.getServer().getPluginManager().registerEvents(listener, plugin);
         plugin.getServer().getPluginManager().registerEvents(menus, plugin);
+        // Map protection is default-deny: let players mine hot-ore veins, open supply drops and use labs/terminal.
+        Services.find(dev.spacepunk.prison.api.ProtectionService.class).ifPresent(ps -> {
+            ps.allowBreak("undercroft", (p, b) -> listener.isVein(b));
+            ps.allowUse("undercroft", (p, b) -> drops.isDrop(b) || labs.labAt(b) != null);
+        });
 
         UndercroftCommands commands = new UndercroftCommands(this);
         plugin.addCommand("undercroft", "Go down to the Undercroft PvP zone", List.of("uc"), commands.undercroft());
