@@ -98,6 +98,8 @@ final class HudManager implements HudService, Listener {
         Scoreboard board;
         Objective objective;
         List<String> lines = List.of();
+        /** Sidebar blocks owned by other modules (HudService#sidebarSection), in insertion order. */
+        final LinkedHashMap<String, List<String>> sections = new LinkedHashMap<>();
 
         BossBar cargoBar;
         boolean cargoBarShown;
@@ -121,6 +123,19 @@ final class HudManager implements HudService, Listener {
         if (miniMessage == null) s.segments.remove(key);
         else s.segments.put(key, miniMessage);
         renderActionBar(player, s, false);
+    }
+
+    @Override
+    public void sidebarSection(Player player, String key, List<String> lines) {
+        State s = state(player);
+        List<String> old = s.sections.get(key);
+        if (lines == null || lines.isEmpty()) {
+            if (s.sections.remove(key) == null) return;
+        } else {
+            if (lines.equals(old)) return;
+            s.sections.put(key, List.copyOf(lines));
+        }
+        renderSidebar(player, s);
     }
 
     private State state(Player p) { return states.computeIfAbsent(p.getUniqueId(), k -> new State()); }
@@ -519,6 +534,11 @@ final class HudManager implements HudService, Listener {
                         : " <gray>Worth <gold>~" + Numbers.shortFormat(cargoValue(p, s, used)) + " ¢");
             }
             out.add("   ");
+        }
+        int pad = 4;
+        for (List<String> section : s.sections.values()) {
+            out.addAll(section);
+            out.add(" ".repeat(pad++)); // blank lines must differ to be separate scores
         }
         String footer = cfg().sidebarFooter();
         if (footer != null && !footer.isEmpty()) out.add(footer);

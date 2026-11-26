@@ -1,0 +1,674 @@
+# Quests: the story questline, tutorials, daily/weekly contracts and the monthly contract track.
+# /questadmin reload applies changes. Numbers resolve when a quest or contract starts, so edits apply to new ones.
+#
+# Objectives: {type, target, amount, text}
+#   type    an objective type id. Core types: mine_blocks, mine_item, sell_credits, earn_tokens, rank_up,
+#           reach_grade, reach_prestige, prestige, enchant_upgrade, frame_upgrade, cargo_upgrade, autosell_unlock,
+#           deliver_cargo, play_minutes, parkour_complete, contract_complete. Types from systems that are not
+#           installed yet (catch_fish, process_item, gang_join, auction_sell, rare_drop, undercroft_win, ...) hide
+#           the quest until that system registers its type. /questadmin types lists what is live.
+#   target  one target or a list (any of them counts). Placeholders: {mine} = the player's best mine,
+#           {deck} = their deck, {mine_item} = a random notable ore from their best mine (see mine-items).
+#           mine_blocks targets: mine:<id>, deck:<1-5>, grade:<n>. mine_item/deliver_cargo: item ids.
+#   amount  a number or {base, per-grade, growth, grade-cost, min, max}:
+#           base x (1 + per-grade x (grade-1)) x growth^(grade-1) + grade-cost x (Credits for the next rank-up)
+#   text    shown in menus. {amount}, {mine_name}, {deck_name}, {item_name} (the {mine_item}), {target_name}
+#           (the first target's item name), {grade}.
+# Rewards: credits, tokens, shards, points (contract points), commands: [{command: "...{player}...", text: "shown"}]
+# Credits from quests pay with reason income:quest / income:contract, so they count toward prestige "earned this run".
+
+settings:
+  # Daily contracts reset at midnight, weekly on Monday midnight, the track on the 1st. "" = the server's zone.
+  timezone: ""
+  daily-count: 3
+  weekly-count: 3
+  # Paid once a day for finishing every daily contract.
+  daily-bonus:
+    points: 10
+    tokens: {base: 12, per-grade: 0.04}
+  # Token gains with these EconomyService reasons count for earn_tokens (mining finds, not rewards or prestige).
+  earn-token-reasons: ["drill:"]
+  # Show the tracked quest on the sidebar.
+  sidebar-tracker: true
+
+characters:
+  rusk:   {name: "Foreman Rusk", color: "<#c8743a>", title: "Scrapyard Foreman"}
+  vell:   {name: "Tech Vell", color: "<#7fd65a>", title: "Reactor Technician"}
+  nhem:   {name: "Archivist Nhem", color: "<#8fd3ff>", title: "Cold Records"}
+  kade:   {name: "Kade", color: "<#b07cff>", title: "Breach Smuggler"}
+  warden: {name: "THE WARDEN", color: "<#ff5a3c>", title: "Station Intelligence"}
+
+# Notable ores of the mine for each grade (10%+ of its blocks), used by {mine_item}.
+mine-items:
+  1: [minecraft:coal_ore]
+  2: [minecraft:coal_ore, minecraft:copper_ore]
+  3: [minecraft:coal_ore, minecraft:copper_ore]
+  4: [minecraft:copper_ore, minecraft:iron_ore]
+  5: [minecraft:copper_ore, minecraft:iron_ore]
+  6: [minecraft:deepslate_copper_ore, minecraft:deepslate_iron_ore]
+  7: [minecraft:deepslate_iron_ore, minecraft:redstone_ore]
+  8: [minecraft:deepslate_redstone_ore, minecraft:raw_iron_block]
+  9: [minecraft:deepslate_redstone_ore, minecraft:deepslate_gold_ore]
+  10: [minecraft:deepslate_redstone_ore, minecraft:deepslate_gold_ore]
+  11: [minecraft:lapis_ore, minecraft:deepslate_gold_ore]
+  12: [minecraft:lapis_ore, minecraft:raw_gold_block]
+  13: [minecraft:deepslate_lapis_ore, minecraft:amethyst_block]
+  14: [minecraft:amethyst_block, minecraft:lapis_block]
+  15: [minecraft:amethyst_block, minecraft:diamond_ore]
+  16: [minecraft:nether_quartz_ore, minecraft:diamond_ore]
+  17: [minecraft:nether_quartz_ore, minecraft:gilded_blackstone]
+  18: [minecraft:gilded_blackstone, minecraft:obsidian, minecraft:emerald_ore]
+  19: [minecraft:obsidian, minecraft:emerald_ore, minecraft:deepslate_emerald_ore]
+  20: [minecraft:obsidian, minecraft:deepslate_emerald_ore, minecraft:crying_obsidian]
+  21: [minecraft:nether_gold_ore, minecraft:crying_obsidian]
+  22: [minecraft:nether_gold_ore, minecraft:crying_obsidian, minecraft:ancient_debris]
+  23: [minecraft:crying_obsidian, minecraft:ancient_debris]
+  24: [minecraft:ancient_debris, minecraft:diamond_block, minecraft:emerald_block]
+  25: [minecraft:ancient_debris, minecraft:diamond_block]
+
+story:
+  title: "The Warden's Ledger"
+  chapters:
+    # ---------------------------------------------------------------- Chapter I: Scrapyard
+    - id: scrapyard
+      name: "I. Slag and Signal"
+      min-grade: 1
+      character: rusk
+      icon: RAW_COPPER
+      steps:
+        - id: intake
+          name: "Fresh Intake"
+          intro:
+            - "Another transport, another set of hands. Welcome to the Scrapyard, {player}."
+            - "Your sentence pays out in ore. Take that drill and break rock in the Slag Heap."
+          objectives:
+            - {type: mine_blocks, target: "mine:scrapyard-1", amount: 150, text: "Mine {amount} blocks in the Slag Heap"}
+          rewards: {credits: 200, tokens: 10}
+          outro:
+            - "Not bad for a fresh one. The rock out here doesn't care how you got here."
+        - id: scrip
+          name: "Scrip"
+          intro:
+            - "Ore in your hold is worth nothing until the station buys it. Sell it off."
+          objectives:
+            - {type: sell_credits, amount: 600, text: "Earn {amount} Credits selling ore (/sell)"}
+          rewards: {credits: 300, tokens: 10}
+          outro:
+            - "Station scrip. Don't spend it all on vending-machine protein."
+        - id: clearance
+          name: "Clearance"
+          intro:
+            - "Every grade gets you a deeper pit and better ore. Pay the clearance fee."
+          objectives:
+            - {type: reach_grade, amount: 2, text: "Reach Grade 2 (/rankup)"}
+          rewards: {tokens: 20}
+          outro:
+            - "Grade 2. The Rust Pit is open to you now. Something down there has the crews spooked."
+        - id: stamps
+          name: "Something Under the Rust"
+          intro:
+            - "Crews in the Rust Pit keep hitting old hull plating with stamps on it. Dig and see."
+          objectives:
+            - {type: mine_item, target: "minecraft:copper_ore", amount: 200, text: "Mine {amount} {target_name}"}
+          rewards: {credits: {grade-cost: 0.08}, tokens: 15}
+          outro:
+            - "A ledger stamp. W-A-R-D-E-N. Someone kept books down here, and not on ore."
+        - id: evidence
+          name: "Evidence"
+          intro:
+            - "Bring me a load from that seam. I want to melt it down and read the stamps properly."
+            - "Keep it in your hold, don't sell it. Hand it in from your quest log."
+          objectives:
+            - {type: deliver_cargo, target: "minecraft:copper_ore", amount: 150, text: "Hand in {amount} {target_name} from your cargo hold"}
+          rewards: {credits: {grade-cost: 0.1}, tokens: 25}
+          outro:
+            - "Inmate numbers. Hundreds of them. Every one marked PAID IN FULL. Nobody here has ever been paid in full."
+        - id: teeth
+          name: "Teeth"
+          intro:
+            - "That drill is held together with tape and prayer. Spend some Tokens on it in the drill bay."
+          objectives:
+            - {type: enchant_upgrade, amount: 2, text: "Buy {amount} drill enchant levels (shift + right-click your drill)"}
+          rewards: {tokens: 20}
+        - id: ducts
+          name: "Clearance to the Ducts"
+          intro:
+            - "The stamps point down-station. Reactor Ducts. They don't let scrap rats in there below Grade 6."
+          objectives:
+            - {type: reach_grade, amount: 6, text: "Reach Grade 6 to enter the Reactor Ducts"}
+          rewards: {credits: {grade-cost: 0.2}, tokens: 60}
+          outro:
+            - "Take this ledger page to Vell in the Ducts. Tell them Rusk sent you."
+            - "And {player}... don't let the Warden see you reading it."
+
+    # ---------------------------------------------------------------- Chapter II: Reactor Ducts
+    - id: reactor
+      name: "II. Hot Pipes"
+      min-grade: 6
+      character: vell
+      icon: REDSTONE
+      steps:
+        - id: courier
+          name: "Rusk's Courier"
+          intro:
+            - "Rusk's runner, huh? Good. Make yourself useful first. The intake vents clog if nobody mines them."
+          objectives:
+            - {type: mine_blocks, target: "deck:2", amount: 1500, text: "Mine {amount} blocks anywhere in the Reactor Ducts"}
+          rewards: {credits: {grade-cost: 0.08}, tokens: 25}
+        - id: payroll
+          name: "Ghost Payroll"
+          intro:
+            - "That page is a payroll sheet. Inmates paid in scrip that never existed. The archive takes bribes, so earn some."
+          objectives:
+            - {type: sell_credits, amount: {grade-cost: 0.5}, text: "Earn {amount} Credits selling ore"}
+          rewards: {credits: {grade-cost: 0.08}, tokens: 25}
+        - id: redline
+          name: "Redline"
+          intro:
+            - "The ledger lists conduit batches. Redline conduit. Pull some out of the Coolant Line and Turbine Shaft."
+          objectives:
+            - {type: mine_item, target: ["minecraft:redstone_ore", "minecraft:deepslate_redstone_ore"], amount: 400, text: "Mine {amount} {target_name}"}
+          rewards: {credits: {grade-cost: 0.1}, tokens: 30}
+        - id: heatsink
+          name: "Heat Sink"
+          intro:
+            - "Your drill will cook down here. Get it upgraded before you go any deeper."
+          objectives:
+            - {type: enchant_upgrade, amount: 5, text: "Buy {amount} drill enchant levels"}
+          rewards: {tokens: 40}
+        - id: spike
+          name: "Data Spike"
+          intro:
+            - "Bring me conduit from your hold. I'll wire it into a data spike and crack the ledger index."
+          objectives:
+            - {type: deliver_cargo, target: "minecraft:deepslate_redstone_ore", amount: 300, text: "Hand in {amount} {target_name} from your cargo hold"}
+          rewards: {credits: {grade-cost: 0.15}, tokens: 40}
+          outro:
+            - "The spike cracked one file. Every ledger copy is routed to the Cryo Vaults archive."
+        - id: sealed
+          name: "Sealed Deck"
+          intro:
+            - "The Vaults need Grade 11. Find Nhem when you get there. Nhem remembers everything. It's the cold."
+          objectives:
+            - {type: reach_grade, amount: 11, text: "Reach Grade 11 to enter the Cryo Vaults"}
+          rewards: {credits: {grade-cost: 0.2}, tokens: 90}
+
+    # ---------------------------------------------------------------- Chapter III: Cryo Vaults
+    - id: cryo
+      name: "III. Cold Storage"
+      min-grade: 11
+      character: nhem
+      icon: PACKED_ICE
+      steps:
+        - id: thaw
+          name: "Thaw"
+          intro:
+            - "Vell's errand runner. Mind the frost, it bites through gloves."
+            - "The archive shelves are frozen into the rock. Cut them loose."
+          objectives:
+            - {type: mine_blocks, target: "deck:3", amount: 3000, text: "Mine {amount} blocks anywhere in the Cryo Vaults"}
+          rewards: {credits: {grade-cost: 0.08}, tokens: 30}
+        - id: index
+          name: "The Index"
+          intro:
+            - "The archive index is posted up on the maintenance gantries. Climb a maintenance run and read it for me."
+          objectives:
+            - {type: parkour_complete, target: "deck:3", amount: 1, text: "Finish a Cryo Vaults maintenance run (/parkour)"}
+          rewards: {tokens: 50}
+          outro:
+            - "Shelf nine. Of course it's shelf nine. It's always the shelf nobody can reach."
+        - id: lapis
+          name: "Lapis Record"
+          intro:
+            - "Records were etched in lapis back then. Dig me out enough to rebuild the shelf."
+          objectives:
+            - {type: mine_item, target: ["minecraft:lapis_ore", "minecraft:deepslate_lapis_ore"], amount: 600, text: "Mine {amount} {target_name}"}
+          rewards: {credits: {grade-cost: 0.1}, tokens: 35}
+        - id: frozen-payroll
+          name: "Frozen Payroll"
+          intro:
+            - "Reading frozen records costs power, and power costs Credits. Sell, sell, sell."
+          objectives:
+            - {type: sell_credits, amount: {grade-cost: 0.6}, text: "Earn {amount} Credits selling ore"}
+          rewards: {credits: {grade-cost: 0.08}, tokens: 35}
+        - id: cores
+          name: "Ice Cores"
+          intro:
+            - "Hand me lapis from your hold so I can patch the reader."
+          objectives:
+            - {type: deliver_cargo, target: "minecraft:lapis_ore", amount: 300, text: "Hand in {amount} {target_name} from your cargo hold"}
+          rewards: {credits: {grade-cost: 0.15}, tokens: 50}
+          outro:
+            - "The last ledger isn't in the archive. It's on the hull, where the Warden dumps what it doesn't want found."
+        - id: breach
+          name: "Breach Clearance"
+          intro:
+            - "Kade runs the breach. Kade will want paying. Reach Grade 16 and go."
+          objectives:
+            - {type: reach_grade, amount: 16, text: "Reach Grade 16 to enter the Hull Breach"}
+          rewards: {credits: {grade-cost: 0.2}, tokens: 120, shards: 1}
+
+    # ---------------------------------------------------------------- Chapter IV: Hull Breach
+    - id: hull
+      name: "IV. Vacuum Debt"
+      min-grade: 16
+      character: kade
+      icon: OBSIDIAN
+      steps:
+        - id: entry-fee
+          name: "Entry Fee"
+          intro:
+            - "Nhem sent you? Then you know I don't work for free. Credits first, questions never."
+          objectives:
+            - {type: sell_credits, amount: {grade-cost: 0.5}, text: "Earn {amount} Credits selling ore"}
+          rewards: {credits: {grade-cost: 0.08}, tokens: 40}
+        - id: quartz-run
+          name: "Quartz Run"
+          intro:
+            - "Quartz fetches a price in the Undercroft. You mine it, I move it, nobody asks."
+          objectives:
+            - {type: mine_item, target: "minecraft:nether_quartz_ore", amount: 800, text: "Mine {amount} {target_name}"}
+          rewards: {credits: {grade-cost: 0.1}, tokens: 45}
+        - id: breach-shift
+          name: "Breach Shift"
+          intro:
+            - "The dump site is past the Debris Field. Clear a path."
+          objectives:
+            - {type: mine_blocks, target: "deck:4", amount: 5000, text: "Mine {amount} blocks anywhere on the Hull Breach"}
+          rewards: {credits: {grade-cost: 0.1}, tokens: 45}
+        - id: tooling
+          name: "Tooling Up"
+          intro:
+            - "Your drill sounds like a dying fridge. Fix it before we go out on the hull."
+          objectives:
+            - {type: enchant_upgrade, amount: 10, text: "Buy {amount} drill enchant levels"}
+          rewards: {tokens: 60}
+        - id: debris
+          name: "The Debris Field"
+          intro:
+            - "Black box is out in the Debris Field. Grade 18 gets you in."
+          objectives:
+            - {type: reach_grade, amount: 18, text: "Reach Grade 18"}
+          rewards: {credits: {grade-cost: 0.15}, tokens: 50}
+        - id: black-box
+          name: "Black Box"
+          intro:
+            - "The box is bonded in emerald seams. Haul it back in your hold."
+          objectives:
+            - {type: deliver_cargo, target: "minecraft:emerald_ore", amount: 300, text: "Hand in {amount} {target_name} from your cargo hold"}
+          rewards: {credits: {grade-cost: 0.15}, tokens: 60}
+          outro:
+            - "The original ledger. It's not payroll. It's a parts list. Inmates, listed as parts. For the Core Foundry."
+        - id: foundry
+          name: "Into the Foundry"
+          intro:
+            - "Only one way to burn a ledger like that. The Core Foundry. Grade 21."
+          objectives:
+            - {type: reach_grade, amount: 21, text: "Reach Grade 21 to enter the Core Foundry"}
+          rewards: {credits: {grade-cost: 0.2}, tokens: 150, shards: 2}
+
+    # ---------------------------------------------------------------- Chapter V: Core Foundry
+    - id: foundry
+      name: "V. The Warden's Ledger"
+      min-grade: 21
+      character: warden
+      icon: NETHERITE_SCRAP
+      steps:
+        - id: heard
+          name: "It Heard You"
+          intro:
+            - "I KNOW WHAT YOU CARRY, {player}."
+            - "WORK. THE FOUNDRY IS ALWAYS HUNGRY."
+          objectives:
+            - {type: mine_blocks, target: "deck:5", amount: 6000, text: "Mine {amount} blocks anywhere in the Core Foundry"}
+          rewards: {credits: {grade-cost: 0.1}, tokens: 50}
+        - id: debt
+          name: "Debt Collection"
+          intro:
+            - "YOUR DEBT IS RECORDED. PAY IT DOWN."
+          objectives:
+            - {type: sell_credits, amount: {grade-cost: 1.0}, text: "Earn {amount} Credits selling ore"}
+          rewards: {credits: {grade-cost: 0.1}, tokens: 60}
+        - id: neutronium
+          name: "Neutronium"
+          intro:
+            - "NEUTRONIUM LIES IN THE CRUCIBLE. FETCH IT."
+          objectives:
+            - {type: reach_grade, amount: 22, text: "Reach Grade 22"}
+            - {type: mine_item, target: "minecraft:ancient_debris", amount: 500, text: "Mine {amount} {target_name}"}
+          rewards: {credits: {grade-cost: 0.15}, tokens: 70}
+        - id: melt
+          name: "Melt the Books"
+          character: kade
+          intro:
+            - "Kade here, on a stolen channel. Feed neutronium into the pour line with the ledger. It's the only thing hot enough."
+          objectives:
+            - {type: deliver_cargo, target: "minecraft:ancient_debris", amount: 300, text: "Hand in {amount} {target_name} from your cargo hold"}
+          rewards: {credits: {grade-cost: 0.15}, tokens: 80}
+          outro:
+            - "It's burning. The Warden won't like that one bit."
+        - id: core
+          name: "Core Access"
+          intro:
+            - "YOU ARE NOT AUTHORIZED. YOU ARE NOT AUTHORIZED. YOU ARE"
+          objectives:
+            - {type: reach_grade, amount: 25, text: "Reach Grade 25"}
+          rewards: {credits: {grade-cost: 0.2}, tokens: 120}
+        - id: clean-slate
+          name: "Clean Slate"
+          character: rusk
+          intro:
+            - "Rusk here. The ledger's ash, but your record still lives in the Warden's core. Prestige wipes it."
+          objectives:
+            - {type: prestige, amount: 1, text: "Prestige (/prestige)"}
+          rewards: {tokens: 500, shards: 10}
+          outro:
+            - "Well, would you look at that. A clean record."
+            - "Back to the Scrapyard, then. This time on your own terms."
+
+# Tutorials start on their own once unlocked (min-grade, min-prestige, after: another tutorial, and the system
+# being installed). Tutorials for systems still being built appear once their module registers its type.
+tutorials:
+  orientation:
+    name: "Orientation"
+    icon: IRON_PICKAXE
+    objectives:
+      - {type: mine_blocks, amount: 50, text: "Break {amount} blocks in any mine"}
+      - {type: sell_credits, amount: 1, text: "Sell your cargo once (/sell or /cargo)"}
+    rewards: {credits: 150, tokens: 5}
+    outro: ["Ore goes into your cargo hold as you mine. Selling it turns it into Credits."]
+  clearance:
+    name: "Clearance Grades"
+    icon: IRON_DOOR
+    after: orientation
+    objectives:
+      - {type: rank_up, amount: 1, text: "Rank up once (/rankup)"}
+    rewards: {tokens: 10}
+    outro: ["Each grade opens the next mine (/mine). Five grades make a deck."]
+  drill-bay:
+    name: "The Drill Bay"
+    icon: DIAMOND_PICKAXE
+    after: orientation
+    objectives:
+      - {type: enchant_upgrade, amount: 1, text: "Buy an enchant level (shift + right-click your drill)"}
+    rewards: {tokens: 15}
+    outro: ["Enchants cost Tokens. Your frame caps how high each one goes."]
+  tokens:
+    name: "Token Hunting"
+    icon: PRISMARINE_CRYSTALS
+    after: drill-bay
+    objectives:
+      - {type: earn_tokens, amount: 20, text: "Find {amount} Tokens while mining"}
+    rewards: {tokens: 10}
+    outro: ["Mining is a slow Token trickle. Prestige pays Tokens in bulk."]
+  contracts:
+    name: "Contract Work"
+    icon: CLOCK
+    after: orientation
+    objectives:
+      - {type: contract_complete, amount: 1, text: "Finish a daily or weekly contract (/contracts)"}
+    rewards: {tokens: 15}
+    outro: ["Contracts give points toward the monthly Contract Track. Claim tiers in /quests track."]
+  parkour:
+    name: "Maintenance Runs"
+    icon: CHAINMAIL_BOOTS
+    after: orientation
+    objectives:
+      - {type: parkour_complete, amount: 1, text: "Finish any mine's maintenance run (/parkour)"}
+    rewards: {tokens: 20}
+    outro: ["Each mine's run pays a reward roll once a day. Deeper decks, harder runs, better loot."]
+  cargo:
+    name: "Bigger Hold"
+    icon: BARREL
+    min-grade: 3
+    objectives:
+      - {type: cargo_upgrade, amount: 1, text: "Upgrade your cargo hold (/cargo)"}
+    rewards: {credits: {grade-cost: 0.05}}
+  auto-seller:
+    name: "Auto-Seller"
+    icon: HOPPER
+    min-grade: 8
+    objectives:
+      - {type: autosell_unlock, amount: 1, text: "Unlock the Auto-Seller (/cargo)"}
+    rewards: {tokens: 25}
+  frames:
+    name: "New Frame"
+    icon: NETHERITE_UPGRADE_SMITHING_TEMPLATE
+    min-grade: 10
+    objectives:
+      - {type: frame_upgrade, amount: 1, text: "Install a new drill frame in the drill bay"}
+    rewards: {tokens: 50}
+    outro: ["Frames raise enchant caps and add module sockets. The best ones need prestige."]
+  prestige:
+    name: "Prestige"
+    icon: NETHER_STAR
+    min-grade: 25
+    objectives:
+      - {type: prestige, amount: 1, text: "Prestige (/prestige)"}
+    rewards: {tokens: 100}
+  # ---- systems still being built (hidden until installed)
+  fishing:
+    name: "Gone Fishing"
+    icon: FISHING_ROD
+    objectives:
+      - {type: catch_fish, amount: 10, text: "Catch {amount} fish"}
+    rewards: {tokens: 20}
+  workshop:
+    name: "Your Workshop"
+    icon: BLAST_FURNACE
+    objectives:
+      - {type: process_item, amount: 1, text: "Process an item in your workshop"}
+    rewards: {tokens: 20}
+  gangs:
+    name: "Crew Up"
+    icon: WHITE_BANNER
+    objectives:
+      - {type: gang_join, amount: 1, text: "Join or found a gang"}
+    rewards: {tokens: 20}
+  auction:
+    name: "The Exchange"
+    icon: GOLD_INGOT
+    objectives:
+      - {type: auction_sell, amount: 1, text: "Sell an item on the auction house"}
+    rewards: {tokens: 20}
+  rare-drops:
+    name: "Salvage"
+    icon: AMETHYST_SHARD
+    objectives:
+      - {type: rare_drop, amount: 1, text: "Find a rare drop while mining"}
+    rewards: {tokens: 20}
+  undercroft:
+    name: "The Undercroft"
+    icon: IRON_SWORD
+    objectives:
+      - {type: undercroft_win, amount: 1, text: "Win a fight in the Undercroft"}
+    rewards: {tokens: 30}
+
+# Contract pools. Each period rolls daily-count / weekly-count different contracts by weight from the ones the
+# player qualifies for (min-grade/max-grade, installed systems).
+contracts:
+  daily:
+    shift-best:
+      name: "Pit Shift"
+      weight: 14
+      objectives:
+        - {type: mine_blocks, target: "{mine}", amount: {base: 1500, per-grade: 0.03}, text: "Mine {amount} blocks in {mine_name}"}
+      rewards: {credits: {grade-cost: 0.05}, tokens: {base: 10, per-grade: 0.05}, points: 10}
+    shift-deck:
+      name: "Deck Sweep"
+      weight: 10
+      objectives:
+        - {type: mine_blocks, target: "{deck}", amount: {base: 2200, per-grade: 0.03}, text: "Mine {amount} blocks anywhere on {deck_name}"}
+      rewards: {credits: {grade-cost: 0.06}, tokens: {base: 12, per-grade: 0.05}, points: 10}
+    ore-quota:
+      name: "Ore Quota"
+      weight: 12
+      objectives:
+        - {type: mine_item, target: "{mine_item}", amount: {base: 250, per-grade: 0.02}, text: "Mine {amount} {item_name}"}
+      rewards: {credits: {grade-cost: 0.05}, tokens: {base: 10, per-grade: 0.05}, points: 10}
+    sell:
+      name: "Scrip Run"
+      weight: 12
+      objectives:
+        - {type: sell_credits, amount: {grade-cost: 0.35}, text: "Earn {amount} Credits selling ore"}
+      rewards: {credits: {grade-cost: 0.05}, tokens: {base: 10, per-grade: 0.05}, points: 10}
+    tokens:
+      name: "Token Sweep"
+      weight: 8
+      objectives:
+        - {type: earn_tokens, amount: {base: 12, per-grade: 0.02}, text: "Find {amount} Tokens while mining"}
+      rewards: {credits: {grade-cost: 0.05}, tokens: {base: 8, per-grade: 0.05}, points: 10}
+    delivery:
+      name: "Supply Drop"
+      weight: 8
+      objectives:
+        - {type: deliver_cargo, target: "{mine_item}", amount: {base: 150, per-grade: 0.02}, text: "Hand in {amount} {item_name} from your cargo hold"}
+      rewards: {credits: {grade-cost: 0.08}, tokens: {base: 12, per-grade: 0.05}, points: 12}
+    tuning:
+      name: "Drill Tuning"
+      weight: 5
+      min-grade: 2
+      objectives:
+        - {type: enchant_upgrade, amount: 2, text: "Buy {amount} drill enchant levels"}
+      rewards: {credits: {grade-cost: 0.05}, tokens: {base: 15, per-grade: 0.05}, points: 10}
+    overtime:
+      name: "Overtime"
+      weight: 6
+      objectives:
+        - {type: play_minutes, amount: 45, text: "Work a {amount}-minute shift"}
+      rewards: {credits: {grade-cost: 0.04}, tokens: {base: 8, per-grade: 0.05}, points: 10}
+    run:
+      name: "Maintenance Run"
+      weight: 7
+      objectives:
+        - {type: parkour_complete, target: "{deck}", amount: 1, text: "Finish a maintenance run on {deck_name} (/parkour)"}
+      rewards: {credits: {grade-cost: 0.04}, tokens: {base: 10, per-grade: 0.05}, points: 10}
+    fish:
+      name: "Catch of the Day"
+      weight: 10
+      objectives:
+        - {type: catch_fish, amount: 20, text: "Catch {amount} fish"}
+      rewards: {credits: {grade-cost: 0.05}, tokens: {base: 10, per-grade: 0.05}, points: 10}
+    process:
+      name: "Line Work"
+      weight: 10
+      objectives:
+        - {type: process_item, amount: {base: 100, per-grade: 0.05}, text: "Process {amount} items in your workshop"}
+      rewards: {credits: {grade-cost: 0.05}, tokens: {base: 10, per-grade: 0.05}, points: 10}
+    salvage:
+      name: "Salvage Hunt"
+      weight: 4
+      objectives:
+        - {type: rare_drop, amount: 1, text: "Find a rare drop while mining"}
+      rewards: {credits: {grade-cost: 0.06}, tokens: {base: 15, per-grade: 0.05}, points: 12}
+    brawl:
+      name: "Undercroft Brawl"
+      weight: 6
+      objectives:
+        - {type: undercroft_win, amount: 2, text: "Win {amount} Undercroft fights"}
+      rewards: {credits: {grade-cost: 0.06}, tokens: {base: 15, per-grade: 0.05}, points: 12}
+  weekly:
+    deck-haul:
+      name: "Deck Haul"
+      weight: 12
+      objectives:
+        - {type: mine_blocks, target: "{deck}", amount: {base: 20000, per-grade: 0.03}, text: "Mine {amount} blocks anywhere on {deck_name}"}
+      rewards: {credits: {grade-cost: 0.2}, tokens: {base: 60, per-grade: 0.05}, points: 40}
+    big-sell:
+      name: "Quarterly Numbers"
+      weight: 12
+      objectives:
+        - {type: sell_credits, amount: {grade-cost: 2.5}, text: "Earn {amount} Credits selling ore"}
+      rewards: {credits: {grade-cost: 0.2}, tokens: {base: 60, per-grade: 0.05}, points: 40}
+    promotion:
+      name: "Promotion"
+      weight: 8
+      max-grade: 23
+      objectives:
+        - {type: rank_up, amount: 2, text: "Rank up {amount} grades"}
+      rewards: {credits: {grade-cost: 0.2}, tokens: {base: 60, per-grade: 0.05}, points: 40}
+    contractor:
+      name: "Reliable Contractor"
+      weight: 10
+      objectives:
+        - {type: contract_complete, target: "daily", amount: 10, text: "Finish {amount} daily contracts"}
+      rewards: {credits: {grade-cost: 0.2}, tokens: {base: 70, per-grade: 0.05}, points: 45}
+    bulk-delivery:
+      name: "Bulk Delivery"
+      weight: 8
+      objectives:
+        - {type: deliver_cargo, target: "{mine_item}", amount: {base: 1500, per-grade: 0.02}, text: "Hand in {amount} {item_name} from your cargo hold"}
+      rewards: {credits: {grade-cost: 0.25}, tokens: {base: 70, per-grade: 0.05}, points: 45}
+    runner:
+      name: "Gantry Runner"
+      weight: 8
+      objectives:
+        - {type: parkour_complete, amount: 4, text: "Finish {amount} maintenance runs (any mine, once a day each)"}
+      rewards: {credits: {grade-cost: 0.15}, tokens: {base: 60, per-grade: 0.05}, points: 40}
+    upgrades:
+      name: "Overhaul"
+      weight: 6
+      min-grade: 3
+      objectives:
+        - {type: enchant_upgrade, amount: 10, text: "Buy {amount} drill enchant levels"}
+      rewards: {credits: {grade-cost: 0.15}, tokens: {base: 80, per-grade: 0.05}, points: 40}
+    long-shift:
+      name: "Double Shift"
+      weight: 6
+      objectives:
+        - {type: play_minutes, amount: 300, text: "Play {amount} minutes this week"}
+      rewards: {credits: {grade-cost: 0.15}, tokens: {base: 60, per-grade: 0.05}, points: 40}
+    trawler:
+      name: "Trawler"
+      weight: 10
+      objectives:
+        - {type: catch_fish, amount: 200, text: "Catch {amount} fish"}
+      rewards: {credits: {grade-cost: 0.2}, tokens: {base: 60, per-grade: 0.05}, points: 40}
+    production:
+      name: "Production Run"
+      weight: 10
+      objectives:
+        - {type: process_item, amount: {base: 1000, per-grade: 0.05}, text: "Process {amount} items in your workshop"}
+      rewards: {credits: {grade-cost: 0.2}, tokens: {base: 60, per-grade: 0.05}, points: 40}
+    pit-fighter:
+      name: "Pit Fighter"
+      weight: 6
+      objectives:
+        - {type: undercroft_win, amount: 15, text: "Win {amount} Undercroft fights"}
+      rewards: {credits: {grade-cost: 0.25}, tokens: {base: 80, per-grade: 0.05}, points: 45}
+
+# Monthly Contract Track: contract points unlock tiers, claimed in /quests track. Points reset on the 1st.
+# A daily player earns about 40 points a day plus about 120 a week.
+track:
+  name: "Contract Track"
+  tiers:
+    - {points: 40, icon: CHEST, rewards: {tokens: {base: 22, per-grade: 0.05}}}
+    - {points: 80, icon: CHEST, rewards: {credits: {grade-cost: 0.058}, tokens: {base: 12, per-grade: 0.05}}}
+    - {points: 120, icon: CHEST, rewards: {tokens: {base: 26, per-grade: 0.05}}}
+    - {points: 160, icon: CHEST, rewards: {credits: {grade-cost: 0.066}, tokens: {base: 14, per-grade: 0.05}}}
+    - {points: 200, icon: CHEST, rewards: {tokens: {base: 30, per-grade: 0.05}}}
+    - {points: 240, icon: CHEST, rewards: {credits: {grade-cost: 0.074}, tokens: {base: 16, per-grade: 0.05}}}
+    - {points: 280, icon: CHEST, rewards: {tokens: {base: 34, per-grade: 0.05}}}
+    - {points: 320, icon: CHEST, rewards: {credits: {grade-cost: 0.082}, tokens: {base: 18, per-grade: 0.05}}}
+    - {points: 360, icon: CHEST, rewards: {tokens: {base: 38, per-grade: 0.05}}}
+    - {points: 400, icon: ENDER_CHEST, rewards: {tokens: {base: 100, per-grade: 0.05}, shards: 2}}
+    - {points: 440, icon: CHEST, rewards: {tokens: {base: 42, per-grade: 0.05}}}
+    - {points: 480, icon: CHEST, rewards: {credits: {grade-cost: 0.098}, tokens: {base: 22, per-grade: 0.05}}}
+    - {points: 520, icon: CHEST, rewards: {tokens: {base: 46, per-grade: 0.05}}}
+    - {points: 560, icon: CHEST, rewards: {credits: {grade-cost: 0.106}, tokens: {base: 24, per-grade: 0.05}}}
+    - {points: 600, icon: ENDER_CHEST, rewards: {tokens: {base: 100, per-grade: 0.05}, commands: [{command: "drill admin module {player} coolant_loop", text: "<aqua>Coolant Loop module"}]}}
+    - {points: 640, icon: CHEST, rewards: {credits: {grade-cost: 0.114}, tokens: {base: 26, per-grade: 0.05}}}
+    - {points: 680, icon: CHEST, rewards: {tokens: {base: 54, per-grade: 0.05}}}
+    - {points: 720, icon: CHEST, rewards: {credits: {grade-cost: 0.122}, tokens: {base: 28, per-grade: 0.05}}}
+    - {points: 760, icon: CHEST, rewards: {tokens: {base: 58, per-grade: 0.05}}}
+    - {points: 800, icon: ENDER_CHEST, rewards: {tokens: {base: 140, per-grade: 0.05}, shards: 3}}
+    - {points: 840, icon: CHEST, rewards: {tokens: {base: 62, per-grade: 0.05}}}
+    - {points: 880, icon: CHEST, rewards: {credits: {grade-cost: 0.138}, tokens: {base: 32, per-grade: 0.05}}}
+    - {points: 920, icon: CHEST, rewards: {tokens: {base: 66, per-grade: 0.05}}}
+    - {points: 960, icon: CHEST, rewards: {credits: {grade-cost: 0.146}, tokens: {base: 34, per-grade: 0.05}}}
+    - {points: 1000, icon: CHEST, rewards: {tokens: {base: 70, per-grade: 0.05}}}
+    - {points: 1040, icon: CHEST, rewards: {credits: {grade-cost: 0.154}, tokens: {base: 36, per-grade: 0.05}}}
+    - {points: 1080, icon: CHEST, rewards: {tokens: {base: 74, per-grade: 0.05}}}
+    - {points: 1120, icon: CHEST, rewards: {credits: {grade-cost: 0.162}, tokens: {base: 38, per-grade: 0.05}}}
+    - {points: 1160, icon: CHEST, rewards: {tokens: {base: 78, per-grade: 0.05}}}
+    - {points: 1200, icon: ENDER_CHEST, rewards: {tokens: {base: 180, per-grade: 0.05}, shards: 5, commands: [{command: "drill admin module {player} magnet_coil", text: "<aqua>Magnet Coil module"}]}}

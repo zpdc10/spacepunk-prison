@@ -34,6 +34,8 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
 | `raredrops/` + `raredrops.yml` | rare drops | Tiered finds while mining, relic collections (sell bonus via `OreSellEvent`), salvage caches, blueprint fragments → drill modules, `/salvage` |
 | `auction/` + `auction.yml` | auction house | The Black Market: buy-it-now + escrowed auctions, fees/tax sink, `auctions.json`, `/ah`; blocks prestige while the player leads a bid (`PrestigeAttemptEvent`) |
+| `quests/` + `quests.yml` | quests | `QuestService` + `ObjectiveTypes` (generic objective API), story questline, tutorials, daily/weekly contracts, monthly Contract Track, quest NPCs, sidebar tracker, `/quests` `/contracts` `/questadmin`. See `docs/QUESTS.md` |
+| `parkour/` + `parkour.yml` | parkour | Daily maintenance run per mine (generated next to it), reward rolls, best times/records, `parkour-<mine>` warps, `/parkour` `/parkouradmin` |
 | `fishing/` + `fishing.yml` | fishing | `FishingService`, fires `FishCaughtEvent` / `SeaCreatureKilledEvent`; the `station_waters` world (hub + one pool per deck), catches, reel-in minigame, soulbound rod (tiers, enchants, lures, bait), sea creatures, collections, weekly leaderboard, `/fish` `/rod` `/waters` `/fishadmin`. See `docs/FISHING.md` |
 | `undercroft/` + `undercroft.yml` | undercroft | `UndercroftService` (PvP zones, drug labs for gangs), the Undercroft world: prestige-gated rings, grace + combat tag, death drops, bounty tags, hot ore, labs + stims, supply drops, checkpoint scan/bribe, `/fence`, `/undercroft`. Warp `undercroft`. See `docs/UNDERCROFT.md` |
 | `guns/` + `guns.yml` | guns | `GunService`, fires `GunHitEvent`; guns, ammo, gun parts, reload/recoil/spread/scopes, `/gunsmith`, `/gun` |
@@ -46,7 +48,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, station, progression, drill, gangs, hud, fishing, raredrops, auction, undercroft, guns, workshop. Missing classes are skipped, so each module can
+Load order: resourcepack, quests, mines, station, progression, drill, gangs, hud, fishing, raredrops, auction, undercroft, guns, workshop, parkour. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -60,11 +62,19 @@ land independently.
 4. HUD (HIGH snapshot, MONITOR): measures what actually went into the hold, then shows it on the action bar
    (`⛏ +14 Iron Ore → hold  +3 ✦`), plays a pickup click and sparks for the miner, and raises the cargo-full alarm.
 
+## Quest objectives (any module)
+
+Report what players do with `Objectives.report(player, ObjectiveTypes.X, amount, targets...)` (no-op without
+the quests module) and call `Objectives.register(type, "Display name")` once from your `enable()`; quests and
+contracts that use a type stay hidden until it is registered. The type list and targets are in `api/ObjectiveTypes`.
+Quest, contract and parkour Credits pay with reasons `income:quest`, `income:contract`, `income:parkour`.
+
 ## Screen ownership (HUD)
 
 The hud module owns the action bar. Never call `sendActionBar` directly when `HudService` is registered:
 use `HudService#flash` for a short notice, or `HudService#segment(player, key, text)` for a persistent part
-(the drill's heat gauge is segment `heat`). Fall back to `sendActionBar` only if the service is missing.
+(the drill's heat gauge is segment `heat`, parkour's timer is segment `parkour`). Modules can add a few sidebar lines with
+`HudService#sidebarSection(player, key, lines)` (quests shows the tracked quest as section `quests`). Fall back to `sendActionBar` only if the service is missing.
 The sidebar uses a per-player scoreboard, so any future nametag/team feature must add its teams to each
 player's board (ask the hud module for a hook) instead of the main scoreboard. Boss bars: mines shows the
 current mine's fill, hud shows the cargo hold while mining.

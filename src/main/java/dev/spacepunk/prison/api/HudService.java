@@ -16,4 +16,10 @@ public interface HudService {
      * "heat". Segments are shown first, then mining gains and flashes. Pass null to remove it.
      */
     void segment(Player player, String key, String miniMessage);
+
+    /**
+     * Sets a block of sidebar lines owned by a module (for example the tracked quest, key "quests"), shown below the
+     * built-in sections. Pass null or an empty list to remove it. Keep it to two or three short lines.
+     */
+    default void sidebarSection(Player player, String key, java.util.List<String> lines) {}
 }

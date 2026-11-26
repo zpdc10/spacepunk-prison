@@ -21,6 +21,9 @@ public interface MineService {
      */
     int breakBlocks(Player player, Collection<Block> blocks, BreakCause cause);
 
+    /** Every configured mine in grade order (placed or not). */
+    default Collection<? extends MineInfo> mines() { return java.util.List.of(); }
+
     /** Read-only view of a mine. */
     interface MineInfo {
         String id();
@@ -31,6 +34,9 @@ public interface MineService {
         double fillRatio();
         /** True if the block is inside the mine's breakable region. */
         boolean contains(Block block);
+
+        /** Where /mine sends players, or null if the mine is not placed. */
+        default org.bukkit.Location spawn() { return null; }
     }
 
     enum BreakCause { HAND, ENCHANT, MODULE, ADMIN }

@@ -1,0 +1,163 @@
+# Daily parkour ("maintenance runs"): one course per mine, built in the void just north of the mine's spawn rim
+# by /parkouradmin generate (run it after /mineadmin generate). Each run can be finished any number of times for a
+# best time, but pays one reward roll per day. /parkouradmin reload applies rewards at once; layout and difficulty
+# changes need /parkouradmin generate again.
+
+settings:
+  # Daily rolls reset at midnight in this zone ("" = the server's zone).
+  timezone: ""
+  # Teleport back to the mine two seconds after finishing.
+  return-to-mine: true
+  # Floating text over the start and finish.
+  signs: true
+  rare-broadcast: "<gold>{player}</gold> <gray>pulled <white>{reward}</white> <gray>out of the {mine} maintenance run!"
+
+layout:
+  half-width: 20     # blocks either side of the spawn the course may wander
+  depth: 44          # how far north of the rim it may go (mine rows are 150 apart)
+  row-gap: 7         # blocks between the east-west rows of the snake
+  max-rise: 40       # highest point above the rim
+  seed: 0            # change and regenerate for new layouts
+
+# Jumps per course: base + per-grade x (grade - 1), so 14 in the first mine and 38 in the last.
+jumps:
+  base: 14
+  per-grade: 1.0
+
+# Difficulty per deck (1 = Scrapyard ... 5 = Core Foundry). gap = air blocks between platforms [min, max]
+# (3 is a full sprint jump on the flat). up-gap caps the gap when the next platform is one block higher.
+# lateral-chance = chance of a diagonal jump. shapes = weights of platform shapes:
+# line3/line2 = 3 or 2 blocks long, wide = 3 across, single = one block, slab = half block, trapdoor = thin plate.
+tiers:
+  1:
+    name: "Scrapyard Gantries"
+    checkpoint-every: 5
+    gap: [1, 2]
+    up-gap: 2
+    up-chance: 0.30
+    down-chance: 0.10
+    lateral-chance: 0.0
+    shapes: {line3: 40, line2: 35, wide: 15, single: 10}
+  2:
+    name: "Reactor Pipework"
+    checkpoint-every: 6
+    gap: [1, 3]
+    up-gap: 2
+    up-chance: 0.33
+    down-chance: 0.12
+    lateral-chance: 0.10
+    shapes: {line3: 20, line2: 35, single: 30, slab: 15}
+  3:
+    name: "Cryo Catwalks"
+    checkpoint-every: 6
+    gap: [2, 3]
+    up-gap: 2
+    up-chance: 0.35
+    down-chance: 0.12
+    lateral-chance: 0.15
+    shapes: {line2: 30, single: 40, slab: 15, trapdoor: 15}
+  4:
+    name: "Hull Scaffolds"
+    checkpoint-every: 7
+    gap: [2, 3]
+    up-gap: 2
+    up-chance: 0.35
+    down-chance: 0.15
+    lateral-chance: 0.25
+    shapes: {line2: 20, single: 45, slab: 15, trapdoor: 20}
+  5:
+    name: "Foundry Rigging"
+    checkpoint-every: 7
+    gap: [2, 3]
+    up-gap: 2
+    up-chance: 0.38
+    down-chance: 0.15
+    lateral-chance: 0.30
+    shapes: {line2: 10, single: 50, slab: 15, trapdoor: 25}
+
+# Blocks per deck, matching each deck's mine shell so the resource pack styles them.
+themes:
+  1:
+    blocks: [WAXED_WEATHERED_CUT_COPPER, WAXED_EXPOSED_COPPER_GRATE, POLISHED_ANDESITE, WAXED_WEATHERED_COPPER]
+    slab: WAXED_WEATHERED_CUT_COPPER_SLAB
+    trapdoor: WAXED_WEATHERED_COPPER_TRAPDOOR
+    pad: POLISHED_ANDESITE
+    light: OCHRE_FROGLIGHT
+    chain: IRON_CHAIN
+    lantern: LANTERN
+    decor-chance: 0.35
+  2:
+    blocks: [POLISHED_DEEPSLATE, DEEPSLATE_TILES, POLISHED_TUFF, WAXED_OXIDIZED_COPPER_GRATE]
+    slab: POLISHED_DEEPSLATE_SLAB
+    trapdoor: IRON_TRAPDOOR
+    pad: POLISHED_TUFF
+    light: VERDANT_FROGLIGHT
+    chain: IRON_CHAIN
+    lantern: LANTERN
+    decor-chance: 0.35
+  3:
+    blocks: [POLISHED_DIORITE, SMOOTH_STONE, SMOOTH_QUARTZ, WHITE_CONCRETE]
+    slab: SMOOTH_STONE_SLAB
+    trapdoor: IRON_TRAPDOOR
+    pad: SMOOTH_STONE
+    light: SEA_LANTERN
+    chain: IRON_CHAIN
+    lantern: SOUL_LANTERN
+    decor-chance: 0.3
+  4:
+    blocks: [POLISHED_BLACKSTONE_BRICKS, CRACKED_POLISHED_BLACKSTONE_BRICKS, POLISHED_BLACKSTONE, OBSIDIAN]
+    slab: POLISHED_BLACKSTONE_BRICK_SLAB
+    trapdoor: IRON_TRAPDOOR
+    pad: CRACKED_POLISHED_BLACKSTONE_BRICKS
+    light: PEARLESCENT_FROGLIGHT
+    chain: IRON_CHAIN
+    lantern: SOUL_LANTERN
+    decor-chance: 0.3
+  5:
+    blocks: [POLISHED_BASALT, POLISHED_BLACKSTONE, NETHER_BRICKS, SMOOTH_BASALT]
+    slab: POLISHED_BLACKSTONE_SLAB
+    trapdoor: IRON_TRAPDOOR
+    pad: POLISHED_BLACKSTONE
+    light: SHROOMLIGHT
+    chain: IRON_CHAIN
+    lantern: LANTERN
+    decor-chance: 0.3
+
+# Daily reward roll per deck: one line is picked by weight.
+#   credits: flat Credits; credits-grade-cost: share of the player's next rank-up cost (income, counts for prestige)
+#   tokens: N or [min, max]; shards: N; commands: console commands ({player}); text: what the player is told
+#   rare: true broadcasts the find to the server.
+# Crate keys from the rare drops system can be added here as commands once it exists.
+rewards:
+  1:
+    - {weight: 55, credits-grade-cost: 0.04, tokens: [4, 8]}
+    - {weight: 30, tokens: [12, 24]}
+    - {weight: 12, credits-grade-cost: 0.12, tokens: [8, 12]}
+    - {weight: 2, tokens: [120, 200], rare: true, text: "<aqua>a Token cache"}
+    - {weight: 1, commands: ["drill admin module {player} coolant_loop"], rare: true, text: "<aqua>a Coolant Loop module"}
+  2:
+    - {weight: 55, credits-grade-cost: 0.04, tokens: [6, 12]}
+    - {weight: 30, tokens: [18, 32]}
+    - {weight: 12, credits-grade-cost: 0.12, tokens: [10, 16]}
+    - {weight: 2, tokens: [180, 300], rare: true, text: "<aqua>a Token cache"}
+    - {weight: 1, commands: ["drill admin module {player} magnet_coil"], rare: true, text: "<aqua>a Magnet Coil module"}
+  3:
+    - {weight: 54, credits-grade-cost: 0.04, tokens: [8, 16]}
+    - {weight: 30, tokens: [25, 45]}
+    - {weight: 12, credits-grade-cost: 0.12, tokens: [14, 22]}
+    - {weight: 3, tokens: [250, 400], rare: true, text: "<aqua>a Token cache"}
+    - {weight: 1, commands: ["drill admin module {player} scavenger_rig"], rare: true, text: "<aqua>a Scavenger Rig module"}
+  4:
+    - {weight: 53, credits-grade-cost: 0.04, tokens: [10, 20]}
+    - {weight: 30, tokens: [32, 55]}
+    - {weight: 12, credits-grade-cost: 0.12, tokens: [18, 28]}
+    - {weight: 3, tokens: [350, 550], rare: true, text: "<aqua>a Token cache"}
+    - {weight: 1, shards: 3, rare: true, text: "<light_purple>3 Prestige Shards"}
+    - {weight: 1, commands: ["drill admin module {player} plasma_cutter"], rare: true, text: "<aqua>a Plasma Cutter module"}
+  5:
+    - {weight: 52, credits-grade-cost: 0.04, tokens: [12, 24]}
+    - {weight: 30, tokens: [40, 70]}
+    - {weight: 12, credits-grade-cost: 0.12, tokens: [22, 34]}
+    - {weight: 3, tokens: [500, 800], rare: true, text: "<aqua>a Token cache"}
+    - {weight: 2, shards: 5, rare: true, text: "<light_purple>5 Prestige Shards"}
+    - {weight: 1, commands: ["drill admin module {player} token_condenser"], rare: true, text: "<aqua>a Token Condenser module"}
