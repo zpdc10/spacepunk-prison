@@ -18,8 +18,9 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:$paperApi")
-    // Mines module: add FAWE/WorldEdit compileOnly deps here, e.g.
-    // compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:<version>") { isTransitive = false }
+    // Mines module: optional FAWE refiller (used only when FastAsyncWorldEdit is installed on the server).
+    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Core:2.16.3") { isTransitive = false }
+    compileOnly("com.fastasyncworldedit:FastAsyncWorldEdit-Bukkit:2.16.3") { isTransitive = false }
 }
 
 java {

@@ -1,0 +1,305 @@
+# Mines module config. Placement (regions, spawns) is stored separately in mines-data.yml by the admin
+# commands, so this file stays hand-editable. All tuning lives here; /mineadmin reload applies changes.
+
+world:
+  # World used by /mineadmin generate. Created as an empty void world if missing.
+  name: mines
+  create-if-missing: true
+  # Make the first mine's spawn the mines world spawn after /mineadmin generate.
+  set-spawn-to-first-mine: true
+
+# Auto layout used by /mineadmin generate: one row per deck (north to south), one column per mine.
+layout:
+  origin-x: 0
+  origin-z: 0
+  base-y: 40          # bottom layer of every mine
+  spacing: 150        # blocks between mine centres
+  rim-width: 4        # walkway around the top of each pit
+
+refill:
+  mined-fraction: 0.65      # refill once 65% of a mine's blocks are gone
+  interval-seconds: 600     # also refill on this timer if anything was mined (0 = off)
+  warn-seconds: 3           # warn players inside before refilling (0 = no warning)
+  on-startup: true          # refill every placed mine when the server starts
+  use-fawe: true            # use FastAsyncWorldEdit (off-thread) when it is installed
+  native-blocks-per-tick: 20000   # budget for the built-in refiller when FAWE is absent
+
+limits:
+  max-volume: 250000        # largest region /mineadmin define or create accepts
+
+protection:
+  pvp: false                # PvP inside mines and anywhere in the mines world
+  fall-damage: false        # fall damage in the mines world
+  protect-world: true       # only players with spacepunk.mines.build can edit the mines world outside the mine pits
+
+display:
+  boss-bar: true            # show the mine name and ore left while near a mine
+
+# Shell blocks for /mineadmin generate. size: [x, depth, z] of the breakable area.
+decks:
+  scrapyard:
+    name: Scrapyard
+    color: "<#c8743a>"
+    size: [33, 24, 33]
+    wall: WAXED_WEATHERED_CUT_COPPER
+    rim: POLISHED_ANDESITE
+    light: OCHRE_FROGLIGHT
+  reactor:
+    name: Reactor Ducts
+    color: "<#7fd65a>"
+    size: [35, 26, 35]
+    wall: POLISHED_DEEPSLATE
+    rim: POLISHED_TUFF
+    light: VERDANT_FROGLIGHT
+  cryo:
+    name: Cryo Vaults
+    color: "<#8fd3ff>"
+    size: [37, 28, 37]
+    wall: POLISHED_DIORITE
+    rim: SMOOTH_STONE
+    light: SEA_LANTERN
+  hull:
+    name: Hull Breach
+    color: "<#b07cff>"
+    size: [39, 30, 39]
+    wall: POLISHED_BLACKSTONE_BRICKS
+    rim: CRACKED_POLISHED_BLACKSTONE_BRICKS
+    light: PEARLESCENT_FROGLIGHT
+  foundry:
+    name: Core Foundry
+    color: "<#ff5a3c>"
+    size: [41, 32, 41]
+    wall: POLISHED_BASALT
+    rim: POLISHED_BLACKSTONE
+    light: SHROOMLIGHT
+
+# One mine per grade. blocks: relative weights (any scale). Weights are tuned so the average sell value
+# of a block is about 2 x 1.21^(grade-1) Credits with the prices in progression.yml.
+mines:
+  scrapyard-1:
+    name: Slag Heap
+    deck: scrapyard
+    grade: 1
+    blocks:
+      STONE: 519
+      COBBLESTONE: 148
+      COAL_ORE: 333
+  scrapyard-2:
+    name: Rust Pit
+    deck: scrapyard
+    grade: 2
+    blocks:
+      STONE: 485
+      COBBLESTONE: 132
+      COAL_ORE: 247
+      COPPER_ORE: 136
+  scrapyard-3:
+    name: Wreck Yard
+    deck: scrapyard
+    grade: 3
+    blocks:
+      STONE: 409
+      ANDESITE: 149
+      COAL_ORE: 216
+      COPPER_ORE: 227
+  scrapyard-4:
+    name: Hull Graveyard
+    deck: scrapyard
+    grade: 4
+    blocks:
+      ANDESITE: 436
+      STONE: 193
+      COAL_ORE: 46
+      COPPER_ORE: 210
+      IRON_ORE: 115
+  scrapyard-5:
+    name: Smelter Floor
+    deck: scrapyard
+    grade: 5
+    blocks:
+      ANDESITE: 621
+      COPPER_ORE: 183
+      IRON_ORE: 159
+      RAW_COPPER_BLOCK: 37
+  reactor-6:
+    name: Intake Vent
+    deck: reactor
+    grade: 6
+    blocks:
+      DEEPSLATE: 496
+      TUFF: 149
+      DEEPSLATE_COPPER_ORE: 101
+      DEEPSLATE_IRON_ORE: 255
+  reactor-7:
+    name: Coolant Line
+    deck: reactor
+    grade: 7
+    blocks:
+      DEEPSLATE: 440
+      TUFF: 165
+      DEEPSLATE_IRON_ORE: 224
+      REDSTONE_ORE: 171
+  reactor-8:
+    name: Turbine Shaft
+    deck: reactor
+    grade: 8
+    blocks:
+      DEEPSLATE: 536
+      TUFF: 153
+      DEEPSLATE_REDSTONE_ORE: 186
+      RAW_IRON_BLOCK: 125
+  reactor-9:
+    name: Core Bypass
+    deck: reactor
+    grade: 9
+    blocks:
+      TUFF: 635
+      DEEPSLATE_REDSTONE_ORE: 192
+      RAW_IRON_BLOCK: 72
+      DEEPSLATE_GOLD_ORE: 101
+  reactor-10:
+    name: Meltdown Chamber
+    deck: reactor
+    grade: 10
+    blocks:
+      TUFF: 613
+      DEEPSLATE_REDSTONE_ORE: 181
+      DEEPSLATE_GOLD_ORE: 158
+      RAW_GOLD_BLOCK: 47
+  cryo-11:
+    name: Frost Locker
+    deck: cryo
+    grade: 11
+    blocks:
+      PACKED_ICE: 487
+      CALCITE: 211
+      LAPIS_ORE: 133
+      DEEPSLATE_GOLD_ORE: 169
+  cryo-12:
+    name: Stasis Bay
+    deck: cryo
+    grade: 12
+    blocks:
+      PACKED_ICE: 448
+      CALCITE: 164
+      LAPIS_ORE: 271
+      RAW_GOLD_BLOCK: 117
+  cryo-13:
+    name: Rime Archive
+    deck: cryo
+    grade: 13
+    blocks:
+      BLUE_ICE: 335
+      CALCITE: 176
+      DEEPSLATE_LAPIS_ORE: 274
+      AMETHYST_BLOCK: 215
+  cryo-14:
+    name: Cold Storage
+    deck: cryo
+    grade: 14
+    blocks:
+      BLUE_ICE: 591
+      AMETHYST_BLOCK: 213
+      LAPIS_BLOCK: 110
+      DIAMOND_ORE: 85
+  cryo-15:
+    name: Cryo Core
+    deck: cryo
+    grade: 15
+    blocks:
+      BLUE_ICE: 543
+      AMETHYST_BLOCK: 210
+      DIAMOND_ORE: 156
+      DEEPSLATE_DIAMOND_ORE: 91
+  hull-16:
+    name: Breach Edge
+    deck: hull
+    grade: 16
+    blocks:
+      BLACKSTONE: 389
+      BASALT: 130
+      NETHER_QUARTZ_ORE: 289
+      DIAMOND_ORE: 192
+  hull-17:
+    name: Vacuum Gap
+    deck: hull
+    grade: 17
+    blocks:
+      BLACKSTONE: 232
+      BASALT: 100
+      NETHER_QUARTZ_ORE: 299
+      GILDED_BLACKSTONE: 369
+  hull-18:
+    name: Debris Field
+    deck: hull
+    grade: 18
+    blocks:
+      BASALT: 491
+      GILDED_BLACKSTONE: 257
+      OBSIDIAN: 109
+      EMERALD_ORE: 143
+  hull-19:
+    name: Torn Plating
+    deck: hull
+    grade: 19
+    blocks:
+      BASALT: 507
+      OBSIDIAN: 176
+      QUARTZ_BLOCK: 78
+      EMERALD_ORE: 135
+      DEEPSLATE_EMERALD_ORE: 104
+  hull-20:
+    name: Void Lip
+    deck: hull
+    grade: 20
+    blocks:
+      BLACKSTONE: 501
+      OBSIDIAN: 162
+      DEEPSLATE_EMERALD_ORE: 169
+      CRYING_OBSIDIAN: 113
+      EMERALD_BLOCK: 55
+  foundry-21:
+    name: Slag Furnace
+    deck: foundry
+    grade: 21
+    blocks:
+      SMOOTH_BASALT: 532
+      NETHER_GOLD_ORE: 261
+      CRYING_OBSIDIAN: 147
+      EMERALD_BLOCK: 60
+  foundry-22:
+    name: Crucible
+    deck: foundry
+    grade: 22
+    blocks:
+      SMOOTH_BASALT: 430
+      NETHER_GOLD_ORE: 241
+      CRYING_OBSIDIAN: 219
+      ANCIENT_DEBRIS: 111
+  foundry-23:
+    name: Pour Line
+    deck: foundry
+    grade: 23
+    blocks:
+      SMOOTH_BASALT: 558
+      CRYING_OBSIDIAN: 214
+      ANCIENT_DEBRIS: 145
+      DIAMOND_BLOCK: 83
+  foundry-24:
+    name: Forge Heart
+    deck: foundry
+    grade: 24
+    blocks:
+      SMOOTH_BASALT: 542
+      ANCIENT_DEBRIS: 230
+      DIAMOND_BLOCK: 116
+      EMERALD_BLOCK: 111
+  foundry-25:
+    name: Core Foundry
+    deck: foundry
+    grade: 25
+    blocks:
+      SMOOTH_BASALT: 550
+      ANCIENT_DEBRIS: 258
+      DIAMOND_BLOCK: 126
+      NETHERITE_BLOCK: 67
