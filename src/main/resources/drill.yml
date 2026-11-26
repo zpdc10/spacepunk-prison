@@ -1,0 +1,307 @@
+# Drill: the player's custom pickaxe. Frames, Token enchants, modules and heat.
+# Every number is a starting point for playtesting. Change it here and run /drill admin reload.
+
+item:
+  # Base vanilla item. The resource pack replaces its look through the item_model component.
+  material: NETHERITE_PICKAXE
+  # Set to false while the resource pack does not have the spacepunk:* models yet (avoids missing-texture items).
+  use-item-models: true
+
+tokens:
+  # Mining is a slow Token trickle (prestige is the main bulk source of Tokens). Over a first 50-100 hour run
+  # this should afford only the first several levels of each enchant.
+  # Base Token find from blocks you break by hand: chance per block and amount range.
+  hand-chance: 0.015
+  min: 1
+  max: 2
+  # Blocks broken by enchants (Shaped Charge, Jackhammer, Cutting Laser) roll Tokens at this fraction of the hand chance.
+  enchant-block-rate: 0.05
+
+salvage:
+  # Chance per hand-broken block to salvage a random drill module, before Salvage Sense and Scavenger Rig.
+  module-chance: 0.00002
+  # Announce module finds to the whole server.
+  broadcast: true
+
+# Frames in upgrade order. A frame unlocks at (prestige, grade): prestige higher than required, or equal with
+# grade at least the required grade. Once bought, a frame is kept forever (including through prestige).
+frames:
+  rusted:
+    name: Rusted
+    color: "#8a6a55"
+    grade: 1
+    prestige: 0
+    cost-currency: TOKENS
+    cost: 0
+    sockets: 0
+    # Block break speed multiplier before Bore Speed (1.0 = a plain netherite pickaxe).
+    base-speed: 0.5
+    # Extra heat capacity on top of heat.base-capacity.
+    heat-capacity: 0
+    lore: "Patched together from hull scrap. It mostly works."
+  salvaged:
+    name: Salvaged
+    color: "#b08850"
+    grade: 10
+    prestige: 0
+    # About 2-3 hours of Credits income at grade 10.
+    cost-currency: CREDITS
+    cost: 175000
+    sockets: 1
+    base-speed: 0.65
+    heat-capacity: 25
+    lore: "Stripped from a decommissioned loader. One module socket."
+  industrial:
+    name: Industrial
+    color: "#d0a040"
+    grade: 1
+    prestige: 1
+    cost-currency: SHARDS
+    cost: 5
+    sockets: 2
+    base-speed: 0.85
+    heat-capacity: 60
+    lore: "Foundry-grade housing. Heavy, loud, reliable."
+  military:
+    name: Military
+    color: "#7fa36a"
+    grade: 1
+    prestige: 5
+    cost-currency: SHARDS
+    cost: 30
+    sockets: 3
+    base-speed: 1.1
+    heat-capacity: 110
+    lore: "Breaching drill from the station's security armory."
+  prototype:
+    name: Prototype
+    color: "#c070ff"
+    grade: 1
+    prestige: 15
+    cost-currency: SHARDS
+    cost: 120
+    sockets: 4
+    base-speed: 1.5
+    heat-capacity: 180
+    lore: "Experimental core-tapping rig. Nobody knows who built it."
+
+# Token enchants. Cost of level N = base * growth^(N-1), rounded.
+# max-level lists the level cap for each frame, in the frame order above (0 = locked on that frame).
+# Caps are the hard gate: a fully upgraded drill needs the Prototype frame (high prestige) whatever your Tokens.
+# heat = heat added each time the enchant fires (before the deck multiplier).
+enchants:
+  bore_speed:
+    name: Bore Speed
+    color: "#e0a050"
+    icon: GOLDEN_PICKAXE
+    description: "Spins the bit faster. Raw mining speed."
+    base: 15
+    growth: 1.1
+    max-level: [15, 30, 50, 75, 100]
+    # Added to the frame's base-speed per level (block break speed multiplier).
+    per-level: 0.08
+  yield:
+    name: Yield
+    color: "#f0d060"
+    icon: RAW_GOLD
+    description: "Pulls more ore out of every block."
+    base: 20
+    growth: 1.1
+    max-level: [10, 25, 50, 80, 120]
+    # +2.5% ore per level (works on every block the drill breaks, enchants included).
+    per-level: 0.025
+  token_siphon:
+    name: Token Siphon
+    color: "#50d0e0"
+    icon: PRISMARINE_CRYSTALS
+    description: "Chance to siphon bonus Tokens from each block."
+    base: 25
+    growth: 1.1
+    max-level: [10, 25, 50, 80, 120]
+    # Capped on purpose: Siphon roughly doubles to triples the mining trickle, it never replaces prestige.
+    chance-per-level: 0.0005
+    max-chance: 0.03
+    amount-min: 1
+    amount-max: 2
+    # Bonus amount grows by this share per level.
+    amount-per-level: 0.01
+  shaped_charge:
+    name: Shaped Charge
+    color: "#ff7040"
+    icon: TNT
+    description: "Chance to blow out a sphere of blocks."
+    base: 60
+    growth: 1.11
+    max-level: [5, 15, 30, 50, 75]
+    chance-per-level: 0.0008
+    max-chance: 0.08
+    radius-base: 2
+    # +1 radius every this many levels.
+    radius-every: 12
+    radius-max: 6
+    heat: 6
+  jackhammer:
+    name: Jackhammer
+    color: "#ff4060"
+    icon: ANVIL
+    description: "Chance to clear the whole layer of the mine."
+    base: 4000
+    growth: 1.13
+    max-level: [0, 0, 10, 25, 40]
+    chance-per-level: 0.0003
+    max-chance: 0.02
+    max-blocks: 4000
+    heat: 22
+  cutting_laser:
+    name: Cutting Laser
+    color: "#ff3030"
+    icon: END_ROD
+    description: "Chance to fire a laser through the blocks ahead."
+    base: 1200
+    growth: 1.12
+    max-level: [0, 10, 25, 40, 60]
+    chance-per-level: 0.0008
+    max-chance: 0.06
+    length-base: 6
+    length-per-level: 0.4
+    length-max: 40
+    heat: 5
+  overclock:
+    name: Overclock
+    color: "#a0f0ff"
+    icon: LIGHTNING_ROD
+    description: "Chance to overclock the motor for a burst of speed."
+    base: 80
+    growth: 1.11
+    max-level: [5, 15, 30, 50, 75]
+    chance-per-level: 0.0004
+    max-chance: 0.03
+    duration-base: 3.0
+    duration-per-level: 0.05
+    # Break speed bonus while overclocked (0.75 = +75%).
+    speed-bonus: 0.75
+    # Heat gain multiplier while overclocked.
+    heat-multiplier: 1.5
+    heat: 4
+  salvage_sense:
+    name: Salvage Sense
+    color: "#c0a0ff"
+    icon: SPYGLASS
+    description: "Sniffs out salvage: Token caches, modules, rare drops."
+    base: 1500
+    growth: 1.12
+    max-level: [0, 10, 25, 40, 60]
+    # Rare drop and module odds +4% per level.
+    rare-per-level: 0.04
+    # Chance per hand-broken block of a Token cache.
+    cache-chance-per-level: 0.000005
+    cache-min: 15
+    cache-max: 50
+    cache-per-level: 0.02
+  coolant:
+    name: Coolant System
+    color: "#60a0ff"
+    icon: BLUE_ICE
+    description: "Raises the heat limit and cools the drill faster."
+    base: 30
+    growth: 1.11
+    max-level: [5, 15, 30, 50, 75]
+    capacity-per-level: 4
+    decay-per-level: 0.15
+
+heat:
+  base-capacity: 100
+  # Heat per block broken by hand. Area enchants add their own heat when they fire.
+  hand-block: 0.35
+  # Cooling per second once you stop mining for decay-delay seconds, and while you keep mining.
+  decay-per-second: 12
+  active-decay-per-second: 0.6
+  decay-delay: 1.5
+  # Heat gain multiplier per deck (Scrapyard, Reactor Ducts, Cryo Vaults, Hull Breach, Core Foundry).
+  deck-multiplier: [0.35, 0.6, 0.85, 1.0, 1.2]
+  overheat:
+    stall-seconds: 3.0
+    # Heat left after the stall, as a share of capacity.
+    heat-after: 0.4
+  vent:
+    # Press your drop key (Q) while holding the drill to vent. Needs at least this share of capacity.
+    min-fraction: 0.3
+    cooldown-seconds: 6
+    burst-seconds-base: 2.0
+    burst-seconds-per-fraction: 4.0
+    # Break speed bonus during the vent burst (0.4 = +40%).
+    burst-speed: 0.4
+    # Venting inside this window is a perfect vent: burst bonus times perfect-multiplier.
+    perfect-min: 0.75
+    perfect-max: 0.95
+    perfect-multiplier: 2.0
+
+# Modules: found while mining (or given by admins), slotted into frame sockets. Each changes how the drill plays.
+# rarity: COMMON, RARE, EPIC, LEGENDARY. weight = share of salvage finds.
+modules:
+  magnet_coil:
+    name: Magnet Coil
+    rarity: RARE
+    weight: 30
+    material: BREEZE_ROD
+    lore: "A coil that drags ore straight to the station's buyers."
+    pros: ["Auto-sells everything you mine"]
+    cons: ["No Token drops"]
+  plasma_cutter:
+    name: Plasma Cutter
+    rarity: EPIC
+    weight: 15
+    material: BLAZE_ROD
+    lore: "Superheated plasma lance bolted to the charge chamber."
+    pros: ["Shaped Charge radius x2"]
+    cons: ["Shaped Charge heat x2"]
+    radius-multiplier: 2.0
+    heat-multiplier: 2.0
+  scavenger_rig:
+    name: Scavenger Rig
+    rarity: RARE
+    weight: 30
+    material: TRIAL_KEY
+    lore: "Sorting arms that pick the good bits out of the slag."
+    pros: ["Rare drop and module odds x2"]
+    cons: ["Sell price -15%"]
+    rare-multiplier: 2.0
+    sell-multiplier: 0.85
+  coolant_loop:
+    name: Cryo Coolant Loop
+    rarity: COMMON
+    weight: 45
+    material: PRISMARINE_SHARD
+    lore: "Stolen from the Cryo Vaults. Still frosty."
+    pros: ["Heat capacity +60%"]
+    cons: ["Overclock can't fire"]
+    capacity-multiplier: 1.6
+  token_condenser:
+    name: Token Condenser
+    rarity: EPIC
+    weight: 15
+    material: ECHO_SHARD
+    lore: "Condenses token residue out of the exhaust. Runs hot."
+    pros: ["Tokens x1.5"]
+    cons: ["Heat from hand mining x2.5"]
+    token-multiplier: 1.5
+    hand-heat-multiplier: 2.5
+  seismic_dampener:
+    name: Seismic Dampener
+    rarity: EPIC
+    weight: 12
+    material: RECOVERY_COMPASS
+    lore: "Tunes the hammer to the deck's resonance."
+    pros: ["Jackhammer fires twice as often"]
+    cons: ["Cutting Laser can't fire"]
+    jackhammer-multiplier: 2.0
+  overcharger:
+    name: Overcharger
+    rarity: LEGENDARY
+    weight: 5
+    material: NETHER_STAR
+    lore: "Bypasses every safety limiter. Don't tell maintenance."
+    pros: ["Overclock and vent bursts last x2"]
+    cons: ["Overheat stalls last x2"]
+    burst-multiplier: 2.0
+    stall-multiplier: 2.0

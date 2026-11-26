@@ -2,6 +2,7 @@ package dev.spacepunk.prison.api.event;
 
 import dev.spacepunk.prison.api.MineService;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
@@ -27,14 +28,25 @@ public class MineBlocksBrokenEvent extends Event {
     private final MineService.BreakCause cause;
     private final int blockCount;
     private final Map<Material, Long> ores;
+    private final Block origin;
 
     public MineBlocksBrokenEvent(Player player, MineService.MineInfo mine, MineService.BreakCause cause,
                                  int blockCount, Map<Material, Long> ores) {
+        this(player, mine, cause, blockCount, ores, null);
+    }
+
+    /**
+     * @param origin the block the player broke by hand (cause HAND), so area enchants know where to center.
+     *               May be null for bulk breaks.
+     */
+    public MineBlocksBrokenEvent(Player player, MineService.MineInfo mine, MineService.BreakCause cause,
+                                 int blockCount, Map<Material, Long> ores, Block origin) {
         this.player = player;
         this.mine = mine;
         this.cause = cause;
         this.blockCount = blockCount;
         this.ores = ores;
+        this.origin = origin;
     }
 
     public Player player() { return player; }
@@ -44,6 +56,8 @@ public class MineBlocksBrokenEvent extends Event {
     public int blockCount() { return blockCount; }
     /** Ore yield keyed by the mined block's Material (mutable). */
     public Map<Material, Long> ores() { return ores; }
+    /** The hand-broken block (now air) for cause HAND, or null if the firer did not supply it. */
+    public Block origin() { return origin; }
 
     @Override public @NotNull HandlerList getHandlers() { return HANDLERS; }
     public static HandlerList getHandlerList() { return HANDLERS; }
