@@ -22,8 +22,9 @@ public-url: ""
 # Optional: serve this zip instead of the built-in pack (path relative to the plugin folder, or absolute).
 pack-file: ""
 
-# Ticks to wait after join before sending the pack.
-send-delay-ticks: 2
+# Ticks to wait after join before sending the pack. Keep this after the join teleport to the mines world:
+# a world change while the prompt is open closes it, and the client never answers.
+send-delay-ticks: 40
 
 # Log every pack send with its URL.
 debug: false
