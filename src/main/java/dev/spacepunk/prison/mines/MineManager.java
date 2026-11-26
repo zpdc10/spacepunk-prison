@@ -129,7 +129,11 @@ public final class MineManager implements MineService {
 
     /** Grade gate. Without a progression module everyone can use every mine. */
     public boolean canAccess(Player p, Mine m) {
-        if (p.hasPermission(BYPASS_PERMISSION)) return true;
+        return p.hasPermission(BYPASS_PERMISSION) || hasGrade(p, m);
+    }
+
+    /** Grade check only, ignoring the admin bypass. Used to pick a player's own mine. */
+    public boolean hasGrade(Player p, Mine m) {
         Optional<ProgressionService> prog = Services.find(ProgressionService.class);
         if (prog.isEmpty()) return true;
         try {
@@ -139,11 +143,14 @@ public final class MineManager implements MineService {
         }
     }
 
-    /** Highest placed mine the player can use, or empty. */
+    /**
+     * Highest placed mine the player's grade unlocks, or empty. Uses the real grade even for admins with the
+     * bypass permission, so ops are not always sent to the last mine.
+     */
     public Optional<Mine> bestFor(Player p) {
         Mine best = null;
         for (Mine m : mines.values()) {
-            if (m.placed() && canAccess(p, m) && (best == null || m.requiredGrade() >= best.requiredGrade())) best = m;
+            if (m.placed() && hasGrade(p, m) && (best == null || m.requiredGrade() >= best.requiredGrade())) best = m;
         }
         return Optional.ofNullable(best);
     }
