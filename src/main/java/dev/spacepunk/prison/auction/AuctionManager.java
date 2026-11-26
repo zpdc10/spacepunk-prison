@@ -29,13 +29,14 @@ import java.util.UUID;
  * Money flow: buyers and bidders pay with reason "auction:buy"/"auction:bid"; sellers receive "auction:sale"; refunds
  * use "auction:refund"; fees "auction:fee". None start with "sell:" or "income:", so auction money never counts toward
  * the prestige payout. Bids are held in escrow (taken from the bidder), and a player who is the top bidder anywhere
- * cannot prestige, so escrow can't carry Credits past the prestige wipe. Credits owed to offline players wait in the
+ * cannot prestige, so escrow can't carry Credits past the prestige wipe. From prestige-lock.spend-lock-grade on a
+ * player can't buy or bid at all, so an inflated buy from a friend can't park Credits with them before prestige. Credits owed to offline players wait in the
  * store and are paid when their profile loads (they can't prestige before that).
  */
 final class AuctionManager {
     enum ListResult { OK, NOTHING_IN_HAND, NOT_ALLOWED, BAD_PRICE, BAD_DURATION, TOO_MANY, CLAIMS_FULL, TOO_POOR, NOT_LOADED }
-    enum BuyResult { OK, GONE, OWN, TOO_POOR, NOT_BIN, NOT_LOADED }
-    enum BidResult { OK, GONE, OWN, TOO_LOW, TOO_POOR, NOT_AUCTION, NOT_LOADED }
+    enum BuyResult { OK, GONE, OWN, TOO_POOR, NOT_BIN, NOT_LOADED, LOCKED }
+    enum BidResult { OK, GONE, OWN, TOO_LOW, TOO_POOR, NOT_AUCTION, NOT_LOADED, LOCKED }
     enum CancelResult { OK, GONE, NOT_YOURS, HAS_BIDS }
 
     private final AuctionStore store;
@@ -136,6 +137,16 @@ final class AuctionManager {
 
     // ---- buying / bidding ----
 
+    /**
+     * Prestige lock: from cfg.spendLockGrade on a player can't buy or bid, so a friend's junk listing at an inflated
+     * price can't carry Credits past the prestige wipe (same grade as the gang bank and /trade Credit locks).
+     */
+    boolean spendLocked(UUID id) {
+        if (cfg.spendLockGrade <= 0) return false;
+        int grade = Services.find(ProgressionService.class).map(s -> s.grade(id)).orElse(1);
+        return grade >= cfg.spendLockGrade;
+    }
+
     BuyResult buy(Player p, long listingId) {
         UUID id = p.getUniqueId();
         if (!loaded(id)) return BuyResult.NOT_LOADED;
@@ -143,6 +154,7 @@ final class AuctionManager {
         if (l == null || l.ends <= System.currentTimeMillis()) return BuyResult.GONE;
         if (l.auction) return BuyResult.NOT_BIN;
         if (l.seller.equals(id.toString())) return BuyResult.OWN;
+        if (spendLocked(id)) return BuyResult.LOCKED;
         ItemStack item = l.item();
         if (item == null) return BuyResult.GONE;
         if (!eco().take(id, Currency.CREDITS, l.price, "auction:buy")) return BuyResult.TOO_POOR;
@@ -162,6 +174,7 @@ final class AuctionManager {
         if (l == null || l.ends <= now) return BidResult.GONE;
         if (!l.auction) return BidResult.NOT_AUCTION;
         if (l.seller.equals(id.toString())) return BidResult.OWN;
+        if (spendLocked(id)) return BidResult.LOCKED;
         if (amount < cfg.minNextBid(l) || amount > cfg.maxPrice) return BidResult.TOO_LOW;
         boolean raising = id.toString().equals(l.topBidder);
         long charge = raising ? amount - l.topBid : amount;

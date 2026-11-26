@@ -346,6 +346,7 @@ final class AuctionMenu implements Listener {
                         case GONE -> { Text.send(p, "<red>That listing is gone."); back(p, h); return; }
                         case OWN -> Text.send(p, "<red>That's your own listing.");
                         case NOT_LOADED -> Text.send(p, "<red>Your profile is still loading.");
+                        case LOCKED -> Text.send(p, "<red>Prestige lock: you can't buy or bid from Grade " + auctions.cfg().spendLockGrade + " on.</red> <gray>Prestige wipes Credits, so they can't be passed to a seller before it. You can still sell.");
                         case NOT_BIN -> {}
                     }
                     render(p, h);
@@ -371,6 +372,7 @@ final class AuctionMenu implements Listener {
             case OWN -> Text.send(p, "<red>You can't bid on your own auction.");
             case NOT_AUCTION -> Text.send(p, "<red>That listing is buy-it-now.");
             case NOT_LOADED -> Text.send(p, "<red>Your profile is still loading.");
+            case LOCKED -> Text.send(p, "<red>Prestige lock: you can't buy or bid from Grade " + auctions.cfg().spendLockGrade + " on.</red> <gray>Prestige wipes Credits, so they can't be passed to a seller before it. You can still sell.");
         }
     }
 
