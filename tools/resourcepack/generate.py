@@ -1094,6 +1094,9 @@ def main():
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import raredrops_art
     raredrops_art.raredrops(sys.modules[__name__])
+    # Fishing items, rods and icons (fishing module); art lives in fishing_art.py.
+    import fishing_art
+    fishing_art.fishing(sys.modules[__name__])
     pack_meta()
     print(f"wrote {len(written)} files under {ROOT}")
 

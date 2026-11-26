@@ -174,7 +174,7 @@ final class FishingMenus implements Listener {
         for (int s = 0; s < LURE_SLOTS.length; s++) {
             int slot = s;
             if (s >= t.lureSlots()) {
-                menu.set(LURE_SLOTS[s], items().icon(Material.GRAY_DYE, "ui/socket_locked", "<dark_gray>Locked lure slot",
+                menu.set(LURE_SLOTS[s], items().icon(Material.GRAY_DYE, "ui/locked", "<dark_gray>Locked lure slot",
                         List.of("<gray>A better rod tier has more lure slots.")), null);
                 continue;
             }

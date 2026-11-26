@@ -34,6 +34,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
 | `raredrops/` + `raredrops.yml` | rare drops | Tiered finds while mining, relic collections (sell bonus via `OreSellEvent`), salvage caches, blueprint fragments → drill modules, `/salvage` |
 | `auction/` + `auction.yml` | auction house | The Black Market: buy-it-now + escrowed auctions, fees/tax sink, `auctions.json`, `/ah`; blocks prestige while the player leads a bid (`PrestigeAttemptEvent`) |
+| `fishing/` + `fishing.yml` | fishing | `FishingService`, fires `FishCaughtEvent` / `SeaCreatureKilledEvent`; the `station_waters` world (hub + one pool per deck), catches, reel-in minigame, soulbound rod (tiers, enchants, lures, bait), sea creatures, collections, weekly leaderboard, `/fish` `/rod` `/waters` `/fishadmin`. See `docs/FISHING.md` |
 | `station/` + `station.yml` | station | Hub world + layout, `WarpService` (warps, hub spawn), terminals, `/hub` `/warp` `/warps` `/stationadmin`. See `docs/STATION.md` |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
@@ -42,7 +43,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, station, progression, drill, gangs, hud, raredrops, auction. Missing classes are skipped, so each module can
+Load order: resourcepack, mines, station, progression, drill, gangs, hud, fishing, raredrops, auction. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -121,6 +122,11 @@ here in the same PR that needs them, and the pack falls back to a vanilla look u
 | `spacepunk:currency/token` | Token item/icon |
 | `spacepunk:currency/shard` | Prestige Shard icon |
 | `spacepunk:currency/credit` | Credits (scrip) icon |
+| `spacepunk:fish/<fish_id>` | Fish from `fishing.yml` (art in `tools/resourcepack/fishing_art.py`, generated for every fish id found there), e.g. `spacepunk:fish/rust_minnow` |
+| `spacepunk:rod/<tier>` | Fishing rod tiers (`condition` on `fishing_rod/cast`): `spacepunk:rod/bent_wire`, `scrap_spinner`, `carbon_line`, `mag_rail`, `void_angler` |
+| `spacepunk:fishing/junk/<id>`, `fishing/lure/<id>`, `fishing/bait/<id>` | Fishing junk, lures and bait icons, e.g. `spacepunk:fishing/lure/spinner`, `spacepunk:fishing/bait/grub_paste` |
+| `spacepunk:fishing/scale`, `spacepunk:fishing/cooler`, `spacepunk:fishing/collection`, `spacepunk:fishing/leaderboard`, `spacepunk:fishing/waters` | Fishing menu icons |
+| `spacepunk:ui/rod_enchant/<id>` | Rod bay enchant icons, e.g. `spacepunk:ui/rod_enchant/lure_speed` |
 | `spacepunk:raredrop/<drop_id>` | Rare drop items from `raredrops.yml` (art in `tools/resourcepack/raredrops_art.py`): `scrap_cache`, `sealed_crate`, `armored_strongbox`, `vault_core`, `fragment_common`, `fragment_rare`, `fragment_epic`, `fragment_legendary`, relics `inmate_tag` ... `warden_key` |
 
 UI icons available as `spacepunk:ui/<name>`: `panel` (default filler), `panel_rust`, `panel_hazard`, `divider`,
