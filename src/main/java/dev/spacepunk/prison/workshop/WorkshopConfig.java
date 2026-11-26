@@ -330,26 +330,26 @@ final class WorkshopConfig {
         assembly = Collections.unmodifiableMap(as);
 
         refurbGrade = Math.max(1, y.getInt("refurbisher.grade", 1));
-        List<RefurbLevel> rl = new ArrayList<>();
+        List<RefurbLevel> refurbLevelList = new ArrayList<>();
         for (Map<?, ?> m : y.getMapList("refurbisher.levels")) {
-            rl.add(new RefurbLevel(String.valueOf(m.get("name") == null ? "Mk " + (rl.size() + 1) : m.get("name")),
+            refurbLevelList.add(new RefurbLevel(String.valueOf(m.get("name") == null ? "Mk " + (refurbLevelList.size() + 1) : m.get("name")),
                     num(m, "pristine", 0.05).doubleValue(), num(m, "credits", 0).longValue(), num(m, "grade", 1).intValue(), goods(m.get("components"))));
         }
-        if (rl.isEmpty()) rl.add(new RefurbLevel("Mk I", 0.05, 0, 1, Map.of()));
-        refurbLevels = List.copyOf(rl);
-        Map<String, RefurbCost> rc = new LinkedHashMap<>();
-        ConfigurationSection rcs = y.getConfigurationSection("refurbisher.costs");
-        if (rcs != null) {
-            for (String tier : rcs.getKeys(false)) {
-                ConfigurationSection t = rcs.getConfigurationSection(tier);
+        if (refurbLevelList.isEmpty()) refurbLevelList.add(new RefurbLevel("Mk I", 0.05, 0, 1, Map.of()));
+        refurbLevels = List.copyOf(refurbLevelList);
+        Map<String, RefurbCost> refurbCostMap = new LinkedHashMap<>();
+        ConfigurationSection refurbSec = y.getConfigurationSection("refurbisher.costs");
+        if (refurbSec != null) {
+            for (String tier : refurbSec.getKeys(false)) {
+                ConfigurationSection t = refurbSec.getConfigurationSection(tier);
                 if (t == null) continue;
                 Map<String, Long> comps = new LinkedHashMap<>();
                 ConfigurationSection cs = t.getConfigurationSection("components");
                 if (cs != null) for (String k : cs.getKeys(false)) comps.put(goodId(k), cs.getLong(k));
-                rc.put(tier.toLowerCase(Locale.ROOT), new RefurbCost(t.getLong("credits", 0), Collections.unmodifiableMap(comps)));
+                refurbCostMap.put(tier.toLowerCase(Locale.ROOT), new RefurbCost(t.getLong("credits", 0), Collections.unmodifiableMap(comps)));
             }
         }
-        refurbCosts = Collections.unmodifiableMap(rc);
+        refurbCosts = Collections.unmodifiableMap(refurbCostMap);
 
         List<Decor> dl = new ArrayList<>();
         for (Map<?, ?> m : y.getMapList("decor")) {
