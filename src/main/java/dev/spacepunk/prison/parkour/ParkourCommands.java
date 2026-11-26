@@ -108,7 +108,7 @@ final class ParkourCommands {
                         StringBuilder sb = new StringBuilder("<gray>" + mgr().courses().size() + " runs built");
                         for (Course c : mgr().courses().values()) {
                             sb.append("\n  <white>").append(c.mineId).append(" <gray>G").append(c.grade).append(" ").append(c.jumps)
-                                    .append(" jumps, ").append(c.checkpoints.size()).append(" CP, start ").append(c.start)
+                                    .append("/").append(mgr().cfg().jumps(c.grade)).append(" jumps, ").append(c.checkpoints.size()).append(" CP, start ").append(c.start)
                                     .append(mgr().record(c.mineId).map(r -> " <gold>" + ParkourManager.time(r.millis()) + " " + r.name()).orElse(""));
                         }
                         Text.send(s, sb.toString());
@@ -121,7 +121,7 @@ final class ParkourCommands {
                 String prefix = args.length == 0 ? "" : args[args.length - 1].toLowerCase(Locale.ROOT);
                 if (args.length <= 1) return Stream.of("generate", "clear", "list", "reload").filter(x -> x.startsWith(prefix)).toList();
                 if (args.length == 2 && List.of("generate", "clear").contains(args[0].toLowerCase(Locale.ROOT))) {
-                    return Stream.concat(Stream.of("all"), mineIds()).filter(x -> x.startsWith(prefix)).toList();
+                    return Stream.concat(Stream.of("all", "short"), mineIds()).filter(x -> x.startsWith(prefix)).toList();
                 }
                 return List.of();
             }
@@ -141,6 +141,14 @@ final class ParkourCommands {
         }
         List<MineService.MineInfo> targets = new ArrayList<>();
         if (which.equalsIgnoreCase("all")) targets.addAll(ms.mines());
+        else if (which.equalsIgnoreCase("short")) {
+            // Rebuild only runs that came out with fewer jumps than their grade calls for.
+            for (MineService.MineInfo m : ms.mines()) {
+                Course c = mgr().courses().get(m.id());
+                if (c != null && c.jumps < mgr().cfg().jumps(c.grade)) targets.add(m);
+            }
+            if (targets.isEmpty()) { Text.send(s, "<green>Every built run already has its full length."); return; }
+        }
         else mine(which).ifPresent(targets::add);
         if (targets.isEmpty()) { Text.send(s, "<red>No mine called " + which + "."); return; }
         int built = 0;
@@ -150,12 +158,20 @@ final class ParkourCommands {
             if (err == null) built++;
             else errors.add(err);
         }
-        Text.send(s, "<green>Built " + built + " maintenance run(s)." + (errors.isEmpty() ? "" : " <red>" + String.join(" ", errors)));
+        StringBuilder shortRuns = new StringBuilder();
+        for (MineService.MineInfo m : targets) {
+            Course c = mgr().courses().get(m.id());
+            if (c != null && c.jumps < mgr().cfg().jumps(c.grade)) {
+                shortRuns.append(" ").append(m.id()).append(" (").append(c.jumps).append("/").append(mgr().cfg().jumps(c.grade)).append(")");
+            }
+        }
+        Text.send(s, "<green>Built " + built + " maintenance run(s)." + (errors.isEmpty() ? "" : " <red>" + String.join(" ", errors))
+                + (shortRuns.isEmpty() ? "" : " <yellow>Still short:" + shortRuns + ". Try generate MINE with another seed."));
     }
 
     private static void help(CommandSender s) {
         Text.send(s, """
-                <gray>/parkouradmin <white>generate [all|MINE] [SEED]</white> <dark_gray>- build runs north of each mine's spawn (rebuilds)
+                <gray>/parkouradmin <white>generate [all|short|MINE] [SEED]</white> <dark_gray>- build runs north of each mine's spawn (rebuilds; short = only runs below full length)
                 <gray>/parkouradmin <white>clear all|MINE</white> <dark_gray>- remove runs and restore the rim
                 <gray>/parkouradmin <white>list</white> | <white>reload</white>""");
     }

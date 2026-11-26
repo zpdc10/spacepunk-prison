@@ -49,8 +49,21 @@ final class CourseGenerator {
      * @param spawnZ z of the spawn block
      */
     static Course plan(ParkourConfig cfg, String mineId, String world, int grade, int sx, int baseY, int gateZ, int spawnZ, long seed) {
-        return new CourseGenerator(cfg, ParkourConfig.deckOf(grade), seed).build(mineId, world, grade, sx, baseY, gateZ, spawnZ, seed);
+        // The planner is greedy and can box itself in early. Try a series of seeds and keep the first layout that
+        // places every jump, or else the longest one found.
+        int want = cfg.jumps(grade);
+        Course best = null;
+        for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
+            long s = seed + attempt * 0x9E3779B97F4A7C15L;
+            Course c = new CourseGenerator(cfg, ParkourConfig.deckOf(grade), s).build(mineId, world, grade, sx, baseY, gateZ, spawnZ, s);
+            if (best == null || c.jumps > best.jumps) best = c;
+            if (c.jumps >= want) break;
+        }
+        return best;
     }
+
+    /** Layouts tried per course before settling for the longest. */
+    static final int ATTEMPTS = 40;
 
     private Course build(String mineId, String world, int grade, int sx, int baseY, int gateZ, int spawnZ, long seed) {
         Course c = new Course();
@@ -94,10 +107,14 @@ final class CourseGenerator {
                 lateral = -lateral;
             }
             Jump jump = null;
-            for (int attempt = 0; attempt < 60 && jump == null; attempt++) {
-                boolean goNorth = attempt < 40 ? north : !north;
-                int[] dir = goNorth ? DIRS[0] : (lateral > 0 ? DIRS[1] : DIRS[2]);
+            for (int attempt = 0; attempt < 90 && jump == null; attempt++) {
+                // Preferred heading first, then the other one, then doubling back across the row.
+                boolean back = attempt >= 60;
+                boolean goNorth = !back && (attempt < 40 ? north : !north);
+                int side = back ? -lateral : lateral;
+                int[] dir = goNorth ? DIRS[0] : (side > 0 ? DIRS[1] : DIRS[2]);
                 jump = tryJump(front, dir, prev, last, checkpoint, xMin, xMax, zMin, zMax, baseY, yMax);
+                if (jump != null && back) lateral = -lateral;
             }
             if (jump == null) break; // boxed in: finish here
             for (Pos p : jump.cells) put(p, jump.materials.get(p));
