@@ -41,7 +41,9 @@ public final class SpacepunkPrison extends JavaPlugin {
             "dev.spacepunk.prison.undercroft.UndercroftModule",
             "dev.spacepunk.prison.guns.GunsModule",
             "dev.spacepunk.prison.workshop.WorkshopModule",
-            "dev.spacepunk.prison.parkour.ParkourModule"
+            "dev.spacepunk.prison.parkour.ParkourModule",
+            // Last: the in-game guide only reads other modules' services and events.
+            "dev.spacepunk.prison.guide.GuideModule"
     );
 
     private final List<FeatureModule> modules = new ArrayList<>();
@@ -90,7 +92,13 @@ public final class SpacepunkPrison extends JavaPlugin {
         }
 
         getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
-            for (PendingCommand c : commands) event.registrar().register(c.label, c.description, c.aliases, c.command);
+            for (PendingCommand c : commands) {
+                try {
+                    event.registrar().register(c.label, c.description, c.aliases, c.command);
+                } catch (RuntimeException e) {
+                    getLogger().log(Level.WARNING, "Could not register /" + c.label, e);
+                }
+            }
         });
 
         new dev.spacepunk.prison.core.WorldRules(getConfig().getBoolean("worlds.disable-weather", true)).start(this);

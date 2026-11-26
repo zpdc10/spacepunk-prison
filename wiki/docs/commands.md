@@ -9,6 +9,9 @@ Every player command on the server. Aliases are in brackets.
 | `/hub` (`/spawn`, `/station`) | Back to the station concourse |
 | `/warps` (`/shuttle`) | Open the Shuttle Board |
 | `/warp <id>` | Travel to a warp |
+| `/guide [chapter]` (`/help`, `/tutorial`) | The Station Guide: every system explained in game |
+| `/guide bar`, `/guide tips` | Hide or show the checklist bar, turn first-visit briefings off or on |
+| `/guide skip`, `/guide restart <chapter>` | Drop the current checklist, or run a chapter's checklist again |
 | `/resourcepack` (`/rp`) | Re-send the station texture pack |
 | `/hud` (`/sidebar`) | Hide or show your sidebar |
 | `/balance` (`/bal`) | Show your Credits, Tokens and Shards |

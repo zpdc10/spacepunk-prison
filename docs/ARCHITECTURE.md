@@ -41,6 +41,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `guns/` + `guns.yml` | guns | `GunService`, fires `GunHitEvent`; guns, ammo, gun parts, reload/recoil/spread/scopes, `/gunsmith`, `/gun` |
 | `workshop/` + `workshop.yml` | workshop | `WorkshopService`, private hull bays (own void world, plot grid), machines, power/heat/coolant, conveyors, Bay Locker, daily goods market, Assembly Bench, `/ws` `/wsadmin`, warp `workshop`. See `docs/WORKSHOP.md` |
 | `station/` + `station.yml` | station | Hub world + layout, `WarpService` (warps, hub spawn), terminals, `/hub` `/warp` `/warps` `/stationadmin`. See `docs/STATION.md` |
+| `guide/` + `guide.yml` (read from the jar; an optional server `guide.yml` overrides keys) | guide | In-game onboarding: `/guide` (`/help`) chapters as books, first-visit briefings, boss bar checklists, info boards (station wings, mine pads, fishing hub, Undercroft checkpoint, each workshop bay), `/guideadmin`. Follows players through `ObjectiveProgressEvent`, warps, worlds, menus and commands; never calls into other packages. See `docs/GUIDE.md` |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
 in your PR description. If you need something from another module, add an interface method or event in
@@ -48,7 +49,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, quests, mines, station, progression, drill, gangs, hud, fishing, raredrops, auction, undercroft, guns, workshop, parkour. Missing classes are skipped, so each module can
+Load order: resourcepack, quests, mines, station, progression, drill, gangs, hud, fishing, raredrops, auction, undercroft, guns, workshop, parkour, guide. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -67,6 +68,8 @@ land independently.
 Report what players do with `Objectives.report(player, ObjectiveTypes.X, amount, targets...)` (no-op without
 the quests module) and call `Objectives.register(type, "Display name")` once from your `enable()`; quests and
 contracts that use a type stay hidden until it is registered. The type list and targets are in `api/ObjectiveTypes`.
+Every report also fires `api.event.ObjectiveProgressEvent` (whether or not a quest wanted it), which the guide's
+checklists follow; a new system's tutorial steps can be added to `guide.yml` with `on: objective:<type>`.
 Quest, contract and parkour Credits pay with reasons `income:quest`, `income:contract`, `income:parkour`.
 
 ## Screen ownership (HUD)

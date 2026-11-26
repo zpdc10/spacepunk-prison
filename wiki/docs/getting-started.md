@@ -8,6 +8,24 @@
    to **Enabled**. `/resourcepack` (`/rp`) re-sends it.
 3. You arrive on the **station concourse**, the hub of everything. You respawn here too.
 
+## The in-game guide
+
+You never need to leave the game to learn a system:
+
+- **`/guide`** (also `/help`, `/tutorial`) opens the **Station Guide**: one chapter per system, as a book with
+  clickable commands. Every chapter links back to its page on this wiki.
+- **First-visit briefings.** The first time you reach a new place or system (the mines, your workshop bay, the
+  fishing waters, the Crew Deck, the Undercroft checkpoint, your first Token or salvage find...) you get a short title
+  and a chat briefing with a **[Read the guide]** button.
+- **Checklists.** Some chapters start a step-by-step checklist on a bar at the top of your screen: Getting Started on
+  your first join, your first production line in the workshop, your first catches when fishing, and more. Each step
+  tells you exactly what to do next.
+- **Info boards** float in each station wing, above every mine's landing pad, at the fishing hub and the Undercroft
+  checkpoint. Right-click the ⓘ for the chapter. Your own workshop bay has a "first line" board until you finish its
+  checklist.
+- `/guide bar` hides or shows the checklist bar, `/guide tips` turns briefings off or on, `/guide skip` drops the
+  current checklist and `/guide restart <chapter>` runs one again.
+
 ## Your first hour
 
 1. **Get your drill.** Every player gets one soulbound drill on first join. It can't be dropped, stored or lost,

@@ -96,6 +96,13 @@ final class QuestMenu implements Listener {
             case TRACK -> renderTrack(p, h, d);
         }
         set(h, SLOT_CLOSE, icon(Material.BARRIER, "ui/close", "<red>Close", List.of(), false), p::closeInventory);
+        if (h.tab == Tab.TUTORIALS) {
+            set(h, 47, icon(Material.WRITTEN_BOOK, "ui/info", "<#e0b354>Station Guide", List.of(
+                    "<gray>How every system works, step by step.", "", "<white>Click</white> <gray>to open <white>/guide"), false), () -> {
+                p.closeInventory();
+                p.performCommand("guide");
+            });
+        }
     }
 
     private void tab(Player p, Holder h, int slot, Tab tab, Material m, String name, String desc) {
