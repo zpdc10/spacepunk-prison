@@ -247,6 +247,25 @@ final class ParkourManager {
     }
 
     /** Removes a course's blocks and signs, restoring what it replaced. Returns false if there was none. */
+    /**
+     * Fills the 3x2 doorway that generate opened in the mine's north wall with the wall block above it. Courses built
+     * when the wall was a 1-high parapet only recorded one row in {@code replaced}, which would leave a gap in today's
+     * full-height wall. The catwalk is the first placed block, one block in front of the wall at rim height.
+     */
+    private static void closeDoorway(World w, Course c) {
+        if (c.placed.isEmpty()) return;
+        Pos walk = c.placed.getFirst().pos();
+        int cx = walk.x() + 1, gz = walk.z() + 1, y0 = walk.y() + 1;
+        for (int dx = -1; dx <= 1; dx++) {
+            Block above = w.getBlockAt(cx + dx, y0 + 2, gz);
+            if (above.getType().isAir()) continue;
+            for (int dy = 0; dy <= 1; dy++) {
+                Block b = w.getBlockAt(cx + dx, y0 + dy, gz);
+                if (b.getType().isAir()) b.setBlockData(above.getBlockData(), false);
+            }
+        }
+    }
+
     boolean clear(String mineId) {
         Course c = courses.remove(mineId);
         if (c == null) return false;
@@ -265,6 +284,7 @@ final class ParkourManager {
                     w.getBlockAt(p.pos().x(), p.pos().y(), p.pos().z()).setBlockData(Bukkit.createBlockData(p.data()), false);
                 } catch (IllegalArgumentException ignored) { }
             }
+            closeDoorway(w, c);
             for (UUID id : c.displays) {
                 Entity e = Bukkit.getEntity(id);
                 if (e != null) e.remove();
