@@ -1,6 +1,9 @@
 # Mines module config. Placement (regions, spawns) is stored separately in mines-data.yml by the admin
 # commands, so this file stays hand-editable. All tuning lives here; /mineadmin reload applies changes.
 
+# Bumped when defaults change; older files on a server are migrated on start (see MinesModule).
+config-version: 2
+
 world:
   # World used by /mineadmin generate. Created as an empty void world if missing.
   name: mines
@@ -22,9 +25,9 @@ layout:
   ladders-per-wall: 3 # ladders set into each pit wall, floor to walkway, so nobody gets stuck at the bottom
 
 refill:
-  mined-fraction: 0.65      # refill once 65% of a mine's blocks are gone
-  interval-seconds: 600     # also refill on this timer if anything was mined (0 = off)
-  warn-seconds: 3           # warn players inside before refilling (0 = no warning)
+  mined-fraction: 0.80      # reset once 80% of a mine's blocks are gone (20% left)
+  interval-seconds: 0       # also reset on this timer if anything was mined (0 = off)
+  warn-seconds: 60          # countdown before a reset while players are in the mine room (0 = no warning)
   on-startup: true          # refill every placed mine when the server starts
   use-fawe: true            # use FastAsyncWorldEdit (off-thread) when it is installed
   native-blocks-per-tick: 20000   # budget for the built-in refiller when FAWE is absent

@@ -15,6 +15,8 @@ public final class Mine implements MineService.MineInfo {
     private long remaining;
     private boolean refilling;
     private boolean refillPending;
+    private long refillAt;
+    private int lastAnnounced;
     private long lastRefillMillis = System.currentTimeMillis();
     private final BossBar bar = BossBar.bossBar(Component.empty(), 1f, BossBar.Color.YELLOW, BossBar.Overlay.NOTCHED_10);
 
@@ -69,6 +71,11 @@ public final class Mine implements MineService.MineInfo {
     void refilling(boolean b) { refilling = b; }
     boolean refillPending() { return refillPending; }
     void refillPending(boolean b) { refillPending = b; }
+    /** When a pending refill fires (epoch millis). */
+    long refillAt() { return refillAt; }
+    void refillAt(long t) { refillAt = t; }
+    int lastAnnounced() { return lastAnnounced; }
+    void lastAnnounced(int s) { lastAnnounced = s; }
     long lastRefillMillis() { return lastRefillMillis; }
 
     BossBar bar() { return bar; }
