@@ -237,7 +237,7 @@ heat:
     perfect-multiplier: 2.0
 
 # Modules: found while mining (or given by admins), slotted into frame sockets. Each changes how the drill plays.
-# rarity: COMMON, RARE, EPIC, LEGENDARY. weight = share of salvage finds.
+# rarity: COMMON, RARE, EPIC, LEGENDARY. weight = share of salvage finds. model = spacepunk:module/<model> (default: the id).
 modules:
   magnet_coil:
     name: Magnet Coil
@@ -281,6 +281,8 @@ modules:
     rarity: EPIC
     weight: 15
     material: ECHO_SHARD
+    # No pack art yet: uses the fallback module model.
+    model: unknown
     lore: "Condenses token residue out of the exhaust. Runs hot."
     pros: ["Tokens x1.5"]
     cons: ["Heat from hand mining x2.5"]
@@ -291,6 +293,8 @@ modules:
     rarity: EPIC
     weight: 12
     material: RECOVERY_COMPASS
+    # No pack art yet: uses the fallback module model.
+    model: unknown
     lore: "Tunes the hammer to the deck's resonance."
     pros: ["Jackhammer fires twice as often"]
     cons: ["Cutting Laser can't fire"]

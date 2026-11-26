@@ -40,6 +40,7 @@ public final class DrillModule implements FeatureModule {
         var pm = plugin.getServer().getPluginManager();
         pm.registerEvents(mining, plugin);
         pm.registerEvents(menu, plugin);
+        pm.registerEvents(new SellListener(drills, heat), plugin);
         pm.registerEvents(new DrillListener(plugin, drills, heat, mining, menu), plugin);
 
         plugin.addCommand("drill", "Open your drill bay", List.of("pickaxe", "pick"), new DrillCommand(this));

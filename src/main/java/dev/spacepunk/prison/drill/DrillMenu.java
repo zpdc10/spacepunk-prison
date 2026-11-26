@@ -117,7 +117,14 @@ public final class DrillMenu implements Listener {
         heatLore.add("<gray>for a <gold>perfect vent</gold><gray> (x" + DrillMath.fmt(cfg.heat.perfectMultiplier()) + " burst).");
         heatLore.add("");
         heatLore.add("<dark_gray>Overheats " + Numbers.shortFormat(d.overheats) + " · Perfect vents " + Numbers.shortFormat(d.perfectVents));
-        inv.setItem(SLOT_HEAT, items.icon(Material.MAGMA_CREAM, "ui/heat_gauge", "<#ff8c1a>Heat Gauge", heatLore));
+        ItemStack gauge = items.icon(Material.MAGMA_CREAM, "ui/heat_gauge", "<#ff8c1a>Heat Gauge", heatLore);
+        // The pack's gauge picks one of 9 stages from custom_model_data float [heat 0.0-1.0].
+        var gaugeMeta = gauge.getItemMeta();
+        var cmd = gaugeMeta.getCustomModelDataComponent();
+        cmd.setFloats(List.of((float) Math.min(1.0, heat.heat(p) / eff.heatCapacity)));
+        gaugeMeta.setCustomModelDataComponent(cmd);
+        gauge.setItemMeta(gaugeMeta);
+        inv.setItem(SLOT_HEAT, gauge);
 
         // Modules
         List<String> modInfo = new ArrayList<>();
@@ -129,7 +136,7 @@ public final class DrillMenu implements Listener {
         modInfo.add("<gray>click an installed module to take it out.");
         modInfo.add("");
         modInfo.add("<dark_gray>Modules found " + Numbers.shortFormat(d.modulesFound));
-        inv.setItem(SLOT_MODULES_INFO, items.icon(Material.HOPPER, "ui/modules", "<#c8743a>Module Sockets", modInfo));
+        inv.setItem(SLOT_MODULES_INFO, items.icon(Material.HOPPER, "ui/info", "<#c8743a>Module Sockets", modInfo));
         for (int i = 0; i < SOCKET_SLOTS.length; i++) {
             inv.setItem(SOCKET_SLOTS[i], socketIcon(cfg, d, frame, i));
         }
@@ -158,7 +165,7 @@ public final class DrillMenu implements Listener {
             FrameDef unlock = firstFrameWith(cfg, def, frame);
             lore.add("<red>Locked on the " + frame.name() + " frame.");
             if (unlock != null) lore.add("<gray>Unlocks with the " + unlock.coloredName() + "<gray> frame.");
-            return drills.items().icon(Material.GRAY_DYE, "ui/enchant/locked", "<dark_gray>" + def.name() + " <red>(locked)", lore);
+            return drills.items().icon(Material.GRAY_DYE, "ui/locked", "<dark_gray>" + def.name() + " <red>(locked)", lore);
         }
         lore.add("<gray>Level <white>" + lvl + "</white><dark_gray> / " + cap);
         lore.add("<gray>Now: " + (lvl > 0 ? DrillMath.describe(cfg, frame, e, lvl) : "<dark_gray>not installed"));
@@ -185,7 +192,7 @@ public final class DrillMenu implements Listener {
             }
         }
         String title = def.coloredName() + (lvl > 0 ? " <white>" + lvl : "");
-        ItemStack icon = drills.items().icon(def.icon(), "ui/enchant/" + e.id(), title, lore);
+        ItemStack icon = drills.items().icon(def.icon(), null, title, lore);
         if (lvl >= cap && cap > 0) {
             var meta = icon.getItemMeta();
             meta.setEnchantmentGlintOverride(true);
@@ -206,7 +213,7 @@ public final class DrillMenu implements Listener {
             for (FrameDef f : cfg.frames) if (f.sockets() > i) { unlock = f; break; }
             List<String> lore = new ArrayList<>();
             lore.add(unlock == null ? "<dark_gray>No frame has this socket." : "<gray>Opens with the " + unlock.coloredName() + "<gray> frame.");
-            return items.icon(Material.IRON_BARS, "ui/socket_locked", "<dark_gray>Locked socket", lore);
+            return items.icon(Material.IRON_BARS, "ui/locked", "<dark_gray>Locked socket", lore);
         }
         ModuleDef m = cfg.module(d.socket(i));
         if (m == null) {
@@ -227,7 +234,7 @@ public final class DrillMenu implements Listener {
         FrameDef next = cfg.nextFrame(frame);
         DrillItems items = drills.items();
         if (next == null) {
-            return items.icon(Material.NETHERITE_BLOCK, "ui/frame_upgrade", frame.coloredName() + " <gold>frame",
+            return items.icon(Material.NETHERITE_BLOCK, "ui/upgrade", frame.coloredName() + " <gold>frame",
                     List.of("<gold>Top frame installed.", "<gray>There's nothing left to bolt on."));
         }
         int grade = drills.grade(p);
@@ -252,7 +259,7 @@ public final class DrillMenu implements Listener {
         if (next.cost() > 0) lore.add((afford ? "<green>✔ " : "<red>✘ ") + "<gray>Costs " + eco.format(next.costCurrency(), next.cost()));
         lore.add("");
         lore.add(unlocked && afford ? "<#c8743a>Click</#c8743a> <gray>to install" : "<dark_gray>Not available yet");
-        return items.icon(unlocked && afford ? Material.ANVIL : Material.CHIPPED_ANVIL, "ui/frame_upgrade",
+        return items.icon(unlocked && afford ? Material.ANVIL : Material.CHIPPED_ANVIL, "ui/upgrade",
                 "<gray>Upgrade to " + next.coloredName() + " <gray>frame", lore);
     }
 
