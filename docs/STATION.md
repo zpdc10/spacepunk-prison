@@ -18,7 +18,7 @@ More: [exterior](img/station-hub-exterior.png), [floor plan](img/station-hub-pla
 | Mine Lifts (north) | x -14..14, z -54..-31 | `lift-scrapyard..lift-foundry` → `/mine <first mine of deck>`, `lift-best` → `/mine`, `mine-directory` → `/mines`, `parkour` → `/parkour` |
 | Exchange (east) | x 31..54, z -14..14 | `sell`, `cargo`, `drill`, `rankup`, `grades`, `auction` → `/ah`, `auction-claims` → `/ah claims`, `salvage` → `/salvage` |
 | Crew Deck (west) | x -54..-31, z -14..14 | `quests`, `contracts`, `gang`; bar and lounge, room for quest NPCs |
-| Shuttle Bay (south) | x -18..18, z 31..60 | `shuttle-board` → board of `planetside` + `danger` warps, `workshop` → warp `workshop` (falls back to `/workshop`) |
+| Shuttle Bay (south) | x -18..18, z 31..60 | `shuttle-board` → board of `planetside` + `danger` warps, `fishing` → warp `fishing`, `workshop` → warp `workshop` (falls back to `/workshop`) |
 | Guard Checkpoint | x 20..30, z 44..58 (off the bay) | `undercroft` → warp `undercroft` |
 
 Terminals are a lodestone console with a button; right-click either. Text displays label everything and are

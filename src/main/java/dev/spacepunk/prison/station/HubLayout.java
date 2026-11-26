@@ -24,7 +24,7 @@ import static dev.spacepunk.prison.station.Palette.*;
  */
 final class HubLayout {
     /** Layout version; the module rebuilds the hub on start when the stored version is older. */
-    static final int VERSION = 1;
+    static final int VERSION = 2;
     static final int FLOOR = 64;
     static final double SPAWN_X = 0.5, SPAWN_Z = 9.5;
     static final float SPAWN_YAW = 180f;
@@ -46,15 +46,16 @@ final class HubLayout {
 
     HubLayout draw() {
         concourse();
-        corridor(0, -1);
-        corridor(1, 0);
-        corridor(-1, 0);
-        corridor(0, 1);
         mineLifts();
         exchange();
         crewDeck();
         shuttleBay();
         checkpoint();
+        // Corridors last so they cut doorways through the wing walls.
+        corridor(0, -1);
+        corridor(1, 0);
+        corridor(-1, 0);
+        corridor(0, 1);
         return this;
     }
 
@@ -150,7 +151,7 @@ final class HubLayout {
         labels.add(new Label(17.3, 70.6, 0.5, "<#e0b354><bold>▶ EXCHANGE</bold>\n<gray>sell · cargo · drill bay · black market", 1.4f));
         labels.add(new Label(-16.3, 70.6, 0.5, "<#8fd3ff><bold>◀ CREW DECK</bold>\n<gray>quests · contracts · gangs", 1.4f));
         labels.add(new Label(0.5, 70.6, 17.8, "<#ff7a5a><bold>▼ SHUTTLE BAY</bold>\n<gray>planetside · workshop · undercroft", 1.4f));
-        labels.add(new Label(SPAWN_X, F + 2.6, SPAWN_Z - 3, "<gray>Welcome aboard. <white>/hub</white> brings you back here.", 0.9f));
+        labels.add(new Label(SPAWN_X, F + 2.6, SPAWN_Z - 3, "<gray>Welcome aboard. Right-click the <white>consoles</white> in each wing to travel.\n<white>/hub</white> brings you back here.", 0.9f));
     }
 
     private void crates(int x, int z, int height) {
@@ -356,6 +357,7 @@ final class HubLayout {
         shuttle(0, pz);
         terminal("shuttle-board", -6, 35, "<#ff7a5a><bold>Shuttle Board", "planetside destinations");
         terminal("shuttle-board", 6, 35, "<#ff7a5a><bold>Shuttle Board", "planetside destinations");
+        terminal("fishing", -6, 57, "<#8fd3ff><bold>Fishing Shuttle", "station waters and deck catches");
         // Workshop airlock in the west wall
         door(-19, 53, false, 1, LIGHT);
         terminal("workshop", -16, 53, "<#e0b354><bold>Workshop Airlock", "your private hull bay");

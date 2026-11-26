@@ -44,5 +44,6 @@ terminals:
   contracts: "command:contracts"
   gang: "command:gang"
   shuttle-board: "board:planetside,danger"
+  fishing: "warp:fishing|board:planetside"
   workshop: "warp:workshop|command:workshop"
   undercroft: "warp:undercroft"
