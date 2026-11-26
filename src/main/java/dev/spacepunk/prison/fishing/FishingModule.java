@@ -56,7 +56,7 @@ public final class FishingModule implements FeatureModule {
         menus = new FishingMenus(this);
         Services.register(FishingService.class, manager);
 
-        boolean created = world.load();
+        world.load();
         if (world.world() == null) plugin.getLogger().warning("[fishing] waters world unavailable; fishing areas disabled");
 
         listeners.add(new FishingListener(this));
@@ -79,7 +79,9 @@ public final class FishingModule implements FeatureModule {
         // One tick later so every world is up, then build (first run) and spawn signs and boards.
         sched.runTask(plugin, () -> {
             if (world.world() == null) return;
-            if (cfg.autoBuild && (created || !world.built())) {
+            // Only the stored layout version decides: the world folder can live outside the world container
+            // (newer servers keep dimensions inside the main world), so "folder missing" is not "new world".
+            if (cfg.autoBuild && !world.built()) {
                 plugin.getLogger().info("[fishing] building the station waters (hub + " + cfg.areas.size() + " pools)");
                 world.build();
             }

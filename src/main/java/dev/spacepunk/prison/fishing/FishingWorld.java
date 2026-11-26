@@ -173,12 +173,14 @@ final class FishingWorld {
     }
 
     boolean built() {
-        return YamlConfiguration.loadConfiguration(stateFile).getInt("built-layout", 0) >= LAYOUT_VERSION;
+        YamlConfiguration y = YamlConfiguration.loadConfiguration(stateFile);
+        return y.getInt("built-layout", 0) >= LAYOUT_VERSION && cfg.worldName.equals(y.getString("world", cfg.worldName));
     }
 
     private void markBuilt() {
         YamlConfiguration y = YamlConfiguration.loadConfiguration(stateFile);
         y.set("built-layout", LAYOUT_VERSION);
+        y.set("world", cfg.worldName);
         try {
             y.save(stateFile);
         } catch (IOException e) {
@@ -191,6 +193,19 @@ final class FishingWorld {
     /** Builds (or rebuilds) the hub, bridges and every pool. Main thread. */
     void build() {
         if (world == null) return;
+        long start = System.nanoTime();
+        try {
+            buildAll();
+        } catch (RuntimeException e) {
+            plugin.getLogger().log(Level.WARNING, "[fishing] building the station waters failed; it will retry next start", e);
+            return;
+        }
+        markBuilt();
+        plugin.getLogger().info("[fishing] station waters built (layout v" + LAYOUT_VERSION + ", "
+                + (System.nanoTime() - start) / 1_000_000 + " ms); saved to " + stateFile.getName());
+    }
+
+    private void buildAll() {
         int y = cfg.baseY - 1;
         // Hub
         for (int x = -HUB_RADIUS; x <= HUB_RADIUS; x++) {
@@ -220,7 +235,6 @@ final class FishingWorld {
             prevWall = a.wall();
         }
         world.setSpawnLocation(hub());
-        markBuilt();
     }
 
     private void bridge(int fromX, int toX, Material floorA, Material wallA, Material floorB, Material wallB, Material light) {
