@@ -131,6 +131,9 @@ final class Checkpoint {
             PlayerData d = uc.data(p);
             if (d != null && out > 0) { d.smuggled += out; uc.save(p); }
             uc.plugin().getServer().getPluginManager().callEvent(new ContrabandSmuggledEvent(p, out, taken, bribed));
+            int smuggled = out;
+            if (smuggled > 0) Services.find(dev.spacepunk.prison.api.GangService.class)
+                    .ifPresent(g -> g.addContractProgress(p.getUniqueId(), "contraband_smuggled", smuggled));
         }
         exit(p, destination);
     }

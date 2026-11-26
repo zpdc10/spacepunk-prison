@@ -1,10 +1,13 @@
 package dev.spacepunk.prison.undercroft;
 
 import dev.spacepunk.prison.SpacepunkPrison;
+import dev.spacepunk.prison.api.GangService;
 import dev.spacepunk.prison.api.Services;
+import dev.spacepunk.prison.api.WarpService;
 import dev.spacepunk.prison.api.UndercroftService;
 import dev.spacepunk.prison.core.FeatureModule;
 import dev.spacepunk.prison.util.Text;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
@@ -54,6 +57,11 @@ public final class UndercroftModule implements FeatureModule {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             World w = manager.world.loadOrCreate();
             if (w == null) return;
+            registerWarp();
+            Services.find(GangService.class).ifPresent(g -> {
+                g.registerContractObjective("pvp_kills", "Undercroft kills");
+                g.registerContractObjective("contraband_smuggled", "Contraband smuggled out");
+            });
             if (!store.generated && manager.cfg().autoGenerate) {
                 plugin.getLogger().info("[undercroft] building the Undercroft layout (first run)...");
                 generate();
@@ -111,9 +119,26 @@ public final class UndercroftModule implements FeatureModule {
         }
         World w = manager.world.loadOrCreate();
         if (w == null) { Text.send(p, "<red>The Undercroft is sealed right now."); return; }
+        if (Services.find(WarpService.class).map(ws -> ws.get("undercroft").isPresent() && ws.warp(p, "undercroft")).orElse(false)) {
+            return;
+        }
         p.teleportAsync(manager.world.checkpointSpawn(w));
         Text.send(p, "<gray>You step off the freight lift into the " + manager.cfg().checkpointName
                 + ". <red>Past the gate, PvP is on</red> <gray>and whatever you carry drops when you die.");
+    }
+
+    /** The station's Undercroft Gate terminal and Shuttle Board use warp id "undercroft". */
+    private void registerWarp() {
+        Services.find(WarpService.class).ifPresent(ws -> ws.register(new WarpService.Warp("undercroft",
+                "<red>The Undercroft", WarpService.DANGER, Material.NETHERITE_SCRAP,
+                List.of("<gray>The lawless lower hull. <red>PvP is on.", "<gray>Hot ore, drug labs, supply drops, bounties.",
+                        "<gray>Whatever you carry drops when you die.", "<gray>Contraband is scanned on the way out."),
+                p -> {
+                    World w = manager.world.world();
+                    return w == null ? null : manager.world.checkpointSpawn(w);
+                },
+                p -> manager.grade(p) < manager.cfg().minGrade ? "<red>Needs Grade " + manager.cfg().minGrade
+                        : manager.inUndercroft(p.getLocation()) ? "<gray>You're already down there." : null)));
     }
 
     UndercroftManager manager() { return manager; }

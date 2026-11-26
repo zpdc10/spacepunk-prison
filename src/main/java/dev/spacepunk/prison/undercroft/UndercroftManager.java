@@ -137,6 +137,8 @@ final class UndercroftManager implements UndercroftService {
 
     /** Where players go when they leave or die: the station hub if there is one, else the fallback world spawn. */
     Location exitLocation(Player p) {
+        Location hub = Services.find(dev.spacepunk.prison.api.WarpService.class).map(dev.spacepunk.prison.api.WarpService::hub).orElse(null);
+        if (hub != null && !world.isWorld(hub.getWorld())) return hub.clone();
         World w = Bukkit.getWorld(cfg.fallbackWorld);
         if (w == null || world.isWorld(w)) w = Bukkit.getWorlds().getFirst();
         return w.getSpawnLocation().add(0.5, 0, 0.5);

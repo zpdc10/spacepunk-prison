@@ -4,6 +4,8 @@ import dev.spacepunk.prison.api.GunService;
 import dev.spacepunk.prison.api.Services;
 import dev.spacepunk.prison.api.event.GunHitEvent;
 import dev.spacepunk.prison.api.event.OreSellEvent;
+import dev.spacepunk.prison.api.event.PlayerWarpEvent;
+import dev.spacepunk.prison.api.GangService;
 import dev.spacepunk.prison.api.event.UndercroftKillEvent;
 import dev.spacepunk.prison.data.ProfileLoadedEvent;
 import dev.spacepunk.prison.undercroft.Contraband.Id;
@@ -213,6 +215,7 @@ final class UndercroftListener implements Listener {
         uc.broadcastZone("<red>☠ <white>" + killer.getName() + "</white> <gray>dropped <white>" + victim.getName() + "</white>"
                 + (weapon.equals("melee") ? "" : " <dark_gray>[" + weapon.replace('_', ' ') + "]") + streak);
         uc.plugin().getServer().getPluginManager().callEvent(new UndercroftKillEvent(killer, victim, ring, !repeat, weapon));
+        if (!repeat) Services.find(GangService.class).ifPresent(g -> g.addContractProgress(killer.getUniqueId(), "pvp_kills", 1));
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -273,6 +276,20 @@ final class UndercroftListener implements Listener {
             uc.plugin().getServer().getScheduler().runTask(uc.plugin(), () -> checkpoint.request(p, dest));
         } else {
             notice(p, "<red>No shortcuts out of the Undercroft. Get back to the " + uc.cfg().checkpointName + " (west).");
+        }
+    }
+
+    /** Station warps out of the Undercroft go through the checkpoint scanner first. */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onWarp(PlayerWarpEvent e) {
+        Player p = e.player();
+        if (!in(e.from()) || in(e.to()) || checkpoint.leaving.contains(p.getUniqueId()) || p.hasPermission(BYPASS)) return;
+        Location dest = e.to();
+        if (uc.world.ringAt(p.getLocation()) == 0) {
+            e.cancel("<gray>Checkpoint scan first.");
+            uc.plugin().getServer().getScheduler().runTask(uc.plugin(), () -> checkpoint.request(p, dest));
+        } else {
+            e.cancel("<red>No shortcuts out of the Undercroft. Get back to the " + uc.cfg().checkpointName + " (west).");
         }
     }
 

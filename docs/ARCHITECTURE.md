@@ -34,6 +34,8 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
 | `raredrops/` + `raredrops.yml` | rare drops | Tiered finds while mining, relic collections (sell bonus via `OreSellEvent`), salvage caches, blueprint fragments → drill modules, `/salvage` |
 | `auction/` + `auction.yml` | auction house | The Black Market: buy-it-now + escrowed auctions, fees/tax sink, `auctions.json`, `/ah`; blocks prestige while the player leads a bid (`PrestigeAttemptEvent`) |
+| `undercroft/` + `undercroft.yml` | undercroft | `UndercroftService` (PvP zones, drug labs for gangs), the Undercroft world: prestige-gated rings, grace + combat tag, death drops, bounty tags, hot ore, labs + stims, supply drops, checkpoint scan/bribe, `/fence`, `/undercroft`. Warp `undercroft`. See `docs/UNDERCROFT.md` |
+| `guns/` + `guns.yml` | guns | `GunService`, fires `GunHitEvent`; guns, ammo, gun parts, reload/recoil/spread/scopes, `/gunsmith`, `/gun` |
 | `station/` + `station.yml` | station | Hub world + layout, `WarpService` (warps, hub spawn), terminals, `/hub` `/warp` `/warps` `/stationadmin`. See `docs/STATION.md` |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
@@ -42,7 +44,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, station, progression, drill, gangs, hud, raredrops, auction. Missing classes are skipped, so each module can
+Load order: resourcepack, mines, station, progression, drill, gangs, hud, raredrops, auction, undercroft, guns. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -121,6 +123,13 @@ here in the same PR that needs them, and the pack falls back to a vanilla look u
 | `spacepunk:currency/token` | Token item/icon |
 | `spacepunk:currency/shard` | Prestige Shard icon |
 | `spacepunk:currency/credit` | Credits (scrip) icon |
+| `spacepunk:gun/rivet_pistol`, `gun/scrap_smg`, `gun/breach_shotgun`, `gun/bolt_rifle`, `gun/plasma_lance` | Guns (32x32, held level like a gun; art in `tools/resourcepack/undercroft_art.py`) |
+| `spacepunk:gun/parts` | Gun parts (gunsmith currency) |
+| `spacepunk:ammo/pistol`, `ammo/rifle`, `ammo/shell`, `ammo/cell` | Ammo |
+| `spacepunk:stim/rust`, `stim/overdrive`, `stim/coldsleep`, `stim/static` | Undercroft stims |
+| `spacepunk:contraband/sludge`, `contraband/rust_flakes`, `contraband/cryo_gel`, `contraband/volt_salt` | Stim ingredients |
+| `spacepunk:contraband/hot_scrap`, `contraband/hot_crystal`, `contraband/hot_core` | Hot ore |
+| `spacepunk:contraband/bounty_tag`, `contraband/lining`, `contraband/tech_crate` | Bounty tag, Smuggler's Lining, Smuggled Tech Crate |
 | `spacepunk:raredrop/<drop_id>` | Rare drop items from `raredrops.yml` (art in `tools/resourcepack/raredrops_art.py`): `scrap_cache`, `sealed_crate`, `armored_strongbox`, `vault_core`, `fragment_common`, `fragment_rare`, `fragment_epic`, `fragment_legendary`, relics `inmate_tag` ... `warden_key` |
 
 UI icons available as `spacepunk:ui/<name>`: `panel` (default filler), `panel_rust`, `panel_hazard`, `divider`,
