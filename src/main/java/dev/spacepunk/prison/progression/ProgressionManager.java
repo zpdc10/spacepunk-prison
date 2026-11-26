@@ -73,6 +73,20 @@ final class ProgressionManager implements ProgressionService {
         return paid;
     }
 
+    @Override public String gradeName(int grade) { return cfg().gradeName(grade); }
+
+    @Override public String deckName(int grade) { return cfg().deckName(grade); }
+
+    @Override public boolean autoSelling(UUID player) {
+        CargoStore.Data d = cargo.get(player);
+        return d != null && d.autoSellUnlocked && d.autoSell;
+    }
+
+    @Override public long cargoCapacity(UUID player) {
+        CargoStore.Data d = cargo.get(player);
+        return d == null ? 0 : cfg().capacity(d.level);
+    }
+
     // ---- Cargo hold API ----
 
     @Override public Map<String, Long> cargoContents(UUID player) {

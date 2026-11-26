@@ -128,7 +128,10 @@ public final class MiningListener implements Listener {
             Services.get(EconomyService.class).give(id, Currency.TOKENS, tokens, "drill:mining");
             d.tokensFound += tokens;
             if (hand) {
-                heat.flash(p, "<aqua>+" + tokens + " Token" + (tokens == 1 ? "" : "s"));
+                // With the HUD module, Token gains already show in its mining summary.
+                if (Services.find(dev.spacepunk.prison.api.HudService.class).isEmpty()) {
+                    heat.flash(p, "<aqua>+" + tokens + " Token" + (tokens == 1 ? "" : "s"));
+                }
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.35f, 1.6f);
             }
         }

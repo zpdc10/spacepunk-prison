@@ -29,6 +29,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `mines/` + `mines.yml` | mines | `MineService`, fires `MineBlocksBrokenEvent`, mine refills, `/mine` |
 | `progression/` + `progression.yml` | progression | `ProgressionService`, grades 1-25, prestige, cargo hold, selling, `/rankup` `/prestige` `/sell` |
 | `drill/` + `drill.yml` | drill | The drill item, frames, enchants, modules, heat, drill menu |
+| `hud/` + `hud.yml` | hud | `HudService` (shared action bar), sidebar, tab list, cargo boss bar, per-break feedback, `/hud` |
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
@@ -37,7 +38,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, progression, drill. Missing classes are skipped, so each module can
+Load order: resourcepack, mines, progression, drill, hud. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -48,6 +49,17 @@ land independently.
    area enchants, which call `MineService.breakBlocks(..., ENCHANT)`. That fires another
    `MineBlocksBrokenEvent` with cause ENCHANT (drill must not proc enchants again on non-HAND causes).
 3. Progression (HIGHEST): adds `ores` to the cargo hold, or auto-sells (price × `sellMultiplier`).
+4. HUD (HIGH snapshot, MONITOR): measures what actually went into the hold, then shows it on the action bar
+   (`⛏ +14 Iron Ore → hold  +3 ✦`), plays a pickup click and sparks for the miner, and raises the cargo-full alarm.
+
+## Screen ownership (HUD)
+
+The hud module owns the action bar. Never call `sendActionBar` directly when `HudService` is registered:
+use `HudService#flash` for a short notice, or `HudService#segment(player, key, text)` for a persistent part
+(the drill's heat gauge is segment `heat`). Fall back to `sendActionBar` only if the service is missing.
+The sidebar uses a per-player scoreboard, so any future nametag/team feature must add its teams to each
+player's board (ask the hud module for a hook) instead of the main scoreboard. Boss bars: mines shows the
+current mine's fill, hud shows the cargo hold while mining.
 
 ## Currencies
 
