@@ -29,7 +29,7 @@ Every player command on the server. Aliases are in brackets.
 | `/cargo` (`/hold`, `/backpack`, `/bp`) | Open your cargo hold |
 | `/autosell` | Install or toggle the Auto-Seller |
 | `/drill` (`/pickaxe`, `/pick`) | Open the drill bay |
-| `/rig [drill\|rod\|gun <gun>]` (`/modules`) | Open your Module Rig, Rod Rig or a Weapon Rig (tabs switch between them) |
+| `/rig [drill\|rod\|exo\|gun <gun>]` (`/modules`) | Open your Module Rig, Rod Rig, Exo-Rig or a Weapon Rig (tabs switch between them) |
 | `/salvage` | Relic collections and decoding blueprints into module schematics |
 
 ## Quests and parkour
