@@ -155,6 +155,22 @@ selling:
     ANCIENT_DEBRIS: "Neutronium"
     DIAMOND_BLOCK: "Cryo Core"
     NETHERITE_BLOCK: "Dense Neutronium"
+    # Deck shell blocks (walls, rims, lights). Not mined normally, named in case they end up in a hold.
+    SMOOTH_STONE: "Bulkhead Plate"
+    POLISHED_ANDESITE: "Ash Panel"
+    POLISHED_DIORITE: "Pale Panel"
+    POLISHED_DEEPSLATE: "Hull Panel"
+    POLISHED_TUFF: "Vent Panel"
+    POLISHED_BASALT: "Scorched Pillar"
+    POLISHED_BLACKSTONE: "Breach Panel"
+    POLISHED_BLACKSTONE_BRICKS: "Breach Bricks"
+    CRACKED_POLISHED_BLACKSTONE_BRICKS: "Cracked Breach Bricks"
+    WAXED_WEATHERED_CUT_COPPER: "Duct Plating"
+    OCHRE_FROGLIGHT: "Amber Lamp"
+    VERDANT_FROGLIGHT: "Toxic Lamp"
+    PEARLESCENT_FROGLIGHT: "Pearl Lamp"
+    SEA_LANTERN: "Cryo Lamp"
+    SHROOMLIGHT: "Furnace Lamp"
 
 cargo:
   # Ore units the hold carries at level 0; each level multiplies it by capacity-growth.

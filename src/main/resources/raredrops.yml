@@ -1,0 +1,367 @@
+# Rare drops while mining (raredrops module). Every hand-broken block in a mine has a small chance to dig
+# something up. The chance is multiplied by the drill's rare odds (Salvage Sense, Scavenger Rig). Blocks broken by
+# area enchants roll at a reduced rate. A find picks a tier by weight, then an item of that tier that can drop on
+# the current deck (falls back to a lower tier if the deck has nothing in it).
+#
+# Pace at the base chance with ~3,000 hand-broken blocks an hour: ~6 finds an hour, a Rare about every 1.5 hours,
+# an Epic every ~4 hours, a Legendary every ~18 hours and a Mythic every ~170 hours (before Salvage Sense).
+
+roll:
+  base-chance: 0.002
+  # Multiplier on the chance for blocks broken by Shaped Charge, Jackhammer, Cutting Laser...
+  enchant-rate: 0.15
+  # At most this many finds from one batch of blocks.
+  max-per-event: 3
+
+# Use the resource pack's spacepunk:raredrop/<model> item models.
+use-item-models: true
+
+# Announcement per tier: title = big title for the finder, broadcast = server-wide chat line (hover shows the item),
+# global-sound = everyone online hears the tier's sound. Sounds are Minecraft sound keys.
+tiers:
+  common:
+    name: Common
+    color: "<#b8b0a0>"
+    weight: 55
+    sound: entity.item.pickup
+    pitch: 0.7
+  uncommon:
+    name: Uncommon
+    color: "<#7ccf6a>"
+    weight: 28
+    sound: entity.experience_orb.pickup
+    pitch: 0.8
+  rare:
+    name: Rare
+    color: "<#5aa0ff>"
+    weight: 12
+    title: true
+    sound: block.amethyst_block.chime
+    pitch: 1.0
+  epic:
+    name: Epic
+    color: "<#c070ff>"
+    weight: 4
+    title: true
+    broadcast: true
+    sound: ui.toast.challenge_complete
+    pitch: 1.2
+  legendary:
+    name: Legendary
+    color: "<#ffb030>"
+    weight: 0.9
+    title: true
+    broadcast: true
+    global-sound: true
+    sound: entity.player.levelup
+    pitch: 0.6
+  mythic:
+    name: Mythic
+    color: "<#ff4060>"
+    weight: 0.1
+    title: true
+    broadcast: true
+    global-sound: true
+    sound: entity.wither.spawn
+    pitch: 1.4
+
+# Salvage caches pay Credits x per-grade^(grade - 1) x (1 + per-prestige x prestige) of the player OPENING them, the
+# same curve as rank-up costs, so a cache is worth about the same number of minutes of mining at any grade (and
+# hoarding them through a prestige gains nothing). Cache Credits count as server income for the prestige payout.
+caches:
+  per-grade: 1.26
+  per-prestige: 0.5
+
+# Blueprint fragments needed to assemble one random drill module of that rarity (/salvage, Assembly Bay).
+fragments:
+  COMMON: 5
+  RARE: 5
+  EPIC: 5
+  LEGENDARY: 4
+
+# Relic collections. Catalog one of every relic in a set for a permanent sell bonus and a Token payout.
+sets:
+  scrapyard:
+    name: Scrapyard Relics
+    color: "<#9c8a6e>"
+    sell-bonus: 0.02
+    tokens: 1500
+  reactor:
+    name: Reactor Duct Relics
+    color: "<#d0603a>"
+    sell-bonus: 0.03
+    tokens: 3000
+  cryo:
+    name: Cryo Vault Relics
+    color: "<#8cc8e8>"
+    sell-bonus: 0.04
+    tokens: 6000
+  breach:
+    name: Hull Breach Relics
+    color: "<#9a70d0>"
+    sell-bonus: 0.05
+    tokens: 12000
+  foundry:
+    name: Core Foundry Relics
+    color: "<#f08a30>"
+    sell-bonus: 0.06
+    tokens: 25000
+  anomalies:
+    name: Anomalies
+    color: "<#ff4060>"
+    sell-bonus: 0.10
+    tokens: 100000
+
+# The drop table. type: RELIC (collectible), CACHE (right-click for Credits/Tokens) or FRAGMENT (module blueprint).
+# decks: which decks it can drop on (1 Scrapyard .. 5 Core Foundry); empty = every deck. weight: odds within its tier.
+# model: spacepunk:raredrop/<model> in the resource pack (defaults to the id).
+drops:
+  # ---- Salvage caches (every deck) ----
+  scrap_cache:
+    name: Scrap Cache
+    tier: common
+    type: CACHE
+    material: FLINT
+    weight: 10
+    lore: "A dented lunchbox someone welded shut."
+    credits: [250, 500]
+  sealed_crate:
+    name: Sealed Supply Crate
+    tier: uncommon
+    type: CACHE
+    material: BRICK
+    weight: 6
+    lore: "Station requisition seal, still intact."
+    credits: [1000, 1800]
+    tokens: [5, 15]
+  armored_strongbox:
+    name: Armored Strongbox
+    tier: rare
+    type: CACHE
+    material: NETHER_BRICK
+    weight: 5
+    lore: "Guard payroll, never delivered."
+    credits: [3500, 5500]
+    tokens: [25, 60]
+  vault_core:
+    name: Warden's Vault Core
+    tier: epic
+    type: CACHE
+    material: HEART_OF_THE_SEA
+    weight: 3
+    lore: "A pressurised core from the warden's private vault."
+    credits: [15000, 22000]
+    tokens: [150, 300]
+
+  # ---- Blueprint fragments (every deck) ----
+  fragment_common:
+    name: Common Module Blueprint
+    tier: uncommon
+    type: FRAGMENT
+    material: PAPER
+    module-rarity: COMMON
+    weight: 3
+    lore: "A greasy schematic scrap."
+  fragment_rare:
+    name: Rare Module Blueprint
+    tier: rare
+    type: FRAGMENT
+    material: PAPER
+    module-rarity: RARE
+    weight: 4
+    lore: "Part of an engineering print, coffee-stained."
+  fragment_epic:
+    name: Epic Module Blueprint
+    tier: epic
+    type: FRAGMENT
+    material: PAPER
+    module-rarity: EPIC
+    weight: 4
+    lore: "Military schematics, half redacted."
+  fragment_legendary:
+    name: Legendary Module Blueprint
+    tier: legendary
+    type: FRAGMENT
+    material: PAPER
+    module-rarity: LEGENDARY
+    weight: 4
+    lore: "Prototype plans. Nobody was meant to see these."
+
+  # ---- Relics: Scrapyard (deck 1) ----
+  inmate_tag:
+    name: Inmate Tag #0451
+    tier: uncommon
+    type: RELIC
+    set: scrapyard
+    decks: [1]
+    material: IRON_NUGGET
+    lore: "Stamped tin. The name has been scratched off."
+  warden_badge:
+    name: Rusted Warden Badge
+    tier: rare
+    type: RELIC
+    set: scrapyard
+    decks: [1]
+    material: GOLD_NUGGET
+    lore: "Whoever wore this didn't leave the yard either."
+  holo_locket:
+    name: Cracked Holo-Locket
+    tier: epic
+    type: RELIC
+    set: scrapyard
+    decks: [1]
+    material: PRISMARINE_CRYSTALS
+    lore: "It still flickers a face when you tap it."
+  founders_rivet:
+    name: Founder's Rivet
+    tier: legendary
+    type: RELIC
+    set: scrapyard
+    decks: [1]
+    material: QUARTZ
+    lore: "The first rivet driven into the station's hull."
+
+  # ---- Relics: Reactor Ducts (deck 2) ----
+  valve_wheel:
+    name: Melted Valve Wheel
+    tier: uncommon
+    type: RELIC
+    set: reactor
+    decks: [2]
+    material: FIREWORK_STAR
+    lore: "Somebody turned it the wrong way."
+  engineer_wrench:
+    name: Coolant Engineer's Wrench
+    tier: rare
+    type: RELIC
+    set: reactor
+    decks: [2]
+    material: TRIPWIRE_HOOK
+    lore: "Initials on the grip: R.K."
+  reactor_log:
+    name: Reactor Log Chip
+    tier: epic
+    type: RELIC
+    set: reactor
+    decks: [2]
+    material: DISC_FRAGMENT_5
+    lore: "The last entry is just a long string of zeroes."
+  fuel_pellet:
+    name: Glowing Fuel Pellet
+    tier: legendary
+    type: RELIC
+    set: reactor
+    decks: [2]
+    material: GLOW_BERRIES
+    lore: "Warm to the touch. Do not lick."
+
+  # ---- Relics: Cryo Vaults (deck 3) ----
+  frozen_dogtag:
+    name: Frozen Dog Tag
+    tier: uncommon
+    type: RELIC
+    set: cryo
+    decks: [3]
+    material: IRON_NUGGET
+    lore: "Rimed over. You can just read 'Sleeper 12'."
+  pod_nameplate:
+    name: Cryo-Pod Nameplate
+    tier: rare
+    type: RELIC
+    set: cryo
+    decks: [3]
+    material: PRISMARINE_SHARD
+    lore: "The pod it came from was empty."
+  music_box:
+    name: Sleeper's Music Box
+    tier: epic
+    type: RELIC
+    set: cryo
+    decks: [3]
+    material: NOTE_BLOCK
+    lore: "Plays three notes, then stops."
+  ice_core:
+    name: Perfect Ice Core
+    tier: legendary
+    type: RELIC
+    set: cryo
+    decks: [3]
+    material: BLUE_ICE
+    lore: "It has never melted. Not once."
+
+  # ---- Relics: Hull Breach (deck 4) ----
+  void_bolt:
+    name: Void-Bleached Bolt
+    tier: uncommon
+    type: RELIC
+    set: breach
+    decks: [4]
+    material: IRON_NUGGET
+    lore: "Hard vacuum took the colour out of it."
+  visor_shard:
+    name: Spacesuit Visor Shard
+    tier: rare
+    type: RELIC
+    set: breach
+    decks: [4]
+    material: AMETHYST_SHARD
+    lore: "Gold-tinted. A reflection that isn't yours."
+  black_box:
+    name: Black Box Recorder
+    tier: epic
+    type: RELIC
+    set: breach
+    decks: [4]
+    material: ARMADILLO_SCUTE
+    lore: "What hit the hull? It knows."
+  star_chart:
+    name: Star Chart Fragment
+    tier: legendary
+    type: RELIC
+    set: breach
+    decks: [4]
+    material: MAP
+    lore: "Shows a route off the station."
+
+  # ---- Relics: Core Foundry (deck 5) ----
+  gold_tooth:
+    name: Slagged Gold Tooth
+    tier: uncommon
+    type: RELIC
+    set: foundry
+    decks: [5]
+    material: GOLD_NUGGET
+    lore: "Don't ask whose."
+  crown_gear:
+    name: Foundry Crown Gear
+    tier: rare
+    type: RELIC
+    set: foundry
+    decks: [5]
+    material: CLOCK
+    lore: "The master gear of the first smelter."
+  ledger_page:
+    name: Warden's Ledger Page
+    tier: epic
+    type: RELIC
+    set: foundry
+    decks: [5]
+    material: PAPER
+    lore: "A list of names. Yours is on it."
+  neutronium_heart:
+    name: Neutronium Heart
+    tier: legendary
+    type: RELIC
+    set: foundry
+    decks: [5]
+    material: ECHO_SHARD
+    lore: "Heavier than it has any right to be."
+
+  # ---- Mythic (any deck) ----
+  warden_key:
+    name: The Warden's Master Key
+    tier: mythic
+    type: RELIC
+    set: anomalies
+    material: TRIAL_KEY
+    lore: "Opens every door on the station. Every single one."

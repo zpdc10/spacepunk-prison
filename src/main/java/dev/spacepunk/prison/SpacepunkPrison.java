@@ -27,9 +27,13 @@ public final class SpacepunkPrison extends JavaPlugin {
     private static final List<String> MODULE_CLASSES = List.of(
             "dev.spacepunk.prison.resourcepack.ResourcePackModule",
             "dev.spacepunk.prison.mines.MinesModule",
+            "dev.spacepunk.prison.station.StationModule",
             "dev.spacepunk.prison.progression.ProgressionModule",
             "dev.spacepunk.prison.drill.DrillModule",
-            "dev.spacepunk.prison.hud.HudModule"
+            "dev.spacepunk.prison.gangs.GangsModule",
+            "dev.spacepunk.prison.hud.HudModule",
+            "dev.spacepunk.prison.raredrops.RareDropsModule",
+            "dev.spacepunk.prison.auction.AuctionModule"
     );
 
     private final List<FeatureModule> modules = new ArrayList<>();
@@ -76,6 +80,7 @@ public final class SpacepunkPrison extends JavaPlugin {
             for (PendingCommand c : commands) event.registrar().register(c.label, c.description, c.aliases, c.command);
         });
 
+        new dev.spacepunk.prison.core.WorldRules(getConfig().getBoolean("worlds.disable-weather", true)).start(this);
         profileManager.start(getConfig().getInt("storage.autosave-seconds", 120));
     }
 

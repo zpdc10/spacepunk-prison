@@ -70,13 +70,16 @@ public final class MinesModule implements FeatureModule {
         }
     }
 
-    /** Until there is a hub, everyone who joins outside the mines world is sent to the mines world spawn. */
+    /** Until the station hub is built, everyone who joins outside the mines world is sent to the mines world spawn. */
     private final class JoinToMines implements org.bukkit.event.Listener {
         @org.bukkit.event.EventHandler
         public void onJoin(org.bukkit.event.player.PlayerJoinEvent e) {
             String name = manager.config().settings().world();
             World w = plugin.getServer().getWorld(name);
             if (w == null || e.getPlayer().getWorld().equals(w)) return;
+            // The station hub takes over once it exists.
+            if (dev.spacepunk.prison.api.Services.find(dev.spacepunk.prison.api.WarpService.class)
+                    .map(dev.spacepunk.prison.api.WarpService::hub).isPresent()) return;
             e.getPlayer().teleportAsync(w.getSpawnLocation().add(0.5, 0, 0.5));
         }
     }
