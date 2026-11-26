@@ -68,7 +68,7 @@ See [Currencies](../currencies.md#tokens).
 ### 3. Modules and the Module Rig
 
 Modules are shaped pieces you fit into your **Module Rig**, a grid that opens from the **Module Rig** button in the
-drill bay. Each module changes how the drill plays, with an **upside and a downside**, so two players at the same
+drill bay or with `/rig`. Each module changes how the drill plays, with an **upside and a downside**, so two players at the same
 level build very different drills.
 
 **Fitting modules**
@@ -138,6 +138,9 @@ about +8% heat.
   random module. Finds are announced to the server.
 - **Daily parkour** rare rolls, **fishing** treasure (Sealed Module Cases), **Undercroft** Smuggled Tech Crates,
   and the **Contract Track** (Coolant Loop at 600 points, Magnet Coil at 1,200).
+
+Your fishing rod and each gun model have rigs of their own that work the same way, with their own modules: see the
+[Rod Rig](fishing.md#the-rod-rig) and [Weapon Rigs](guns.md#weapon-rigs).
 
 Modules, schematics and scrap parts are kept through prestige and can be traded (`/trade` or the
 [Black Market](black-market.md)).

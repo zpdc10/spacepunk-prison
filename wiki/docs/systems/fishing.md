@@ -233,6 +233,48 @@ Cost of level N = base × 1.09^(N−1) Scales.
 | Harpoon | +0.5 damage to sea creatures | 10 |
 | Fillet | Fish sell for +1% more | 12 |
 
+### The Rod Rig
+
+Your rod has its own module grid, the **Rod Rig**. It works exactly like the drill's
+[Module Rig](drill.md#3-modules-and-the-module-rig): shaped modules, rotation, families, placement rules, hidden
+combos and Mk I to Mk V fusing. Open it with `/rig rod` (or `/rig`, then the rod tab), or the **Rod Rig** button in
+the rod bay.
+
+The grid grows with your rod tier:
+
+| Rod tier | Rod Rig |
+| --- | --- |
+| Bent Wire Rod | 2×1 |
+| Scrap Spinner | 2×2 |
+| Carbon Line | 3×2 |
+| Mag-Rail Rod | 3×3, 1 core cell |
+| Void Angler | 4×3, 1 core cell |
+
+Rod modules add to your fishing effects the same way lures do (+8% bite speed is like a lure giving +8%).
+
+| Module | Rarity | Family | Shape | Upside | Downside | Rule |
+| --- | --- | --- | --- | --- | --- | --- |
+| Reel Servo | Common | Tackle | Dot | Bites 8% faster | Catch zone −1% | |
+| Sonar Pinger | Common | Sonar | Bar 2 | Rarer fish +10% | Bites 5% slower | |
+| Kevlar Spool | Rare | Tackle | L | Line strength +20%, zone +2% | Treasure −15% | |
+| Salvage Magnet | Rare | | Bar 2 | Treasure +50%, scrap parts +30% | Rarer fish −10% | Needs the edge |
+| Chum Injector | Rare | Sonar | T | Sea creatures +50% | Fish value −5% | |
+| Fillet Laser | Epic | Tackle | Zig-zag | Fish value +10% | Bites 10% slower | Must touch Tackle |
+| Twin Reel | Epic | Tackle | Square | Double catch +6% | Line strength −15%, zone −1% | |
+| Leviathan Sonar | Legendary | Sonar | Bar 3 | Rarer fish +30%, sea creatures +40% | Bites 15% slower | Core cell |
+
+| Family | 2 online | 3 online |
+| --- | --- | --- |
+| Sonar | Rarer fish +5% | Sea creatures +20%, treasure +20% |
+| Tackle | Line strength +10% | Bites 6% faster, double catch +2% |
+
+Two hidden combos exist for the Rod Rig. As with the drill, nobody tells you which pairs.
+
+**Where rod modules come from:** a random one is found on **0.15% of fish**, **1% of treasure catches** and
+**2% of sea creature kills**. You can also build any of them at the workshop
+[Assembly Bench](workshop.md#the-assembly-bench) once you know its schematic; everyone starts knowing the Reel
+Servo. They fuse, trade and survive prestige like drill modules.
+
 ### Lures
 
 Lures are items from treasure and sea creatures. Slot them into the rod (they're tradeable while not slotted).
