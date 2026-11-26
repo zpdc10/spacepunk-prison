@@ -146,37 +146,47 @@ final class RareDropsManager {
 
     /** Gives the drop, records it and plays the tier's announcement. */
     void award(Player p, RareData d, Drop drop, boolean announce) {
-        give(p, d, drop, 1);
+        boolean fit = give(p, d, drop, 1);
         d.totalFinds++;
         d.found.merge(drop.id(), 1L, Long::sum);
         save(p.getUniqueId());
-        if (announce) announce(p, drop);
+        if (announce) announce(p, drop, fit);
         Objectives.report(p, ObjectiveTypes.RARE_DROP, 1, drop.id(), "rarity:" + drop.tier().id());
     }
 
-    /** Puts items in the inventory; whatever does not fit waits in the /salvage stash (never dropped in the mine). */
-    void give(Player p, RareData d, Drop drop, long amount) {
+    /**
+     * Puts the drop in the player's real inventory (never the cargo hold). Whatever doesn't fit drops at their feet,
+     * protected so only they can pick it up. Returns true if everything fit in the inventory.
+     */
+    boolean give(Player p, RareData d, Drop drop, long amount) {
         long left = amount;
+        boolean fit = true;
         while (left > 0) {
             int n = (int) Math.min(64, left);
             left -= n;
-            Map<Integer, ItemStack> over = p.getInventory().addItem(items.create(drop, n));
-            long overflow = over.values().stream().mapToLong(ItemStack::getAmount).sum();
-            if (overflow > 0) {
-                d.stash.merge(drop.id(), overflow + left, Long::sum);
-                Text.send(p, "<yellow>Inventory full:</yellow> <gray>" + drop.coloredName()
-                        + " <gray>went to your stash in <white>/salvage</white>.");
-                return;
+            for (ItemStack over : p.getInventory().addItem(items.create(drop, n)).values()) {
+                fit = false;
+                p.getWorld().dropItem(p.getLocation(), over, item -> {
+                    item.setOwner(p.getUniqueId());
+                    item.setPickupDelay(0);
+                    item.setUnlimitedLifetime(true);
+                    item.setGlowing(true);
+                });
             }
         }
+        if (!fit) {
+            Text.send(p, "<yellow>Inventory full:</yellow> " + drop.coloredName() + " <gray>dropped at your feet.");
+        }
+        return fit;
     }
 
-    private void announce(Player p, Drop drop) {
+    private void announce(Player p, Drop drop, boolean fit) {
         Tier t = drop.tier();
         String label = t.colored("<bold>" + t.name().toUpperCase() + " DROP!</bold>");
         Sound sound = Sound.sound(Key.key(t.sound()), Sound.Source.MASTER, 0.9f, t.pitch());
         p.playSound(sound);
-        String flash = label + " <gray>" + drop.coloredName();
+        String where = fit ? " <dark_gray>→</dark_gray> <gray>inventory" : " <dark_gray>→</dark_gray> <yellow>at your feet";
+        String flash = label + " " + drop.coloredName() + where;
         HudService hud = Services.find(HudService.class).orElse(null);
         if (hud != null) hud.flash(p, flash);
         else p.sendActionBar(Text.mm(flash));
@@ -191,7 +201,8 @@ final class RareDropsManager {
             }
             Bukkit.getConsoleSender().sendMessage(msg);
         } else {
-            p.sendMessage(Text.mm(Text.PREFIX + label + " <gray>You found ").append(name));
+            p.sendMessage(Text.mm(Text.PREFIX + label + " <gray>You found ").append(name)
+                    .append(Text.mm(fit ? " <gray>(in your inventory)" : " <yellow>(dropped at your feet)")));
         }
     }
 
