@@ -37,6 +37,8 @@ final class ProgressionConfig {
     final long defaultPrice;
     /** Item id ("minecraft:copper_ore", "spacepunk:copper_ingot") -> base price. */
     final Map<String, Long> prices;
+    /** Item id -> display name (plain text). */
+    final Map<String, String> names;
 
     final long cargoBaseCapacity;
     final double cargoCapacityGrowth;
@@ -106,6 +108,24 @@ final class ProgressionConfig {
             }
         }
 
+        names = new HashMap<>();
+        ConfigurationSection ns = y.getConfigurationSection("selling.names");
+        if (ns != null) {
+            for (String k : ns.getKeys(false)) {
+                String id = k.contains(":") ? k.toLowerCase(Locale.ROOT) : null;
+                if (id == null) {
+                    Material m = Material.matchMaterial(k.toUpperCase(Locale.ROOT));
+                    if (m == null) {
+                        log.warning("progression.yml: unknown material in selling.names: " + k);
+                        continue;
+                    }
+                    id = id(m);
+                }
+                String v = ns.getString(k);
+                if (v != null && !v.isBlank()) names.put(id, v);
+            }
+        }
+
         cargoBaseCapacity = Math.max(1, y.getLong("cargo.base-capacity", 500));
         cargoCapacityGrowth = Math.max(1.0, y.getDouble("cargo.capacity-growth", 1.5));
         cargoMaxLevel = Math.max(0, y.getInt("cargo.max-level", 12));
@@ -136,6 +156,20 @@ final class ProgressionConfig {
         if (p != null) return p;
         // Unlisted vanilla blocks get the default price; unlisted custom items are not sellable.
         return itemId.startsWith("minecraft:") ? defaultPrice : 0;
+    }
+
+    /** Station name for an item id, or its vanilla name ("minecraft:deepslate_iron_ore" -> "Deepslate Iron Ore"). */
+    String itemName(String itemId) {
+        String n = names.get(itemId);
+        if (n != null) return n;
+        int colon = itemId.indexOf(':');
+        StringBuilder sb = new StringBuilder();
+        for (String p : itemId.substring(colon + 1).split("_")) {
+            if (p.isEmpty()) continue;
+            if (!sb.isEmpty()) sb.append(' ');
+            sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
+        }
+        return sb.toString();
     }
 
     long price(Material m) { return price(id(m)); }

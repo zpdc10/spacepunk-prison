@@ -73,7 +73,7 @@ final class CargoMenu implements Listener {
         d.items.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue(Comparator.reverseOrder()))
                 .limit(8)
-                .forEach(e -> lore.add("<dark_gray>· <gray>" + pretty(e.getKey()) + " <white>x" + Numbers.shortFormat(e.getValue())));
+                .forEach(e -> lore.add("<dark_gray>· <gray>" + progression.cfg().itemName(e.getKey()) + " <white>x" + Numbers.shortFormat(e.getValue())));
         if (d.items.size() > 8) lore.add("<dark_gray>  and " + (d.items.size() - 8) + " more");
         if (d.items.isEmpty()) lore.add("<dark_gray>Empty. Go mine something.");
         inv.setItem(SLOT_CONTENTS, icon(Material.BARREL, "<#c8743a>Cargo Contents", lore));
@@ -157,18 +157,6 @@ final class CargoMenu implements Listener {
         return color + "|".repeat(filled) + "<dark_gray>" + "|".repeat(cells - filled);
     }
 
-    /** "minecraft:deepslate_iron_ore" -> "Deepslate Iron Ore". */
-    static String pretty(String itemId) {
-        int colon = itemId.indexOf(':');
-        String[] parts = itemId.substring(colon + 1).split("_");
-        StringBuilder sb = new StringBuilder();
-        for (String p : parts) {
-            if (p.isEmpty()) continue;
-            if (!sb.isEmpty()) sb.append(' ');
-            sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
-        }
-        return sb.toString();
-    }
 
     private static ItemStack icon(Material m, String name, List<String> lore) {
         ItemStack it = new ItemStack(m);

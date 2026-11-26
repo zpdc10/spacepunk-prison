@@ -77,6 +77,8 @@ final class ProgressionManager implements ProgressionService {
 
     @Override public String deckName(int grade) { return cfg().deckName(grade); }
 
+    @Override public String itemName(String itemId) { return cfg().itemName(itemId.toLowerCase(Locale.ROOT)); }
+
     @Override public boolean autoSelling(UUID player) {
         CargoStore.Data d = cargo.get(player);
         return d != null && d.autoSellUnlocked && d.autoSell;
