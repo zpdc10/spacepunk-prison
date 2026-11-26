@@ -150,7 +150,7 @@ final class RareDropsManager {
         d.totalFinds++;
         d.found.merge(drop.id(), 1L, Long::sum);
         save(p.getUniqueId());
-        if (announce) announce(p, drop);
+        if (announce) announce(p, drop, fit);
         Objectives.report(p, ObjectiveTypes.RARE_DROP, 1, drop.id(), "rarity:" + drop.tier().id());
     }
 
