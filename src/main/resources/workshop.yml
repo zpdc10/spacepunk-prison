@@ -1,0 +1,424 @@
+# Workshop: each player's private hull bay, where they place machines that process mined ore into goods
+# worth more than raw ore. Every number here is a tuning knob. Reload with /wsadmin reload.
+# Design and balance notes: docs/WORKSHOP.md
+
+world:
+  name: workshop
+  # Floor height of every bay. Bays sit on a grid in an empty void world.
+  floor-y: 64
+  # Distance between bay centres (must fit the biggest bay plus its walls).
+  spacing: 128
+  # Bays per grid row.
+  grid-width: 32
+
+# Bay sizes. Level 0 is free. Each expansion grows the bay around its centre; machines and builds stay put.
+# size = interior width and depth (odd), height = interior height, slots = max machines (conveyors don't count),
+# locker = units the Bay Locker holds (finished goods, byproducts, anything a Depot Hatch receives).
+bay-levels:
+  - { size: 11, height: 6, slots: 6, locker: 2000, credits: 0, shards: 0, grade: 1 }
+  - { size: 15, height: 7, slots: 10, locker: 5000, credits: 30000, shards: 0, grade: 3 }
+  - { size: 21, height: 8, slots: 16, locker: 12000, credits: 400000, shards: 0, grade: 8 }
+  - { size: 27, height: 9, slots: 24, locker: 30000, credits: 5000000, shards: 10, grade: 12 }
+  - { size: 35, height: 10, slots: 34, locker: 75000, credits: 60000000, shards: 40, grade: 18 }
+  - { size: 45, height: 12, slots: 48, locker: 200000, credits: 400000000, shards: 120, grade: 22 }
+
+# Blocks of the bay shell (players can't break these). The pack retextures most of them.
+shell:
+  floor: POLISHED_DEEPSLATE
+  floor-accent: DEEPSLATE
+  wall: WAXED_WEATHERED_CUT_COPPER
+  pillar: POLISHED_BLACKSTONE_BRICKS
+  window: TINTED_GLASS
+  wall-top: POLISHED_BLACKSTONE
+  ceiling: DEEPSLATE
+  light: SEA_LANTERN
+  # Right-click the terminal (in the north wall) to open the workshop menu.
+  terminal: LODESTONE
+
+# Machine marks: Mk I is what you buy. Upgrade in the machine's menu.
+# speed/power/heat multiply the machine's base values. refined/pristine = quality roll chance on smelt,
+# alloy and fabricate steps. cost = multiple of the machine's base cost. components = extra parts needed.
+tiers:
+  - { name: "Mk I", speed: 1.0, power: 1.0, heat: 1.0, refined: 0.0, pristine: 0.0, cost: 0 }
+  - { name: "Mk II", speed: 1.6, power: 1.2, heat: 0.9, refined: 0.15, pristine: 0.0, cost: 6 }
+  - name: "Mk III"
+    speed: 2.5
+    power: 1.4
+    heat: 0.8
+    refined: 0.30
+    pristine: 0.06
+    cost: 30
+    components: { "spacepunk:wiring_harness": 4, "spacepunk:armor_plate": 2 }
+
+# Machines. role: source (pulls ore in), processor (runs recipes), generator (power), pump (coolant),
+# radiator (cools neighbours), depot (into the Bay Locker), chute (sells to the market).
+# cost = Credits for the first one; each extra one of the same kind costs cost-growth times more.
+# power = power drawn per second while running. heat = heat gained per second while running.
+# speed: processors = craft speed multiplier; source = items pulled per second; generator = power made
+# per second; pump = coolant made per second. coolant = coolant used per second (washers, forges).
+machines:
+  intake:
+    name: "Cargo Intake"
+    role: source
+    icon: HOPPER
+    cost: 1500
+    grade: 1
+    power: 1
+    heat: 0
+    speed: 2
+    lore: "Pulls ore from your cargo hold (or the Bay Locker) and pushes it out the front."
+  crusher:
+    name: "Jaw Crusher"
+    role: processor
+    icon: GRINDSTONE
+    cost: 3000
+    grade: 1
+    power: 3
+    heat: 2
+    speed: 1
+    markup: 1.15
+    lore: "Crushes raw ore into grit. Spits out slag dust, which burns as fuel."
+  generator:
+    name: "Slag Burner"
+    role: generator
+    icon: BLAST_FURNACE
+    cost: 2500
+    grade: 1
+    heat: 3
+    speed: 12
+    lore: "Burns slag dust, carbon and fuel cells for power. Feeds itself from the Bay Locker."
+  depot:
+    name: "Depot Hatch"
+    role: depot
+    icon: BARREL
+    cost: 1000
+    grade: 1
+    lore: "Anything pushed into it goes to the Bay Locker."
+  radiator:
+    name: "Heat Sink"
+    role: radiator
+    icon: IRON_BARS
+    cost: 2000
+    grade: 2
+    speed: 4
+    lore: "Passive cooling for every machine touching it."
+  washer:
+    name: "Sludge Washer"
+    role: processor
+    icon: CAULDRON
+    cost: 12000
+    grade: 4
+    power: 3
+    heat: 1
+    speed: 1
+    coolant: 4
+    markup: 1.17
+    lore: "Washes grit into clean concentrate. Needs coolant. Leaves toxic sludge behind."
+  pump:
+    name: "Coolant Pump"
+    role: pump
+    icon: CONDUIT
+    cost: 8000
+    grade: 4
+    power: 2
+    heat: 0.5
+    speed: 10
+    lore: "Pumps coolant to every washer and forge in the bay."
+  furnace:
+    name: "Arc Furnace"
+    role: processor
+    icon: FURNACE
+    cost: 40000
+    grade: 6
+    power: 8
+    heat: 6
+    speed: 1
+    markup: 1.33
+    quality: true
+    lore: "Smelts concentrate into ingots. Runs very hot."
+  chute:
+    name: "Trade Chute"
+    role: chute
+    icon: DROPPER
+    cost: 25000
+    grade: 6
+    power: 1
+    lore: "Sells whatever it receives at today's market price, minus a cut."
+  forge:
+    name: "Alloy Forge"
+    role: processor
+    icon: SMITHING_TABLE
+    cost: 400000
+    grade: 11
+    power: 10
+    heat: 5
+    speed: 1
+    coolant: 3
+    markup: 1.25
+    quality: true
+    lore: "Fuses two refined goods into an alloy."
+  fabricator:
+    name: "Fabricator"
+    role: processor
+    icon: CRAFTER
+    cost: 3000000
+    grade: 16
+    power: 12
+    heat: 4
+    speed: 1
+    markup: 1.3
+    quality: true
+    lore: "Builds components: wiring, plating, coils, circuits. Parts for drill modules and guns."
+
+cost-growth: 1.35
+
+heat:
+  max: 100
+  # An overheated machine stops until it cools to this.
+  resume: 25
+  # Every machine sheds this much heat per second on its own.
+  base-cooling: 3
+  # Each running machine touching another adds this share to its heat gain (0.35 = +35%).
+  neighbour-heat: 0.35
+
+logistics:
+  # Items a machine can push out its front per second (times the tier speed).
+  transfer: 4
+  # Longest conveyor line followed, in blocks.
+  max-conveyor: 48
+  # Units each machine buffers per input item / in total output before it stops.
+  input-buffer: 32
+  output-buffer: 64
+  # Conveyors (sold in bundles at the Machine Shop).
+  conveyor-bundle: 16
+  conveyor-price: 800
+
+# Burn time in seconds per unit in a Slag Burner.
+fuels:
+  "spacepunk:slag_dust": 4
+  "minecraft:stone": 2
+  "minecraft:cobblestone": 2
+  "minecraft:coal_ore": 20
+  "minecraft:deepslate_coal_ore": 24
+  "spacepunk:crushed_carbon": 30
+  "spacepunk:fuel_cell": 240
+
+# Ore families: crush -> wash -> smelt. value = Credits value of one crushed unit before markup; each ore
+# yields (its sell price / value) crushed units on average, so crushing never loses value. Goods prices
+# are derived: each step multiplies by its machine's markup. ids are spacepunk:<id>.
+families:
+  slag:
+    value: 1
+    ores: [stone, cobblestone, andesite, deepslate, tuff, calcite, packed_ice, blue_ice, blackstone, basalt, smooth_basalt]
+    crushed: { id: slag_dust, name: "Slag Dust" }
+  carbon:
+    value: 4
+    ores: [coal_ore, deepslate_coal_ore]
+    crushed: { id: crushed_carbon, name: "Crushed Carbon" }
+    washed: { id: washed_carbon, name: "Washed Carbon" }
+    refined: { id: graphite, name: "Graphite Rod" }
+  copper:
+    value: 6
+    ores: [copper_ore, deepslate_copper_ore, raw_copper_block]
+    crushed: { id: crushed_copper, name: "Crushed Copper" }
+    washed: { id: copper_concentrate, name: "Copper Concentrate" }
+    refined: { id: copper_ingot, name: "Copper Ingot" }
+  steel:
+    value: 9
+    ores: [iron_ore, deepslate_iron_ore, raw_iron_block]
+    crushed: { id: crushed_steel, name: "Crushed Steel" }
+    washed: { id: steel_concentrate, name: "Steel Concentrate" }
+    refined: { id: steel_ingot, name: "Steel Ingot" }
+  conduit:
+    value: 13
+    ores: [redstone_ore, deepslate_redstone_ore]
+    crushed: { id: crushed_conduit, name: "Crushed Conduit" }
+    washed: { id: conduit_paste, name: "Conduit Paste" }
+    refined: { id: conduit_filament, name: "Conduit Filament" }
+  brass:
+    value: 28
+    ores: [gold_ore, deepslate_gold_ore, raw_gold_block, nether_gold_ore, gilded_blackstone]
+    crushed: { id: crushed_brass, name: "Crushed Brass" }
+    washed: { id: brass_concentrate, name: "Brass Concentrate" }
+    refined: { id: brass_ingot, name: "Brass Ingot" }
+  cobalt:
+    value: 22
+    ores: [lapis_ore, deepslate_lapis_ore, lapis_block]
+    crushed: { id: crushed_cobalt, name: "Crushed Cobalt" }
+    washed: { id: cobalt_concentrate, name: "Cobalt Concentrate" }
+    refined: { id: cobalt_ingot, name: "Cobalt Ingot" }
+  cryo:
+    value: 60
+    ores: [diamond_ore, deepslate_diamond_ore, diamond_block]
+    crushed: { id: cryo_grit, name: "Cryo Grit" }
+    washed: { id: cryo_slurry, name: "Cryo Slurry" }
+    refined: { id: cryo_lens, name: "Cryo Lens" }
+  quartz:
+    value: 45
+    ores: [nether_quartz_ore, quartz_block]
+    crushed: { id: quartz_grit, name: "Quartz Grit" }
+    washed: { id: quartz_slurry, name: "Quartz Slurry" }
+    refined: { id: silicon_wafer, name: "Silicon Wafer" }
+  verdant:
+    value: 120
+    ores: [emerald_ore, deepslate_emerald_ore, emerald_block]
+    crushed: { id: verdant_grit, name: "Verdant Grit" }
+    washed: { id: verdant_slurry, name: "Verdant Slurry" }
+    refined: { id: verdant_crystal, name: "Verdant Crystal" }
+  void:
+    value: 34
+    ores: [amethyst_block, obsidian, crying_obsidian]
+    crushed: { id: void_grit, name: "Void Grit" }
+    washed: { id: void_residue, name: "Void Residue" }
+    refined: { id: void_essence, name: "Void Essence" }
+  neutronium:
+    value: 260
+    ores: [ancient_debris, netherite_block]
+    crushed: { id: neutronium_grit, name: "Neutronium Grit" }
+    washed: { id: neutronium_slurry, name: "Neutronium Slurry" }
+    refined: { id: neutronium_ingot, name: "Neutronium Ingot" }
+
+# Side products: chance per craft on that machine. Prices are fixed here.
+byproducts:
+  crusher: { id: slag_dust, chance: 0.3 }
+  washer: { id: toxic_sludge, chance: 0.15 }
+
+# Goods with fixed prices and names that aren't made by a family (byproducts, or overrides).
+goods:
+  slag_dust: { name: "Slag Dust", price: 1 }
+  toxic_sludge: { name: "Toxic Sludge", price: 6 }
+
+# Alloy Forge and Fabricator recipes. Output price = inputs' value x the machine's markup / output count,
+# unless the good lists its own price under goods. time = seconds per craft at Mk I.
+recipes:
+  forge:
+    conductive_alloy: { name: "Conductive Alloy", time: 3, inputs: { copper_ingot: 2, steel_ingot: 1 } }
+    hardened_steel: { name: "Hardened Steel", time: 3, inputs: { steel_ingot: 2, graphite: 1 } }
+    circuit_alloy: { name: "Circuit Alloy", time: 3, inputs: { brass_ingot: 1, conduit_filament: 2 } }
+    cobalt_steel: { name: "Cobalt Steel", time: 3.5, inputs: { cobalt_ingot: 1, steel_ingot: 2 } }
+    cryo_alloy: { name: "Cryo Alloy", time: 4, inputs: { cryo_lens: 1, cobalt_ingot: 1 } }
+    verdant_matrix: { name: "Verdant Matrix", time: 4, inputs: { verdant_crystal: 1, silicon_wafer: 1 } }
+    void_lattice: { name: "Void Lattice", time: 4, inputs: { void_essence: 2, silicon_wafer: 1 } }
+    neutronium_composite: { name: "Neutronium Composite", time: 5, inputs: { neutronium_ingot: 1, hardened_steel: 1 } }
+  fabricator:
+    wiring_harness: { name: "Wiring Harness", time: 4, inputs: { conductive_alloy: 1 }, count: 2 }
+    armor_plate: { name: "Armor Plate", time: 4, inputs: { hardened_steel: 2 } }
+    fuel_cell: { name: "Fuel Cell", time: 3, inputs: { graphite: 2, toxic_sludge: 1 } }
+    circuit_board: { name: "Circuit Board", time: 5, inputs: { circuit_alloy: 1, silicon_wafer: 1 } }
+    induction_coil: { name: "Induction Coil", time: 5, inputs: { cobalt_steel: 1, wiring_harness: 1 } }
+    firing_mechanism: { name: "Firing Mechanism", time: 5, inputs: { circuit_board: 1, wiring_harness: 2 } }
+    weapon_receiver: { name: "Weapon Receiver", time: 6, inputs: { armor_plate: 1, induction_coil: 1 } }
+    cryo_coil: { name: "Cryo Coil", time: 6, inputs: { cryo_alloy: 1, induction_coil: 1 } }
+    focusing_array: { name: "Focusing Array", time: 6, inputs: { verdant_matrix: 1, circuit_board: 1 } }
+    void_capacitor: { name: "Void Capacitor", time: 7, inputs: { void_lattice: 1, circuit_board: 1 } }
+    reactor_core: { name: "Reactor Core", time: 10, inputs: { neutronium_composite: 1, void_capacitor: 1, cryo_coil: 1 } }
+
+# Per-craft time in seconds at Mk I for the family steps.
+step-time:
+  crusher: 1.0
+  washer: 1.25
+  furnace: 1.5
+
+quality:
+  - { name: "", price: 1.0 }
+  - { name: "<#7fb8d6>Refined</#7fb8d6> ", price: 1.35 }
+  - { name: "<light_purple>Pristine</light_purple> ", price: 1.9 }
+
+market:
+  # Daily demand: every good gets a price multiplier in this range, re-rolled each day (same for everyone).
+  demand-min: 0.7
+  demand-max: 1.4
+  # A few goods are station priority orders each day and pay extra on top.
+  priority-count: 3
+  priority-bonus: 1.5
+  # Selling floods the market: each good's price drops as the whole server sells more of it that day.
+  # Price factor = 1 / (1 + Credits sold today / saturation-credits), never below min-factor.
+  saturation-credits: 3000000
+  min-factor: 0.4
+  # Trade Chutes sell automatically but keep this share.
+  chute-rate: 0.9
+  # The market day rolls over at midnight in this time zone.
+  timezone: UTC
+
+offline:
+  # When you log back in, your bay catches up on time you were away: up to max-hours, at this share of
+  # its normal speed.
+  max-hours: 4
+  efficiency: 0.5
+
+# Assembly Bench (workshop menu): turn components into drill modules. command runs from the console
+# ({player} = name). Requires the drill module's admin command.
+assembly:
+  magnet_coil:
+    name: "Magnet Coil"
+    grade: 10
+    credits: 250000
+    components: { wiring_harness: 16, induction_coil: 4 }
+    command: "drill admin module {player} magnet_coil 1"
+  coolant_loop:
+    name: "Cryo Coolant Loop"
+    grade: 13
+    credits: 1500000
+    components: { cryo_coil: 4, armor_plate: 4 }
+    command: "drill admin module {player} coolant_loop 1"
+  scavenger_rig:
+    name: "Scavenger Rig"
+    grade: 15
+    credits: 3000000
+    components: { circuit_board: 4, armor_plate: 8 }
+    command: "drill admin module {player} scavenger_rig 1"
+  plasma_cutter:
+    name: "Plasma Cutter"
+    grade: 18
+    credits: 8000000
+    components: { focusing_array: 4, circuit_board: 6 }
+    command: "drill admin module {player} plasma_cutter 1"
+  seismic_dampener:
+    name: "Seismic Dampener"
+    grade: 20
+    credits: 20000000
+    components: { weapon_receiver: 2, induction_coil: 8 }
+    command: "drill admin module {player} seismic_dampener 1"
+  token_condenser:
+    name: "Token Condenser"
+    grade: 22
+    credits: 50000000
+    components: { reactor_core: 2, void_capacitor: 4 }
+    command: "drill admin module {player} token_condenser 1"
+
+# Decor Locker (Machine Shop, second page): building blocks for decorating your bay.
+decor:
+  - { material: WAXED_WEATHERED_CUT_COPPER, amount: 32, price: 300 }
+  - { material: WAXED_CUT_COPPER, amount: 32, price: 300 }
+  - { material: WAXED_COPPER_GRATE, amount: 32, price: 400 }
+  - { material: POLISHED_DEEPSLATE, amount: 32, price: 250 }
+  - { material: DEEPSLATE_TILES, amount: 32, price: 250 }
+  - { material: POLISHED_BLACKSTONE_BRICKS, amount: 32, price: 250 }
+  - { material: SMOOTH_STONE, amount: 32, price: 200 }
+  - { material: TUFF_BRICKS, amount: 32, price: 250 }
+  - { material: IRON_BLOCK, amount: 8, price: 1500 }
+  - { material: IRON_BARS, amount: 32, price: 300 }
+  - { material: CHAIN, amount: 32, price: 300 }
+  - { material: IRON_TRAPDOOR, amount: 16, price: 400 }
+  - { material: WAXED_COPPER_TRAPDOOR, amount: 16, price: 400 }
+  - { material: TINTED_GLASS, amount: 16, price: 400 }
+  - { material: SEA_LANTERN, amount: 8, price: 600 }
+  - { material: VERDANT_FROGLIGHT, amount: 8, price: 600 }
+  - { material: OCHRE_FROGLIGHT, amount: 8, price: 600 }
+  - { material: PEARLESCENT_FROGLIGHT, amount: 8, price: 600 }
+  - { material: LANTERN, amount: 8, price: 300 }
+  - { material: SOUL_LANTERN, amount: 8, price: 300 }
+  - { material: LIGHTNING_ROD, amount: 8, price: 300 }
+  - { material: BARREL, amount: 4, price: 400 }
+  - { material: CHEST, amount: 4, price: 400 }
+  - { material: ITEM_FRAME, amount: 8, price: 300 }
+  - { material: POLISHED_DEEPSLATE_STAIRS, amount: 16, price: 200 }
+  - { material: POLISHED_DEEPSLATE_SLAB, amount: 16, price: 150 }
+  - { material: WAXED_CUT_COPPER_STAIRS, amount: 16, price: 250 }
+  - { material: WAXED_CUT_COPPER_SLAB, amount: 16, price: 200 }
+
+display:
+  # Machine models are item displays. If machines face the wrong way in game, change this by 180.
+  yaw-offset: 180
+  # Show bay power, coolant and jams on the action bar while in a bay.
+  hud: true
