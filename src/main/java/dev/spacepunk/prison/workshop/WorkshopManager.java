@@ -307,6 +307,16 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
         if (!bays.containsKey(p.getUniqueId()) && loaded.containsKey(p.getUniqueId())) {
             bays.put(p.getUniqueId(), new Bay(p.getUniqueId(), plot, loaded.get(p.getUniqueId())));
         }
+        Bay bay = bays.get(p.getUniqueId());
+        if (bay != null && !bay.data.starterFuel) {
+            bay.data.starterFuel = true;
+            long n = cfg().starterFuel;
+            if (n > 0) {
+                BayData.add(bay.data.locker, "spacepunk:slag_dust", n);
+                Text.send(p, "<#c8743a>Starter fuel:</#c8743a> <white>" + n + " Slag Dust</white> <gray>is in your Bay Locker for your first Slag Burner.");
+            }
+            save(p.getUniqueId());
+        }
         return plot;
     }
 
@@ -321,6 +331,7 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
                 if (first) {
                     Text.send(p, "<#c8743a>Welcome to your hull bay.</#c8743a> <gray>Right-click the terminal on the wall for the workshop menu.");
                     Text.send(p, "<gray>Start with a <white>Cargo Intake</white> feeding a <white>Jaw Crusher</white> feeding a <white>Depot Hatch</white>, plus a <white>Slag Burner</white> for power.");
+                    Text.send(p, "<gray>Burners take fuel from your <white>Bay Locker</white> (you start with some slag dust), from <white>Slag</white> in your cargo hold, or click fuel in from your inventory in the burner's menu.");
                 } else {
                     Text.send(p, "<gray>Entered your hull bay. <dark_gray>/ws menu");
                 }
@@ -708,6 +719,38 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
     }
 
     /** Puts a goods item stack from the player's inventory into the locker. Returns true if anything moved. */
+    /**
+     * Feeds fuel from the player's inventory into a Slag Burner: workshop fuel goods (slag dust, fuel cells) or
+     * plain vanilla fuel blocks (stone, cobblestone, coal ore). Returns true if anything was taken.
+     */
+    boolean fuelIn(Player p, Bay bay, MachineData m, ItemStack stack) {
+        if (stack == null || stack.getType().isAir() || !bay.owner.equals(p.getUniqueId())) return false;
+        String key = items.goodKey(stack);
+        if (key == null) {
+            // Plain vanilla blocks only: plugin items (drills, tools, cargo tokens) all carry PDC tags.
+            boolean plain = !stack.hasItemMeta() || stack.getItemMeta().getPersistentDataContainer().isEmpty();
+            if (plain) key = stack.getType().getKey().toString();
+        }
+        WorkshopConfig c = cfg();
+        if (key == null || !c.isFuel(BayData.base(key))) {
+            Gui.deny(p);
+            Text.send(p, "<red>That doesn't burn. <gray>Slag Burners take Slag (stone), Slag Rubble, coal ore, slag dust and fuel cells.");
+            return false;
+        }
+        long cap = (long) c.inputBuffer * 8;
+        long space = cap - BayData.countBase(m.input, BayData.base(key));
+        long n = Math.min(space, stack.getAmount());
+        if (n <= 0) {
+            Text.send(p, "<red>This burner's fuel hopper is full.");
+            return false;
+        }
+        BayData.add(m.input, key, n);
+        stack.setAmount(stack.getAmount() - (int) n);
+        Gui.click(p);
+        save(p.getUniqueId());
+        return true;
+    }
+
     boolean deposit(Player p, ItemStack stack) {
         Bay bay = bays.get(p.getUniqueId());
         String key = items.goodKey(stack);

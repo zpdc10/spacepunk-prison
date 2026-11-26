@@ -177,6 +177,10 @@ final class WorkshopMenus {
     void machine(Player p, Bay bay, MachineData m) {
         Gui g = new Gui(5, "<dark_gray>" + nameOf(m));
         g.live = true;
+        MachineDef md = cfg().machine(m.type);
+        if (md != null && md.role() == Role.GENERATOR) {
+            g.bottomClick = e -> { if (ws.fuelIn(p, bay, m, e.getCurrentItem())) g.render(); };
+        }
         g.renderer(gui -> renderMachine(p, gui, bay, m)).open(p);
         ws.showOutput(p, m);
     }
@@ -219,7 +223,12 @@ final class WorkshopMenus {
 
         // Buffers
         g.set(21, Gui.icon(Material.HOPPER, "workshop/ui/input", "<white>Input", bufferLore(m.input, def.role() == Role.GENERATOR
-                ? List.of("<gray>Fuel left: <white>" + Math.round(m.fuel) + "s", "<dark_gray>Also burns fuel from the Bay Locker.") : List.of())));
+                ? List.of("<gray>Fuel left: <white>" + Math.round(m.fuel) + "s", "",
+                        "<gray>Burns fuel from, in order:",
+                        "<dark_gray>1 <gray>this hopper: <yellow>click fuel in your inventory",
+                        "<dark_gray>2 <gray>your <white>Bay Locker</white> (slag dust, fuel cells)",
+                        "<dark_gray>3 <white>Slag</white> / <white>Slag Rubble</white> <gray>in your cargo hold",
+                        "<dark_gray>Only burns while machines need power.") : List.of())));
         g.set(23, Gui.icon(Material.CHEST, "workshop/ui/output", "<white>Output", bufferLore(m.output, List.of(
                 "<gray>Pushes out the front: <white>" + arrow(m.facing) + " " + m.facing.toLowerCase(),
                 frontLine(bay, m)))));

@@ -80,6 +80,10 @@ final class WorkshopConfig {
     final int maxConveyor, inputBuffer, outputBuffer, conveyorBundle;
     final long conveyorPrice;
     final Map<String, Double> fuels;
+    /** Fuels a Slag Burner may take straight from the owner's cargo hold. */
+    final java.util.Set<String> cargoFuels;
+    /** Slag dust given once to every bay so a new player's first burner lights. */
+    final long starterFuel;
     final Map<String, Good> goods;
     /** machine id -> recipes in priority order. */
     final Map<String, List<Recipe>> recipes;
@@ -180,6 +184,11 @@ final class WorkshopConfig {
         ConfigurationSection fs = y.getConfigurationSection("fuels");
         if (fs != null) for (String k : fs.getKeys(false)) fu.put(anyId(k), fs.getDouble(k));
         fuels = Collections.unmodifiableMap(fu);
+        java.util.Set<String> cf = new java.util.LinkedHashSet<>();
+        for (String k : y.getStringList("cargo-fuels")) cf.add(anyId(k));
+        if (!y.isList("cargo-fuels")) { cf.add("minecraft:stone"); cf.add("minecraft:cobblestone"); }
+        cargoFuels = Collections.unmodifiableSet(cf);
+        starterFuel = Math.max(0, y.getLong("starter-fuel", 200));
 
         // ---- goods and recipes ----
         Map<String, Good> gd = new LinkedHashMap<>();

@@ -141,12 +141,14 @@ final class Simulator {
             MachineDef def = c.machine(g.type);
             double output = def.speed() * c.tier(g.tier).speed();
             if (supply >= demand) {
-                g.status = demand <= 0 ? "<gray>Idle, nothing needs power" : "<gray>Standby";
+                boolean fuelled = g.fuel > 0 || hasFuel(bay, g);
+                g.status = (demand <= 0 ? "<gray>Idle, nothing needs power" : "<gray>Standby")
+                        + (fuelled ? "" : " <red>(no fuel)");
                 continue;
             }
             refuel(bay, g, dt);
             if (g.fuel <= 0) {
-                g.status = "<red>No fuel";
+                g.status = "<red>No fuel: <gray>mine Slag into your cargo hold or click fuel in";
                 alerts++;
                 continue;
             }
@@ -362,26 +364,50 @@ final class Simulator {
         }
     }
 
+    /**
+     * Tops up a generator's burn time. Fuel comes from, in order: its own input buffer (fuel clicked in from the
+     * player's inventory or delivered by conveyor), the Bay Locker, then the cargo hold (only the cheap
+     * {@code cargo-fuels}, so raw coal ore isn't burned behind the player's back).
+     */
     private void refuel(Bay bay, MachineData g, double dt) {
         WorkshopConfig c = cfg.get();
         int guard = 0;
+        Map<String, Long> cargo = null;
         while (g.fuel < dt && guard++ < 64) {
-            String key = firstFuel(c, g.input);
-            Map<String, Long> from = g.input;
-            if (key == null) {
-                key = firstFuel(c, bay.data.locker);
-                from = bay.data.locker;
+            String key = firstFuel(c, g.input, null);
+            if (key != null) {
+                BayData.take(g.input, key, 1);
+            } else if ((key = firstFuel(c, bay.data.locker, null)) != null) {
+                BayData.take(bay.data.locker, key, 1);
+            } else {
+                if (cargo == null) cargo = hooks.cargo(bay.owner);
+                key = firstFuel(c, cargo, c.cargoFuels);
+                if (key == null) return;
+                long need = Math.max(1, (long) Math.ceil((dt - g.fuel) / c.fuels.getOrDefault(key, 1.0)));
+                long got = hooks.cargoWithdraw(bay.owner, key, need);
+                if (got <= 0) return;
+                cargo = null;
+                g.fuel += got * c.fuels.getOrDefault(key, 0.0);
+                continue;
             }
-            if (key == null) return;
-            BayData.take(from, key, 1);
             g.fuel += c.fuels.getOrDefault(BayData.base(key), 0.0);
         }
     }
 
-    private static String firstFuel(WorkshopConfig c, Map<String, Long> m) {
+    /** True if the generator could find fuel anywhere it burns from, without taking any. */
+    boolean hasFuel(Bay bay, MachineData g) {
+        WorkshopConfig c = cfg.get();
+        return firstFuel(c, g.input, null) != null || firstFuel(c, bay.data.locker, null) != null
+                || firstFuel(c, hooks.cargo(bay.owner), c.cargoFuels) != null;
+    }
+
+    private static String firstFuel(WorkshopConfig c, Map<String, Long> m, java.util.Set<String> only) {
         String best = null;
         double bestBurn = Double.MAX_VALUE;
-        for (String k : m.keySet()) {
+        for (Map.Entry<String, Long> en : m.entrySet()) {
+            String k = en.getKey();
+            if (en.getValue() == null || en.getValue() <= 0) continue;
+            if (only != null && !only.contains(BayData.base(k))) continue;
             Double burn = c.fuels.get(BayData.base(k));
             // Burn the cheapest fuel first so fuel cells are saved for when nothing else is left.
             if (burn != null && burn < bestBurn) {
