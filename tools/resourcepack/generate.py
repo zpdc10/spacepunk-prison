@@ -1076,6 +1076,88 @@ def mine_extras():
     animate(out / "sea_lantern.png", 5, [0, 1, 2, 0, 1, 2, 0, 4, 3, 0, 1, 2])
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Station terminals: every console in the station is a lodestone, so the lodestone becomes a CRT terminal.
+# ---------------------------------------------------------------------------------------------------------------
+
+TERM_G_D = (18, 90, 36)
+TERM_G = (60, 200, 90)
+TERM_G_L = (170, 255, 180)
+TERM_BG = (6, 12, 8)
+TERM_BG_L = (10, 20, 13)
+
+
+def terminal_casing(seed) -> Canvas:
+    c = Canvas(seed=seed)
+    c.noise([GUN_D, GUN, GUN_D, SOOT], [4, 3, 3, 1])
+    c.speckle(RUST_D, 5)
+    c.speckle(RUST, 3)
+    return c
+
+
+def terminal_side(frame: int) -> Canvas:
+    c = terminal_casing(700)
+    rng = random.Random(701)
+    # Bezel: lit top-left edge, dark bottom-right, around a 12x9 screen.
+    for x in range(1, 15):
+        c.set(x, 1, GUN_L); c.set(x, 11, OIL)
+    for y in range(1, 12):
+        c.set(1, y, GUN_L); c.set(14, y, OIL)
+    for y in range(2, 11):
+        for x in range(2, 14):
+            c.set(x, y, TERM_BG_L if y % 2 else TERM_BG)  # scanlines
+    # Text: lines of "words" that scroll up one row per frame, newest line typing in at the bottom.
+    lines = []
+    for _ in range(12):
+        words, x = [], 0
+        while x < 11:
+            w = rng.randint(1, 4)
+            words.append((x, min(w, 11 - x)))
+            x += w + 1
+        lines.append(words if rng.random() > 0.15 else [])
+    rows = (3, 5, 7, 9)
+    for i, y in enumerate(rows):
+        line = lines[(i + frame) % len(lines)]
+        for x0, w in line:
+            for dx in range(w):
+                c.set(3 + x0 + dx, y, TERM_G if (x0 + dx) % 5 else TERM_G_L)
+    # Prompt + blinking cursor on the last row.
+    c.set(3, 9, TERM_G_L)
+    for x in range(4, 13):
+        c.set(x, 9, TERM_BG)
+    if frame % 2 == 0:
+        c.set(5, 9, TERM_G_L); c.set(5, 8, TERM_G_D)
+    # Screen glow bleeding onto the inner bezel.
+    for x in range(2, 14):
+        c.set(x, 2, mix(c.get(x, 2)[:3], TERM_G_D, 0.35))
+    # Lower casing: status LEDs and a vent.
+    c.set(2, 13, GREEN if frame % 4 else GREEN_D)
+    c.set(4, 13, HAZ if frame % 3 == 0 else HAZ_D)
+    c.set(6, 13, RED_D)
+    for x in range(9, 14):
+        c.set(x, 13, OIL); c.set(x, 14, GUN_L if x % 2 else OIL)
+    for p in ((0, 0), (15, 0), (0, 15), (15, 15)):
+        c.set(*p, STEEL)
+    return c
+
+
+def terminal():
+    out = MC / "textures" / "block"
+    stack([terminal_side(f) for f in range(8)]).save(out / "lodestone_side.png")
+    animate(out / "lodestone_side.png", 8)
+    c = terminal_casing(710)
+    for i in range(16):
+        c.set(i, 0, GUN_L); c.set(0, i, GUN_L); c.set(i, 15, OIL); c.set(15, i, OIL)
+    for y in (4, 6, 8, 10):  # heat vent slots
+        for x in range(4, 12):
+            c.set(x, y, OIL)
+        c.set(4, y - 1, GUN_L)
+    for p in ((2, 2), (13, 2), (2, 13), (13, 13)):
+        c.set(*p, STEEL)
+    c.set(13, 12, TERM_G)  # power LED
+    c.save(out / "lodestone_top.png")
+
+
 def main():
     if not ROOT.exists():
         sys.exit(f"missing {ROOT}")
@@ -1090,6 +1172,7 @@ def main():
     ui()
     currency()
     mine_extras()
+    terminal()
     # Rare drop items (raredrops module); art lives in raredrops_art.py.
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import raredrops_art
