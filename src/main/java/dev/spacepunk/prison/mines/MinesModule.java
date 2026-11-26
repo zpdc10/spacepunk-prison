@@ -30,6 +30,7 @@ public final class MinesModule implements FeatureModule {
         this.plugin = plugin;
         File cfgFile = new File(plugin.getDataFolder(), "mines.yml");
         if (!cfgFile.exists()) plugin.saveResource("mines.yml", false);
+        migrateConfig(cfgFile);
         MineStore store = new MineStore(new File(plugin.getDataFolder(), "mines-data.yml"), plugin.getLogger());
         MinesConfig config = MinesConfig.load(cfgFile, store.custom(), plugin.getLogger());
         loadWorld(config, false);
@@ -82,6 +83,26 @@ public final class MinesModule implements FeatureModule {
             if (dev.spacepunk.prison.api.Services.find(dev.spacepunk.prison.api.WarpService.class)
                     .map(dev.spacepunk.prison.api.WarpService::hub).isPresent()) return;
             e.getPlayer().teleportAsync(w.getSpawnLocation().add(0.5, 0, 0.5));
+        }
+    }
+
+    /**
+     * Brings an existing mines.yml up to the current defaults. v2: resets at 80% mined with a 60 second countdown,
+     * no timed resets. Only the changed keys are rewritten; everything else in the file is kept.
+     */
+    private void migrateConfig(File cfgFile) {
+        org.bukkit.configuration.file.YamlConfiguration y = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(cfgFile);
+        int version = y.getInt("config-version", 1);
+        if (version >= 2) return;
+        y.set("refill.mined-fraction", 0.80);
+        y.set("refill.warn-seconds", 60);
+        y.set("refill.interval-seconds", 0);
+        y.set("config-version", 2);
+        try {
+            y.save(cfgFile);
+            plugin.getLogger().info("[mines] Updated mines.yml to config v2: reset at 80% mined, 60s warning, no timed resets");
+        } catch (java.io.IOException e) {
+            plugin.getLogger().log(Level.WARNING, "[mines] could not update mines.yml", e);
         }
     }
 
