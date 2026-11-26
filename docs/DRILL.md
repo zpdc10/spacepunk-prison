@@ -25,8 +25,10 @@ and it is kept through prestige. All numbers live in `drill.yml` (`/drill admin 
 
 ## Economy
 
-Mining gives a slow Token trickle (about 100-150 per hour early). Prestige payouts (progression module) are the
-bulk source. Rough cost to max every enchant: Rusted ~2K, Salvaged ~60K, Industrial ~540K, Military ~4M,
+Tokens drop while mining: uncommon finds (0.6% per hand-broken block, 4-7 Tokens) that grow x1.10 per mine grade
+and x1.15 per prestige, so a few hours in the mine always buys a couple of enchant upgrades. About 100/h at grade 1,
+230/h at grade 10, 600/h at grade 20, ~40K over a first run. Token Siphon adds extra find chance, Salvage Sense adds
+caches; both scale the same way. Prestige pays no Tokens. Full model: `docs/progression-balance.md`. Rough cost to max every enchant: Rusted ~2K, Salvaged ~60K, Industrial ~540K, Military ~4M,
 Prototype ~72M Tokens.
 
 ## Admin

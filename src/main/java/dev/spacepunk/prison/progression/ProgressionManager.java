@@ -187,7 +187,7 @@ final class ProgressionManager implements ProgressionService {
         return PrestigeResult.OK;
     }
 
-    /** Grade back to 1, Credits and cargo contents cleared, Tokens and Shards granted. Drill, Tokens, Shards and cargo upgrades are kept. */
+    /** Grade back to 1, Credits and cargo contents cleared, Shards granted (Tokens only come from activities, never prestige). Drill, Tokens, Shards and cargo upgrades are kept. */
     PrestigeResult prestige(Player player) {
         PrestigeResult r = canPrestige(player);
         if (r != PrestigeResult.OK) return r;
@@ -197,7 +197,6 @@ final class ProgressionManager implements ProgressionService {
         long credits = economy.balance(id, Currency.CREDITS);
         if (credits > 0) economy.take(id, Currency.CREDITS, credits, "prestige");
         CargoStore.Data d = cargo.get(id);
-        long earned = d == null ? 0 : d.runEarnings;
         if (d != null) {
             cargo.drain(id, d);
             d.runEarnings = 0;
@@ -205,8 +204,6 @@ final class ProgressionManager implements ProgressionService {
         ProgressionConfig c = cfg();
         long shards = c.shardsFor(newPrestige);
         if (shards > 0) economy.give(id, Currency.SHARDS, shards, "prestige");
-        long tokens = c.tokensFor(newPrestige, earned);
-        if (tokens > 0) economy.give(id, Currency.TOKENS, tokens, "prestige");
         setGrade(player, p, 1, newPrestige);
         for (String cmd : c.prestigeCommands) {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(),

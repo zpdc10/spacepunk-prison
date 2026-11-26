@@ -48,6 +48,15 @@ catch:
     epic: 2.6
     legendary: 0.4
 
+# Token finds: any landed catch can turn up Tokens (uncommon, about one in 33 catches, ~25/h at grade 1).
+# Amounts scale with your grade and prestige like mining drops (drill.yml tokens.grade-growth / prestige-growth).
+tokens:
+  find-chance: 0.03
+  min: 4
+  max: 7
+  # Token Pouch treasure amounts scale the same way.
+  scale-treasure: true
+
 value:
   value-growth: 1.2584
   level-bonus: 0.01
@@ -270,7 +279,7 @@ junk:
 treasure:
   scale_cache:    { name: "Scale Cache",          type: scales,  amount: [8, 30],   weight: 40, areas: [] }
   credit_bundle:  { name: "Waterlogged Scrip",    type: credits, amount: [60, 200], weight: 30, areas: [] }
-  token_pouch:    { name: "Token Pouch",          type: tokens,  amount: [15, 60],  weight: 14, areas: [] }
+  token_pouch:    { name: "Token Pouch",          type: tokens,  amount: [20, 50],  weight: 22, areas: [] }
   bait_crate:     { name: "Bait Crate",           type: bait,    bait: grub_paste, amount: [8, 24], weight: 10, areas: [] }
   glow_crate:     { name: "Glow Worm Jar",        type: bait,    bait: glow_worms, amount: [6, 16], weight: 6, areas: [] }
   lure_spinner:   { name: "Lost Lure",            type: lure,    lure: spinner,      weight: 4, areas: [scrapyard, reactor] }

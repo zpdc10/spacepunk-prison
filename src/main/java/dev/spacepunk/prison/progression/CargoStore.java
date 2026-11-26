@@ -29,7 +29,7 @@ final class CargoStore {
         int level = 0;
         boolean autoSellUnlocked = false;
         boolean autoSell = false;
-        /** Credits earned from the server (not other players) since the last prestige (drives the prestige Token payout). */
+        /** Credits earned from the server (not other players) since the last prestige (a stat shown in /progression admin info). */
         long runEarnings = 0;
         Map<String, Long> items = new LinkedHashMap<>();
 

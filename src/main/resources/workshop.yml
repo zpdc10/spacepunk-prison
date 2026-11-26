@@ -340,6 +340,15 @@ market:
   # The market day rolls over at midnight in this time zone.
   timezone: UTC
 
+# Token finds: while you're online and your bay is processing, it rolls once a minute for Tokens
+# (about 3-4 finds an hour, ~20 Tokens/h at grade 1). Amounts scale with your grade and prestige like mining
+# drops (drill.yml tokens.grade-growth / prestige-growth). Offline catch-up never finds Tokens.
+tokens:
+  roll-seconds: 60
+  chance: 0.06
+  min: 4
+  max: 7
+
 offline:
   # When you log back in, your bay catches up on time you were away: up to max-hours, at this share of
   # its normal speed.

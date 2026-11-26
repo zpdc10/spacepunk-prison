@@ -100,18 +100,20 @@ public final class MiningListener implements Listener {
         d.blocksMined += count;
         drills.markStatsDirty(id);
 
-        // Tokens: base trickle + Token Siphon, reduced for enchant-broken blocks.
+        // Tokens: uncommon finds (base + Token Siphon), bigger in deeper mines and at higher prestige,
+        // reduced for enchant-broken blocks.
         double rate = hand ? 1.0 : cfg.tokenEnchantRate;
+        double scale = cfg.tokenScale(e.mine().requiredGrade(), prestigeOf(id));
         long tokens = 0;
         if (eff.tokenMultiplier > 0) {
             int baseHits = successes(count, cfg.tokenHandChance * rate, rng);
-            for (int i = 0; i < baseHits; i++) tokens += rng.nextInt(cfg.tokenMin, cfg.tokenMax + 1);
+            for (int i = 0; i < baseHits; i++) tokens += Math.round(rng.nextInt(cfg.tokenMin, cfg.tokenMax + 1) * scale);
             if (eff.siphonChance > 0) {
                 DrillConfig.EnchantDef sd = cfg.enchant(Enchant.TOKEN_SIPHON);
                 int hits = successes(count, eff.siphonChance * rate, rng);
-                int lo = (int) Math.round(sd.p("amount-min", 1) * eff.siphonAmount);
-                int hi = Math.max(lo, (int) Math.round(sd.p("amount-max", 2) * eff.siphonAmount));
-                for (int i = 0; i < hits; i++) tokens += rng.nextInt(lo, hi + 1);
+                int lo = (int) Math.round(sd.p("amount-min", 4) * eff.siphonAmount);
+                int hi = Math.max(lo, (int) Math.round(sd.p("amount-max", 7) * eff.siphonAmount));
+                for (int i = 0; i < hits; i++) tokens += Math.round(rng.nextInt(lo, hi + 1) * scale);
             }
             tokens = Math.round(tokens * eff.tokenMultiplier);
         }
@@ -120,7 +122,7 @@ public final class MiningListener implements Listener {
         if (hand) heat.add(p, cfg.heat.handBlock() * eff.handHeatMultiplier * deckMul * count);
 
         if (hand && !heat.stalled(p)) {
-            tokens += salvage(p, d, eff, rng);
+            tokens += salvage(p, d, eff, rng, scale);
             procs(p, e, eff, deckMul, rng);
         }
 
@@ -128,22 +130,27 @@ public final class MiningListener implements Listener {
             Services.get(EconomyService.class).give(id, Currency.TOKENS, tokens, "drill:mining");
             d.tokensFound += tokens;
             if (hand) {
-                // With the HUD module, Token gains already show in its mining summary.
-                if (Services.find(dev.spacepunk.prison.api.HudService.class).isEmpty()) {
-                    heat.flash(p, "<aqua>+" + tokens + " Token" + (tokens == 1 ? "" : "s"));
-                }
-                p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.35f, 1.6f);
+                // The HUD's mining summary adds the amount ("+6 ✦"); the flash marks the find itself.
+                var hud = Services.find(dev.spacepunk.prison.api.HudService.class);
+                if (hud.isPresent()) hud.get().flash(p, "<aqua>✦ Token find</aqua> <white>+" + tokens + "</white>");
+                else heat.flash(p, "<aqua>✦ Token find +" + tokens + " Token" + (tokens == 1 ? "" : "s"));
+                p.playSound(p.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.4f);
+                p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.4f, 1.6f);
             }
         }
     }
 
+    private static int prestigeOf(UUID id) {
+        return Services.find(dev.spacepunk.prison.api.ProgressionService.class).map(s -> s.prestige(id)).orElse(0);
+    }
+
     /** Token caches and module finds. Returns Tokens from a cache. */
-    private long salvage(Player p, DrillData d, DrillMath.Effective eff, ThreadLocalRandom rng) {
+    private long salvage(Player p, DrillData d, DrillMath.Effective eff, ThreadLocalRandom rng, double scale) {
         DrillConfig cfg = drills.cfg();
         long tokens = 0;
         if (eff.cacheChance > 0 && rng.nextDouble() < eff.cacheChance * eff.rareMultiplier && eff.tokenMultiplier > 0) {
             DrillConfig.EnchantDef sd = cfg.enchant(Enchant.SALVAGE_SENSE);
-            double mul = 1 + d.level(Enchant.SALVAGE_SENSE) * sd.p("cache-per-level", 0.02);
+            double mul = (1 + d.level(Enchant.SALVAGE_SENSE) * sd.p("cache-per-level", 0.02)) * scale;
             int lo = (int) Math.round(sd.p("cache-min", 15) * mul);
             int hi = Math.max(lo, (int) Math.round(sd.p("cache-max", 50) * mul));
             tokens = Math.round(rng.nextInt(lo, hi + 1) * eff.tokenMultiplier);

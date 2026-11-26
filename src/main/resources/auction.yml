@@ -1,6 +1,6 @@
 # The Black Market (auction house). Players list what they're holding as buy-it-now (/ah sell <price> [hours]) or as
 # a timed auction (/ah auction <start bid> [hours]). Fees and tax remove Credits from the economy (a money sink).
-# Money from other players never counts toward the prestige Token payout (see progression.yml income-reasons).
+# Money from other players never counts as server income (see progression.yml income-reasons).
 
 fees:
   # Paid up front when listing, never refunded: price x listing-percent x the duration's multiplier, at least listing-min.

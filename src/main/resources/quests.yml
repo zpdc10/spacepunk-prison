@@ -26,7 +26,7 @@ settings:
   daily-bonus:
     points: 10
     tokens: {base: 12, per-grade: 0.04}
-  # Token gains with these EconomyService reasons count for earn_tokens (mining finds, not rewards or prestige).
+  # Token gains with these EconomyService reasons count for earn_tokens (mining finds, not rewards).
   earn-token-reasons: ["drill:"]
   # Show the tracked quest on the sidebar.
   sidebar-tracker: true
@@ -413,7 +413,7 @@ tutorials:
     objectives:
       - {type: earn_tokens, amount: 20, text: "Find {amount} Tokens while mining"}
     rewards: {tokens: 10}
-    outro: ["Mining is a slow Token trickle. Prestige pays Tokens in bulk."]
+    outro: ["Tokens turn up while you work: mining, fishing, your bay. Deeper mines drop bigger finds."]
   contracts:
     name: "Contract Work"
     icon: CLOCK

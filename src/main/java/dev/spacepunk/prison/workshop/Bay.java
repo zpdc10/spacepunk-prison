@@ -22,6 +22,8 @@ final class Bay {
     /** Totals since the counters were last read (offline catch-up report). */
     long reportCrafted;
     long reportSold;
+    /** Last Token find roll (millis), so processing rolls at most once per tokens.roll-seconds. */
+    long lastTokenRoll;
 
     Bay(UUID owner, Plot plot, BayData data) {
         this.owner = owner;

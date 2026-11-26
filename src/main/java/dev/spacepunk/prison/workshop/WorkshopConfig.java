@@ -81,6 +81,9 @@ final class WorkshopConfig {
     final Map<String, Byproduct> byproducts;
     final List<Quality> qualities;
     final double demandMin, demandMax, priorityBonus, saturationCredits, minFactor, chuteRate;
+    /** Token finds while the owner is online and the bay is processing: one roll per tokenRollSeconds. */
+    final long tokenRollSeconds, tokenMin, tokenMax;
+    final double tokenChance;
     final int priorityCount;
     final ZoneId zone;
     final double offlineHours, offlineEfficiency;
@@ -283,6 +286,10 @@ final class WorkshopConfig {
         saturationCredits = Math.max(1, y.getDouble("market.saturation-credits", 3_000_000));
         minFactor = y.getDouble("market.min-factor", 0.4);
         chuteRate = y.getDouble("market.chute-rate", 0.9);
+        tokenRollSeconds = Math.max(5, y.getLong("tokens.roll-seconds", 60));
+        tokenChance = Math.max(0, y.getDouble("tokens.chance", 0.06));
+        tokenMin = Math.max(0, y.getLong("tokens.min", 4));
+        tokenMax = Math.max(tokenMin, y.getLong("tokens.max", 7));
         ZoneId z;
         try {
             z = ZoneId.of(y.getString("market.timezone", "UTC"));

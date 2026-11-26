@@ -81,8 +81,8 @@ current mine's fill, hud shows the cargo hold while mining.
 
 ## Money that never counts toward prestige
 
-Prestige wipes Credits and pays Tokens for server income earned this run (EconomyService reasons starting
-`sell:` or `income:`). Player-to-player money must use any other reason: the auction house uses `auction:buy`,
+Prestige wipes Credits (and pays Shards, never Tokens). Server income (EconomyService reasons starting
+`sell:` or `income:`) is tracked per run as "earned this run". Player-to-player money must use any other reason: the auction house uses `auction:buy`,
 `auction:bid`, `auction:sale`, `auction:refund` and `auction:fee`. Anything that holds a player's Credits outside
 their balance (escrow, banks) must stop that money surviving a prestige: listen to `PrestigeAttemptEvent` and
 `deny(...)` it while the player has money held (the auction house does this for leading bids).
@@ -116,7 +116,7 @@ are listed in `docs/STATION.md`.
 
 ## Currencies
 
-`CREDITS` (sell ore → grade rank-ups), `TOKENS` (mining drops → enchants), `SHARDS` (prestige → frames,
+`CREDITS` (sell ore → grade rank-ups), `TOKENS` (activity drops: mining, fishing, workshop, parkour, quests → enchants; scale with `api/TokenDrops`), `SHARDS` (prestige → frames,
 permanent bonuses). Use `EconomyService`; it fires `CurrencyChangeEvent`.
 
 ## Balance targets

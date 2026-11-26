@@ -8,6 +8,7 @@ import dev.spacepunk.prison.api.HudService;
 import dev.spacepunk.prison.api.ProfileService;
 import dev.spacepunk.prison.api.ProgressionService;
 import dev.spacepunk.prison.api.Services;
+import dev.spacepunk.prison.api.TokenDrops;
 import dev.spacepunk.prison.api.event.FishCaughtEvent;
 import dev.spacepunk.prison.data.PlayerProfile;
 import dev.spacepunk.prison.fishing.FishingConfig.Area;
@@ -504,8 +505,20 @@ final class FishingManager implements FishingService {
             }
             default -> { }
         }
+        tokenFind(p);
         if (hook != null && hook.getWorld() != null) hook.getWorld().spawnParticle(Particle.SPLASH, hook, 20, 0.4, 0.1, 0.4, 0.1);
         changed(p);
+    }
+
+    /** Uncommon Token find on any landed catch. The HUD's gain summary shows the amount too. */
+    private void tokenFind(Player p) {
+        if (cfg.tokenFindChance <= 0 || ThreadLocalRandom.current().nextDouble() >= cfg.tokenFindChance) return;
+        var eco = economy();
+        if (eco.isEmpty()) return;
+        long amount = TokenDrops.roll(p.getUniqueId(), cfg.tokenFindMin, cfg.tokenFindMax);
+        eco.get().give(p.getUniqueId(), Currency.TOKENS, amount, "fishing:token-find");
+        p.playSound(p.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.4f);
+        Text.send(p, "<aqua>✦ Token find</aqua> <gray>tangled in the line: <aqua>+" + Numbers.shortFormat(amount) + " Tokens");
     }
 
     private void landFish(Player p, FishingData d, Catch c) {
@@ -596,8 +609,9 @@ final class FishingManager implements FishingService {
                 got = economy().map(e -> e.format(Currency.CREDITS, credits)).orElse(credits + " Credits");
             }
             case "tokens" -> {
-                economy().ifPresent(e -> e.give(p.getUniqueId(), Currency.TOKENS, amount, "fishing:treasure"));
-                got = economy().map(e -> e.format(Currency.TOKENS, amount)).orElse(amount + " Tokens");
+                long tokens = cfg.tokenTreasureScaled ? Math.max(1, Math.round(amount * TokenDrops.scale(p.getUniqueId()))) : amount;
+                economy().ifPresent(e -> e.give(p.getUniqueId(), Currency.TOKENS, tokens, "fishing:treasure"));
+                got = economy().map(e -> e.format(Currency.TOKENS, tokens)).orElse(tokens + " Tokens");
             }
             case "bait" -> {
                 BaitDef b = cfg.baits.get(t.bait());

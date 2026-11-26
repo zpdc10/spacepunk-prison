@@ -73,8 +73,8 @@ public final class DrillMath {
             case BORE_SPEED -> "Break speed <white>x" + fmt(breakSpeed(c, f, lvl)) + "</white>";
             case YIELD -> "Ore per block <white>x" + fmt(yieldMultiplier(c, lvl)) + "</white>";
             case TOKEN_SIPHON -> "<white>" + pct(chance(d, lvl)) + "</white> chance per block for <white>"
-                    + Math.round(d.p("amount-min", 2) * siphonAmountMultiplier(c, lvl)) + "-"
-                    + Math.round(d.p("amount-max", 5) * siphonAmountMultiplier(c, lvl)) + "</white> Tokens";
+                    + Math.round(d.p("amount-min", 4) * siphonAmountMultiplier(c, lvl)) + "-"
+                    + Math.round(d.p("amount-max", 7) * siphonAmountMultiplier(c, lvl)) + "</white> Tokens <dark_gray>(more in deeper mines)";
             case SHAPED_CHARGE -> "<white>" + pct(chance(d, lvl)) + "</white> chance, radius <white>" + shapedRadius(c, lvl) + "</white>";
             case JACKHAMMER -> "<white>" + pct(chance(d, lvl)) + "</white> chance to clear the layer";
             case CUTTING_LASER -> "<white>" + pct(chance(d, lvl)) + "</white> chance, <white>" + laserLength(c, lvl) + "</white> blocks long";

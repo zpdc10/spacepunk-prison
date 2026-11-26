@@ -44,7 +44,11 @@ worth about 10.7; a full copper+steel to wiring harness chain is about 2.9x the 
 The Trade Terminal market is shared by the whole server: daily demand x0.7-1.4 per good (seeded by date),
 three priority orders at x1.5, and saturation (price falls as the server sells more of a good that day:
 `1 / (1 + Credits sold today / 3M)`, floor 40%). The seller's grade/prestige sell multiplier applies.
-All workshop payouts use the economy reason `income:workshop`, so they count toward the prestige Token payout.
+All workshop payouts use the economy reason `income:workshop` (server income).
+
+**Token finds:** while you're online and your bay is processing, it rolls once a minute (6% chance) for
+4-7 Tokens, scaled by your grade and prestige like mining drops (about 20 Tokens/h at grade 1). Offline
+catch-up never finds Tokens. Tune under `tokens:` in `workshop.yml`.
 
 Throughput is the brake on the pace model (`progression-balance.md`): a Mk I crusher handles 1 ore/s, about
 the mining rate of an early player, and every extra stage needs another machine, power and slots. Expect the

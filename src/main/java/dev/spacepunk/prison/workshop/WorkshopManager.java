@@ -11,6 +11,7 @@ import dev.spacepunk.prison.api.Objectives;
 import dev.spacepunk.prison.api.ProfileService;
 import dev.spacepunk.prison.api.ProgressionService;
 import dev.spacepunk.prison.api.Services;
+import dev.spacepunk.prison.api.TokenDrops;
 import dev.spacepunk.prison.api.WorkshopService;
 import dev.spacepunk.prison.data.PlayerProfile;
 import dev.spacepunk.prison.util.Numbers;
@@ -235,7 +236,24 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
     @Override public void crafted(Bay bay, String key, long n) {
         Services.find(GangService.class).ifPresent(g -> g.addContractProgress(bay.owner, GANG_OBJECTIVE, n));
         Player owner = Bukkit.getPlayer(bay.owner);
-        if (owner != null) Objectives.report(owner, ObjectiveTypes.PROCESS_ITEM, n, key);
+        if (owner != null) {
+            Objectives.report(owner, ObjectiveTypes.PROCESS_ITEM, n, key);
+            tokenFind(owner, bay);
+        }
+    }
+
+    /** Uncommon Token find while the owner is online and their bay is processing (never during offline catch-up). */
+    private void tokenFind(Player owner, Bay bay) {
+        WorkshopConfig c = cfg();
+        long now = System.currentTimeMillis();
+        if (c.tokenChance <= 0 || now - bay.lastTokenRoll < c.tokenRollSeconds * 1000L) return;
+        bay.lastTokenRoll = now;
+        if (java.util.concurrent.ThreadLocalRandom.current().nextDouble() >= c.tokenChance) return;
+        long amount = TokenDrops.roll(owner.getUniqueId(), c.tokenMin, c.tokenMax);
+        economy().give(owner.getUniqueId(), Currency.TOKENS, amount, "workshop:token-find");
+        owner.playSound(owner.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.4f);
+        Text.send(owner, "<aqua>✦ Token find</aqua> <gray>scraped out of your bay's machines: <aqua>+"
+                + Numbers.shortFormat(amount) + " Tokens");
     }
 
     static final String GANG_OBJECTIVE = "goods_processed";
