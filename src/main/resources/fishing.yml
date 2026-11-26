@@ -1,0 +1,339 @@
+# Fishing: the station's flooded decks. Every number here is tuning; /fishadmin reload re-reads this file.
+#
+# Money model: a fish's value is in "grade-1 Credits". The payout is
+#   value x value-growth^(effective grade - 1) x area value-mult x (1 + fishing level bonus + Fillet + collection)
+#   x your progression sell multiplier (grade/prestige bonus)
+# where effective grade = min(your grade, the area's max-grade). So fishing keeps pace with mining at your
+# own deck (about 60-75% of an un-upgraded drill), and fishing an old deck pays old-deck money.
+# Fish money is server income (reason income:fishing), so it counts toward the prestige "earned this run".
+
+world:
+  # Separate void world (normal difficulty so sea creatures can fight; nothing else spawns there).
+  name: station_waters
+  # Build the hub and the five pools automatically the first time the world is created.
+  auto-build: true
+  base-y: 64
+  # Distance between pool centres along +X from the hub.
+  spacing: 44
+  # Water size [x, depth, z] of each pool.
+  pool-size: [19, 6, 19]
+  # Walkway width around each pool.
+  walkway: 4
+  # Send players here with /waters. Players who fall into the void are returned to the hub.
+  hub-name: "<#5fb4c8>Bilge Hub"
+
+items:
+  use-item-models: true
+  # Base items. Fish keep a fish base so they look right without the pack; eating them is blocked.
+  rod-material: FISHING_ROD
+
+# Bite timing in ticks (20 = 1s), before Lure Speed, bait and lures shorten it (at most by max-bite-reduction).
+bite:
+  min-wait: 100
+  max-wait: 300
+  max-bite-reduction: 0.75
+
+# What a bite turns out to be: relative weights. creature is a chance in [0..1] checked first.
+catch:
+  creature-chance: 0.035
+  max-creature-chance: 0.30
+  junk: 12
+  fish: 85
+  treasure: 3
+  # Fish rarity weights (Angler's Eye, Glow Worms and Deep Hook scale every non-common weight up).
+  rarity-weights:
+    common: 64
+    uncommon: 24
+    rare: 9
+    epic: 2.6
+    legendary: 0.4
+
+value:
+  value-growth: 1.2584
+  level-bonus: 0.01
+
+# Per rarity: name/colour, fishing XP, Scales when gutted, and the reel-in minigame difficulty
+# (none = landed straight away). zone = catch zone width (share of the track), speed = how hard the fish
+# swims, erratic = chance per tick it changes direction, gain/drain = progress per tick inside/outside.
+rarities:
+  junk:      { name: Junk,      color: "<#8a8070>", xp: 1,   scales: 0 }
+  common:    { name: Common,    color: "<#d8d0c0>", xp: 3,   scales: 1 }
+  uncommon:  { name: Uncommon,  color: "<#6fd35a>", xp: 8,   scales: 3,
+               minigame: { zone: 0.30, speed: 0.5, erratic: 0.025, gain: 0.016, drain: 0.008 } }
+  rare:      { name: Rare,      color: "<#4fa8ff>", xp: 20,  scales: 8,
+               minigame: { zone: 0.26, speed: 0.75, erratic: 0.04, gain: 0.013, drain: 0.009 } }
+  epic:      { name: Epic,      color: "<#c46cff>", xp: 60,  scales: 25,
+               minigame: { zone: 0.22, speed: 1.0, erratic: 0.06, gain: 0.011, drain: 0.010 } }
+  legendary: { name: Legendary, color: "<#ffb43a>", xp: 250, scales: 100,
+               minigame: { zone: 0.18, speed: 1.3, erratic: 0.085, gain: 0.009, drain: 0.011 } }
+
+# Fishing level: XP to go from level L to L+1 = xp-base x xp-growth^(L-1).
+levels:
+  max: 50
+  xp-base: 60
+  xp-growth: 1.13
+
+# Collections: catching N of one species raises its tier. Each tier: +value-bonus on that species and Scales.
+collections:
+  tiers: [1, 25, 100, 500, 2000]
+  legendary-tiers: [1, 3, 10, 25, 60]
+  value-bonus: 0.05
+  scales: [5, 25, 100, 400, 1500]
+
+leaderboard:
+  # Weekly heaviest single catch. Resets Monday 00:00 UTC; the top three get Scales.
+  weekly-rewards: [600, 300, 150]
+  size: 10
+
+# ---------------------------------------------------------------------------------------------------------
+# Rods. Tier sets the enchant level cap, lure slots and what Fishing Level it needs. Upgrades cost Scales.
+# ---------------------------------------------------------------------------------------------------------
+rod:
+  tiers:
+    bent_wire:  { name: Bent Wire Rod,   color: "<#9c8a6e>", level: 1,  scales: 0,      max-enchant: 10, lure-slots: 1,
+                  lore: "A coat hanger, a bolt and a lot of hope." }
+    scrap_spinner: { name: Scrap Spinner, color: "<#c8743a>", level: 8,  scales: 800,  max-enchant: 20, lure-slots: 1,
+                  lore: "Reel salvaged from a cargo winch." }
+    carbon_line: { name: Carbon Line,    color: "<#7fd65a>", level: 18, scales: 6000,   max-enchant: 35, lure-slots: 2,
+                  lore: "Woven from reactor shielding fibre." }
+    mag_rail:   { name: Mag-Rail Rod,    color: "<#8fd3ff>", level: 30, scales: 30000,  max-enchant: 50, lure-slots: 2,
+                  lore: "Magnetic coils fling the line twice as far." }
+    void_angler: { name: Void Angler,    color: "<#b07cff>", level: 42, scales: 140000, max-enchant: 75, lure-slots: 3,
+                  lore: "It hums. The fish hear it from three decks away." }
+  # Enchants bought with Scales: cost of the next level = cost-base x cost-growth^(current level).
+  # per-level is the effect per level (see effects below).
+  enchants:
+    lure_speed:    { name: Lure Speed,    color: "<#5fb4c8>", cost-base: 8,  cost-growth: 1.09, per-level: 0.010, effect: bite-speed,
+                     description: "Fish bite sooner." }
+    double_catch:  { name: Double Catch,  color: "<#6fd35a>", cost-base: 15, cost-growth: 1.09, per-level: 0.004, effect: double-catch,
+                     description: "Chance to land two fish at once." }
+    angler_eye:    { name: Angler's Eye,  color: "<#4fa8ff>", cost-base: 14, cost-growth: 1.09, per-level: 0.012, effect: rare-luck,
+                     description: "Rarer fish bite more often." }
+    treasure_luck: { name: Treasure Luck, color: "<#ffd23f>", cost-base: 12, cost-growth: 1.09, per-level: 0.03,  effect: treasure,
+                     description: "More treasure, less junk." }
+    chum_sense:    { name: Chum Sense,    color: "<#ff5a3c>", cost-base: 10, cost-growth: 1.09, per-level: 0.02,  effect: creature,
+                     description: "Sea creatures surface more often." }
+    steady_hands:  { name: Steady Hands,  color: "<#d8d0c0>", cost-base: 9,  cost-growth: 1.09, per-level: 0.0025, effect: zone,
+                     description: "Wider catch zone in the reel-in." }
+    line_strength: { name: Line Strength, color: "<#9c8a6e>", cost-base: 9,  cost-growth: 1.09, per-level: 0.008, effect: strength,
+                     description: "Progress drains slower when the fish slips out." }
+    harpoon:       { name: Harpoon,       color: "<#c46cff>", cost-base: 10, cost-growth: 1.09, per-level: 0.5,   effect: harpoon,
+                     description: "Extra damage to sea creatures with your rod." }
+    fillet:        { name: Fillet,        color: "<#ffb43a>", cost-base: 12, cost-growth: 1.09, per-level: 0.01,  effect: value,
+                     description: "Fish sell for more." }
+
+# Effects (shared by enchants, lures and bait):
+#   bite-speed (share of wait removed), double-catch (chance), rare-luck (non-common weights x (1 + v)),
+#   treasure (treasure weight x (1 + v), junk weight / (1 + v)), creature (creature chance x (1 + v)),
+#   zone (added to the catch zone width), strength (drain x (1 - v)), harpoon (bonus damage), value (+ sell share)
+
+# Lures are items (treasure and sea creature drops) that you slot into your rod in the rod bay.
+lures:
+  spinner:      { name: Rattle Spinner,  rarity: uncommon,  effects: { bite-speed: 0.12 }, lore: "Clatters like a loose panel." }
+  deep_hook:    { name: Deep Hook,       rarity: rare,      effects: { rare-luck: 0.18 }, lore: "Sinks past the small stuff." }
+  siren_lure:   { name: Siren Lure,      rarity: rare,      effects: { creature: 0.6 }, lore: "Sings on a frequency only monsters like." }
+  salvage_hook: { name: Salvage Hook,    rarity: uncommon,  effects: { treasure: 0.6 }, lore: "Magnetised. Catches everything metal." }
+  twin_hook:    { name: Twin Hook,       rarity: epic,      effects: { double-catch: 0.08 }, lore: "Two barbs, twice the trouble." }
+  gyro_bobber:  { name: Gyro Bobber,     rarity: rare,      effects: { zone: 0.05 }, lore: "Stays level in any current." }
+  kevlar_leader: { name: Kevlar Leader,  rarity: uncommon,  effects: { strength: 0.25 }, lore: "Rated for hull breaches." }
+  golden_rivet: { name: Golden Rivet,    rarity: legendary, effects: { value: 0.15, rare-luck: 0.10, treasure: 0.25 }, lore: "Pried off the old captain's chair." }
+
+# Bait: bought in the bait shop (Credits, price x value-growth^(grade-1)) and used up one per catch.
+bait:
+  grub_paste:   { name: Grub Paste,      price: 30,  amount: 16, effects: { bite-speed: 0.20 }, lore: "Ground-up vent grubs. Fish love it." }
+  glow_worms:   { name: Glow Worms,      price: 90,  amount: 16, effects: { rare-luck: 0.25 }, lore: "Bioluminescent. Rare fish come to look." }
+  chum_canister: { name: Chum Canister,  price: 70,  amount: 16, effects: { creature: 1.0 }, lore: "Whatever this was, the big ones want it." }
+  magnet_bits:  { name: Magnet Bits,     price: 70,  amount: 16, effects: { treasure: 1.0 }, lore: "Pulls loose salvage off the floor." }
+  coolant_gel:  { name: Coolant Gel,     price: 45,  amount: 16, effects: { zone: 0.04, strength: 0.15 }, lore: "Keeps the line from snapping." }
+
+# ---------------------------------------------------------------------------------------------------------
+# Areas: one pool per deck. grade = clearance needed, max-grade caps the value scaling, value-mult rewards
+# newer decks. biome tints the water. Blocks are the deck shell blocks the resource pack retextures.
+# ---------------------------------------------------------------------------------------------------------
+areas:
+  scrapyard:
+    name: Scrapyard Runoff
+    color: "<#c8743a>"
+    grade: 1
+    max-grade: 5
+    value-mult: 1.0
+    biome: swamp
+    wall: WAXED_WEATHERED_CUT_COPPER
+    floor: POLISHED_ANDESITE
+    light: OCHRE_FROGLIGHT
+    description: "Oily runoff from the scrap presses. Things live in it anyway."
+  reactor:
+    name: Sludge Tanks
+    color: "<#7fd65a>"
+    grade: 6
+    max-grade: 10
+    value-mult: 1.1
+    biome: mangrove_swamp
+    wall: POLISHED_DEEPSLATE
+    floor: POLISHED_TUFF
+    light: VERDANT_FROGLIGHT
+    description: "Reactor coolant gone thick and green. Don't drink it."
+  cryo:
+    name: Frozen Pools
+    color: "<#8fd3ff>"
+    grade: 11
+    max-grade: 15
+    value-mult: 1.2
+    biome: cold_ocean
+    wall: POLISHED_DIORITE
+    floor: SMOOTH_STONE
+    light: SEA_LANTERN
+    description: "Thawed stasis fluid. Some of the fish were frozen on purpose."
+  hull:
+    name: Breach Flood
+    color: "<#b07cff>"
+    grade: 16
+    max-grade: 20
+    value-mult: 1.3
+    biome: warm_ocean
+    wall: POLISHED_BLACKSTONE_BRICKS
+    floor: CRACKED_POLISHED_BLACKSTONE_BRICKS
+    light: PEARLESCENT_FROGLIGHT
+    description: "Seawater from somewhere that isn't here, leaking through the hull."
+  foundry:
+    name: Quench Tanks
+    color: "<#ff5a3c>"
+    grade: 21
+    max-grade: 25
+    value-mult: 1.4
+    biome: lukewarm_ocean
+    wall: POLISHED_BASALT
+    floor: POLISHED_BLACKSTONE
+    light: SHROOMLIGHT
+    description: "Where the foundry cools its castings. The water never stops boiling."
+
+# ---------------------------------------------------------------------------------------------------------
+# Fish. weight: [min, max] kg (big ones are rare). base: vanilla look without the pack.
+# ---------------------------------------------------------------------------------------------------------
+fish:
+  # Scrapyard Runoff
+  rust_minnow:      { name: Rust Minnow,        area: scrapyard, rarity: common,    value: 6,    weight: [0.1, 0.6],   base: COD,            lore: "Flakes when you touch it." }
+  oilgill:          { name: Oilgill,            area: scrapyard, rarity: common,    value: 7,    weight: [0.3, 1.4],   base: COD,            lore: "Leaves a rainbow on everything." }
+  bolt_carp:        { name: Bolt Carp,          area: scrapyard, rarity: common,    value: 8,    weight: [0.8, 3.0],   base: SALMON,         lore: "Swallows loose hardware for ballast." }
+  scrap_pike:       { name: Scrap Pike,         area: scrapyard, rarity: uncommon,  value: 20,   weight: [1.5, 6.0],   base: SALMON,         lore: "Teeth like a hacksaw blade." }
+  rivet_eel:        { name: Rivet Eel,          area: scrapyard, rarity: uncommon,  value: 22,   weight: [1.0, 4.5],   base: COD,            lore: "Its spine is a row of rivets." }
+  tinplate_bass:    { name: Tinplate Bass,      area: scrapyard, rarity: rare,      value: 60,   weight: [2.5, 9.0],   base: TROPICAL_FISH,  lore: "Rings like a bell when it flops." }
+  gearback_gar:     { name: Gearback Gar,       area: scrapyard, rarity: epic,      value: 200,  weight: [6.0, 22.0],  base: TROPICAL_FISH,  lore: "The gears on its back still turn." }
+  bilge_king:       { name: The Bilge King,     area: scrapyard, rarity: legendary, value: 1200, weight: [30.0, 95.0], base: PUFFERFISH,     lore: "Ruler of the runoff. Wears a hubcap crown." }
+  # Sludge Tanks
+  glowfry:          { name: Glowfry,            area: reactor,   rarity: common,    value: 6,    weight: [0.1, 0.5],   base: COD,            lore: "Lights up the tank at night." }
+  sludge_puffer:    { name: Sludge Puffer,      area: reactor,   rarity: common,    value: 7,    weight: [0.4, 1.8],   base: PUFFERFISH,     lore: "Inflates with toxic gas." }
+  duct_perch:       { name: Duct Perch,         area: reactor,   rarity: common,    value: 8,    weight: [0.7, 2.6],   base: COD,            lore: "Lives in the intake pipes." }
+  isotope_trout:    { name: Isotope Trout,      area: reactor,   rarity: uncommon,  value: 20,   weight: [1.2, 5.0],   base: SALMON,         lore: "Half-life: about a week." }
+  coolant_catfish:  { name: Coolant Catfish,    area: reactor,   rarity: uncommon,  value: 22,   weight: [2.0, 8.0],   base: SALMON,         lore: "Whiskers rated to 900 degrees." }
+  fission_ray:      { name: Fission Ray,        area: reactor,   rarity: rare,      value: 60,   weight: [3.0, 12.0],  base: TROPICAL_FISH,  lore: "Splits in two when threatened." }
+  meltdown_mackerel: { name: Meltdown Mackerel, area: reactor,   rarity: epic,      value: 200,  weight: [5.0, 20.0],  base: TROPICAL_FISH,  lore: "Too hot to hold for long." }
+  halflife_sturgeon: { name: The Half-Life Sturgeon, area: reactor, rarity: legendary, value: 1200, weight: [40.0, 130.0], base: PUFFERFISH, lore: "Older than the station. Glows through its scales." }
+  # Frozen Pools
+  frostfin:         { name: Frostfin,           area: cryo,      rarity: common,    value: 6,    weight: [0.2, 0.8],   base: COD,            lore: "Fins sharp as broken ice." }
+  cryo_shrimp:      { name: Cryo Shrimp,        area: cryo,      rarity: common,    value: 7,    weight: [0.1, 0.4],   base: COD,            lore: "Comes back to life when it thaws." }
+  icebreaker_cod:   { name: Icebreaker Cod,     area: cryo,      rarity: common,    value: 8,    weight: [1.0, 3.5],   base: COD,            lore: "Headbutts through the frost." }
+  glacial_char:     { name: Glacial Char,       area: cryo,      rarity: uncommon,  value: 20,   weight: [1.5, 6.0],   base: SALMON,         lore: "Pale as the vault walls." }
+  stasis_eel:       { name: Stasis Eel,         area: cryo,      rarity: uncommon,  value: 22,   weight: [1.0, 5.0],   base: COD,            lore: "Moves in slow motion. Bites in real time." }
+  hoarfrost_salmon: { name: Hoarfrost Salmon,   area: cryo,      rarity: rare,      value: 60,   weight: [3.0, 11.0],  base: SALMON,         lore: "Breathes out snow." }
+  zero_pike:        { name: Absolute Zero Pike, area: cryo,      rarity: epic,      value: 200,  weight: [6.0, 24.0],  base: TROPICAL_FISH,  lore: "Freezes the line it bites." }
+  the_sleeper:      { name: The Sleeper,        area: cryo,      rarity: legendary, value: 1200, weight: [50.0, 160.0], base: PUFFERFISH,    lore: "Tagged 'DO NOT THAW'. Someone thawed it." }
+  # Breach Flood
+  vacuum_sprat:     { name: Vacuum Sprat,       area: hull,      rarity: common,    value: 6,    weight: [0.1, 0.5],   base: COD,            lore: "Swims fine in no air at all." }
+  hullsucker:       { name: Hullsucker,         area: hull,      rarity: common,    value: 7,    weight: [0.5, 2.0],   base: COD,            lore: "Clings to the outside of the station." }
+  static_goby:      { name: Static Goby,        area: hull,      rarity: common,    value: 8,    weight: [0.6, 2.4],   base: TROPICAL_FISH,  lore: "Gives you a little shock." }
+  starlight_tetra:  { name: Starlight Tetra,    area: hull,      rarity: uncommon,  value: 20,   weight: [0.4, 2.0],   base: TROPICAL_FISH,  lore: "Has a tiny galaxy inside." }
+  void_carp:        { name: Void Carp,          area: hull,      rarity: uncommon,  value: 22,   weight: [2.0, 8.0],   base: SALMON,         lore: "You can see through it. You shouldn't." }
+  horizon_angler:   { name: Event Horizon Angler, area: hull,    rarity: rare,      value: 60,   weight: [4.0, 14.0],  base: PUFFERFISH,     lore: "Its lure bends light." }
+  nebula_koi:       { name: Nebula Koi,         area: hull,      rarity: epic,      value: 200,  weight: [5.0, 18.0],  base: TROPICAL_FISH,  lore: "Scales the colour of a dying star." }
+  thing_outside:    { name: The Thing Outside,  area: hull,      rarity: legendary, value: 1200, weight: [60.0, 200.0], base: PUFFERFISH,    lore: "It was knocking on the hull. Now it's in your hold." }
+  # Quench Tanks
+  slagfish:         { name: Slagfish,           area: foundry,   rarity: common,    value: 6,    weight: [0.3, 1.2],   base: COD,            lore: "Mostly cinder." }
+  ember_tetra:      { name: Ember Tetra,        area: foundry,   rarity: common,    value: 7,    weight: [0.1, 0.5],   base: TROPICAL_FISH,  lore: "Glows like a coal." }
+  quench_loach:     { name: Quench Loach,       area: foundry,   rarity: common,    value: 8,    weight: [0.8, 3.0],   base: COD,            lore: "Hisses when it leaves the water." }
+  forgeback_snapper: { name: Forgeback Snapper, area: foundry,   rarity: uncommon,  value: 20,   weight: [2.0, 7.0],   base: SALMON,         lore: "Hammered-steel shell." }
+  molten_arowana:   { name: Molten Arowana,     area: foundry,   rarity: uncommon,  value: 22,   weight: [2.5, 9.0],   base: SALMON,         lore: "Drips when it swims." }
+  neutronium_barracuda: { name: Neutronium Barracuda, area: foundry, rarity: rare,  value: 60,   weight: [8.0, 30.0],  base: SALMON,         lore: "Impossibly heavy for its size." }
+  sunforged_marlin: { name: Sunforged Marlin,   area: foundry,   rarity: epic,      value: 200,  weight: [10.0, 40.0], base: TROPICAL_FISH,  lore: "Its bill was forged, not grown." }
+  foundry_heart:    { name: The Foundry Heart,  area: foundry,   rarity: legendary, value: 1200, weight: [80.0, 260.0], base: PUFFERFISH,    lore: "Still beating. Still burning." }
+
+# Junk: sells for a little, guts for nothing. areas: [] means every area.
+junk:
+  corroded_bolt:  { name: Corroded Bolt,     value: 1.5, base: IRON_NUGGET,  areas: [] }
+  tangled_cable:  { name: Tangled Cable,     value: 2,   base: STRING,       areas: [] }
+  soggy_ration:   { name: Soggy Ration Pack, value: 1,   base: PAPER,        areas: [] }
+  cracked_visor:  { name: Cracked Visor,     value: 3,   base: GLASS_PANE,   areas: [cryo, hull, foundry] }
+  spent_cell:     { name: Spent Power Cell,  value: 3,   base: REDSTONE,     areas: [reactor, foundry] }
+
+# Treasure: type scales | tokens | credits (value units, grade scaled like fish) | lure | bait | command.
+# areas: [] means everywhere. command runs from the console with {player} replaced.
+treasure:
+  scale_cache:    { name: "Scale Cache",          type: scales,  amount: [8, 30],   weight: 40, areas: [] }
+  credit_bundle:  { name: "Waterlogged Scrip",    type: credits, amount: [60, 200], weight: 30, areas: [] }
+  token_pouch:    { name: "Token Pouch",          type: tokens,  amount: [15, 60],  weight: 14, areas: [] }
+  bait_crate:     { name: "Bait Crate",           type: bait,    bait: grub_paste, amount: [8, 24], weight: 10, areas: [] }
+  glow_crate:     { name: "Glow Worm Jar",        type: bait,    bait: glow_worms, amount: [6, 16], weight: 6, areas: [] }
+  lure_spinner:   { name: "Lost Lure",            type: lure,    lure: spinner,      weight: 4, areas: [scrapyard, reactor] }
+  lure_salvage:   { name: "Lost Lure",            type: lure,    lure: salvage_hook, weight: 4, areas: [] }
+  lure_kevlar:    { name: "Lost Lure",            type: lure,    lure: kevlar_leader, weight: 3, areas: [] }
+  lure_deep:      { name: "Lost Lure",            type: lure,    lure: deep_hook,    weight: 2, areas: [cryo, hull, foundry] }
+  lure_gyro:      { name: "Lost Lure",            type: lure,    lure: gyro_bobber,  weight: 2, areas: [reactor, cryo, hull, foundry] }
+  module_magnet:  { name: "<#ffd23f>Sealed Module Case", type: command, command: "drill admin module {player} magnet_coil", weight: 0.4, areas: [], broadcast: true }
+  module_scav:    { name: "<#ffd23f>Sealed Module Case", type: command, command: "drill admin module {player} scavenger_rig", weight: 0.4, areas: [], broadcast: true }
+
+# ---------------------------------------------------------------------------------------------------------
+# Sea creatures: some bites pull up something hostile. Only the angler who hooked it can hurt it (and it only
+# hunts them). Loot goes to that angler. credits are value units (grade scaled like fish).
+# drops: list of { lure|bait: id, chance, amount }.
+# ---------------------------------------------------------------------------------------------------------
+creatures:
+  bilge_rat:
+    { name: Bilge Rat, area: scrapyard, entity: SILVERFISH, level: 2, health: 18, damage: 2, speed: 0.3, scale: 1.6, weight: 60,
+      xp: 15, scales: [3, 8], credits: [10, 30], drops: [ { lure: spinner, chance: 0.03 } ] }
+  drowned_scrapper:
+    { name: Drowned Scrapper, area: scrapyard, entity: DROWNED, level: 5, health: 40, damage: 3, speed: 0.24, scale: 1.0, weight: 35,
+      xp: 30, scales: [6, 15], credits: [25, 60], drops: [ { lure: kevlar_leader, chance: 0.04 } ] }
+  rust_leviathan:
+    { name: Rust Leviathan, area: scrapyard, entity: GUARDIAN, level: 10, health: 120, damage: 5, speed: 0.5, scale: 1.8, weight: 5,
+      xp: 120, scales: [30, 60], credits: [120, 250], broadcast: true, drops: [ { lure: deep_hook, chance: 0.15 }, { lure: golden_rivet, chance: 0.005 } ] }
+  sludge_blob:
+    { name: Sludge Blob, area: reactor, entity: SLIME, size: 2, level: 12, health: 70, damage: 4, speed: 0.35, scale: 1.0, weight: 60,
+      xp: 40, scales: [8, 18], credits: [30, 70], drops: [ { bait: chum_canister, chance: 0.15, amount: 4 } ] }
+  duct_eel:
+    { name: Duct Eel, area: reactor, entity: GUARDIAN, level: 15, health: 90, damage: 5, speed: 0.5, scale: 0.9, weight: 35,
+      xp: 55, scales: [10, 24], credits: [40, 90], drops: [ { lure: siren_lure, chance: 0.04 } ] }
+  reactor_wyrm:
+    { name: Reactor Wyrm, area: reactor, entity: ELDER_GUARDIAN, level: 20, health: 260, damage: 7, speed: 0.4, scale: 0.8, weight: 5,
+      xp: 220, scales: [50, 100], credits: [200, 400], broadcast: true, drops: [ { lure: twin_hook, chance: 0.08 }, { lure: golden_rivet, chance: 0.01 } ] }
+  frostbitten_diver:
+    { name: Frostbitten Diver, area: cryo, entity: STRAY, level: 22, health: 110, damage: 6, speed: 0.27, scale: 1.0, weight: 60,
+      xp: 70, scales: [14, 30], credits: [50, 110], drops: [ { lure: gyro_bobber, chance: 0.04 } ] }
+  cryo_warden:
+    { name: Cryo Warden, area: cryo, entity: DROWNED, level: 26, health: 160, damage: 7, speed: 0.25, scale: 1.4, weight: 35,
+      xp: 95, scales: [18, 40], credits: [70, 150], drops: [ { lure: deep_hook, chance: 0.05 } ] }
+  stasis_horror:
+    { name: Stasis Horror, area: cryo, entity: ELDER_GUARDIAN, level: 32, health: 420, damage: 9, speed: 0.4, scale: 0.9, weight: 5,
+      xp: 320, scales: [80, 160], credits: [300, 600], broadcast: true, drops: [ { lure: twin_hook, chance: 0.10 }, { lure: golden_rivet, chance: 0.015 } ] }
+  void_lurker:
+    { name: Void Lurker, area: hull, entity: PHANTOM, level: 34, health: 140, damage: 7, speed: 0.6, scale: 1.3, weight: 60,
+      xp: 110, scales: [20, 44], credits: [80, 160], drops: [ { lure: siren_lure, chance: 0.05 } ] }
+  hull_breacher:
+    { name: Hull Breacher, area: hull, entity: DROWNED, level: 38, health: 220, damage: 9, speed: 0.27, scale: 1.6, weight: 35,
+      xp: 150, scales: [26, 56], credits: [100, 220], drops: [ { lure: twin_hook, chance: 0.03 } ] }
+  thing_below:
+    { name: The Thing Below, area: hull, entity: ELDER_GUARDIAN, level: 44, health: 640, damage: 11, speed: 0.45, scale: 1.1, weight: 5,
+      xp: 480, scales: [120, 240], credits: [450, 900], broadcast: true, drops: [ { lure: golden_rivet, chance: 0.025 } ] }
+  slag_ooze:
+    { name: Slag Ooze, area: foundry, entity: MAGMA_CUBE, size: 3, level: 46, health: 260, damage: 10, speed: 0.35, scale: 1.0, weight: 60,
+      xp: 170, scales: [30, 64], credits: [120, 260], drops: [ { bait: coolant_gel, chance: 0.2, amount: 8 } ] }
+  cinder_knight:
+    { name: Cinder Knight, area: foundry, entity: WITHER_SKELETON, level: 50, health: 340, damage: 12, speed: 0.28, scale: 1.2, weight: 35,
+      xp: 220, scales: [40, 80], credits: [160, 320], drops: [ { lure: twin_hook, chance: 0.05 } ] }
+  foundry_titan:
+    { name: Foundry Titan, area: foundry, entity: ELDER_GUARDIAN, level: 60, health: 900, damage: 14, speed: 0.45, scale: 1.3, weight: 5,
+      xp: 700, scales: [180, 360], credits: [700, 1400], broadcast: true, drops: [ { lure: golden_rivet, chance: 0.04 } ] }
+
+creature-settings:
+  # Seconds before an unkilled creature sinks back. Max creatures alive per angler.
+  lifetime: 90
+  max-per-player: 3

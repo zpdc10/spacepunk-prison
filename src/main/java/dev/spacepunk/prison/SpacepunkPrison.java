@@ -34,6 +34,7 @@ public final class SpacepunkPrison extends JavaPlugin {
             "dev.spacepunk.prison.drill.DrillModule",
             "dev.spacepunk.prison.gangs.GangsModule",
             "dev.spacepunk.prison.hud.HudModule",
+            "dev.spacepunk.prison.fishing.FishingModule",
             "dev.spacepunk.prison.raredrops.RareDropsModule",
             "dev.spacepunk.prison.auction.AuctionModule",
             "dev.spacepunk.prison.undercroft.UndercroftModule",
@@ -61,6 +62,11 @@ public final class SpacepunkPrison extends JavaPlugin {
         Services.register(EconomyService.class, economy);
         addCommand("balance", "Show your balances", List.of("bal"), EconomyCommands.balance(economy));
         addCommand("eco", "Admin economy controls", List.of(), EconomyCommands.eco(economy));
+        // Default-deny map protection for every world: only mine ore (and what modules allow) can be changed.
+        dev.spacepunk.prison.core.MapProtection protection = new dev.spacepunk.prison.core.MapProtection();
+        Services.register(dev.spacepunk.prison.api.ProtectionService.class, protection);
+        protection.start(this);
+        addCommand("buildmode", "Admins: toggle editing protected map blocks", List.of("build"), protection.command());
 
         for (String cls : MODULE_CLASSES) {
             FeatureModule m;

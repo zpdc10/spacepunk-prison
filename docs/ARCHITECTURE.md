@@ -36,6 +36,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `auction/` + `auction.yml` | auction house | The Black Market: buy-it-now + escrowed auctions, fees/tax sink, `auctions.json`, `/ah`; blocks prestige while the player leads a bid (`PrestigeAttemptEvent`) |
 | `quests/` + `quests.yml` | quests | `QuestService` + `ObjectiveTypes` (generic objective API), story questline, tutorials, daily/weekly contracts, monthly Contract Track, quest NPCs, sidebar tracker, `/quests` `/contracts` `/questadmin`. See `docs/QUESTS.md` |
 | `parkour/` + `parkour.yml` | parkour | Daily maintenance run per mine (generated next to it), reward rolls, best times/records, `parkour-<mine>` warps, `/parkour` `/parkouradmin` |
+| `fishing/` + `fishing.yml` | fishing | `FishingService`, fires `FishCaughtEvent` / `SeaCreatureKilledEvent`; the `station_waters` world (hub + one pool per deck), catches, reel-in minigame, soulbound rod (tiers, enchants, lures, bait), sea creatures, collections, weekly leaderboard, `/fish` `/rod` `/waters` `/fishadmin`. See `docs/FISHING.md` |
 | `undercroft/` + `undercroft.yml` | undercroft | `UndercroftService` (PvP zones, drug labs for gangs), the Undercroft world: prestige-gated rings, grace + combat tag, death drops, bounty tags, hot ore, labs + stims, supply drops, checkpoint scan/bribe, `/fence`, `/undercroft`. Warp `undercroft`. See `docs/UNDERCROFT.md` |
 | `guns/` + `guns.yml` | guns | `GunService`, fires `GunHitEvent`; guns, ammo, gun parts, reload/recoil/spread/scopes, `/gunsmith`, `/gun` |
 | `workshop/` + `workshop.yml` | workshop | `WorkshopService`, private hull bays (own void world, plot grid), machines, power/heat/coolant, conveyors, Bay Locker, daily goods market, Assembly Bench, `/ws` `/wsadmin`, warp `workshop`. See `docs/WORKSHOP.md` |
@@ -47,7 +48,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, quests, mines, station, progression, drill, gangs, hud, raredrops, auction, undercroft, guns, workshop, parkour. Missing classes are skipped, so each module can
+Load order: resourcepack, quests, mines, station, progression, drill, gangs, hud, fishing, raredrops, auction, undercroft, guns, workshop, parkour. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -95,6 +96,17 @@ other), `registerContractObjective` + `addContractProgress` to feed weekly gang 
 moves use reasons `gang:deposit` / `gang:withdraw`, so they never count as server income for prestige.
 `GangMembershipEvent` fires on join/leave/rank/disband/recolor so tags can refresh.
 
+## Map protection (default deny)
+
+Core's `MapProtection` (`api.ProtectionService`) cancels, at LOWEST priority in every world, any block break,
+place, bucket, sign edit, block-altering right-click (tools, pots, containers...), item frame/armor stand edit,
+and any world change (explosions, fire, liquid flow, pistons, growth, fading). Ops included. Exceptions:
+- ore inside a mine pit (`MineService.mineAt`), handled by the mines module;
+- rules a module registers: `allowBreak` / `allowPlace` / `allowUse` (player + block) and `allowEnvironment`
+  (block), e.g. a workshop bay for its owner, Undercroft veins, supply drops and labs;
+- admins with `/buildmode` on (permission `spacepunk.admin`; off by default and reset on rejoin).
+New areas are protected automatically; register a rule for anything players should be able to change.
+
 ## Places and warps
 
 The station hub is the main hub (world `station`); everything else lives in its own area and is reached by a
@@ -134,6 +146,11 @@ here in the same PR that needs them, and the pack falls back to a vanilla look u
 | `spacepunk:currency/token` | Token item/icon |
 | `spacepunk:currency/shard` | Prestige Shard icon |
 | `spacepunk:currency/credit` | Credits (scrip) icon |
+| `spacepunk:fish/<fish_id>` | Fish from `fishing.yml` (art in `tools/resourcepack/fishing_art.py`, generated for every fish id found there), e.g. `spacepunk:fish/rust_minnow` |
+| `spacepunk:rod/<tier>` | Fishing rod tiers (`condition` on `fishing_rod/cast`): `spacepunk:rod/bent_wire`, `scrap_spinner`, `carbon_line`, `mag_rail`, `void_angler` |
+| `spacepunk:fishing/junk/<id>`, `fishing/lure/<id>`, `fishing/bait/<id>` | Fishing junk, lures and bait icons, e.g. `spacepunk:fishing/lure/spinner`, `spacepunk:fishing/bait/grub_paste` |
+| `spacepunk:fishing/scale`, `spacepunk:fishing/cooler`, `spacepunk:fishing/collection`, `spacepunk:fishing/leaderboard`, `spacepunk:fishing/waters` | Fishing menu icons |
+| `spacepunk:ui/rod_enchant/<id>` | Rod bay enchant icons, e.g. `spacepunk:ui/rod_enchant/lure_speed` |
 | `spacepunk:gun/rivet_pistol`, `gun/scrap_smg`, `gun/breach_shotgun`, `gun/bolt_rifle`, `gun/plasma_lance` | Guns (32x32, held level like a gun; art in `tools/resourcepack/undercroft_art.py`) |
 | `spacepunk:gun/parts` | Gun parts (gunsmith currency) |
 | `spacepunk:ammo/pistol`, `ammo/rifle`, `ammo/shell`, `ammo/cell` | Ammo |

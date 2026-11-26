@@ -46,6 +46,9 @@ public final class ParkourModule implements FeatureModule {
         for (Listener l : listeners) plugin.getServer().getPluginManager().registerEvents(l, plugin);
         plugin.addCommand("parkour", "Daily maintenance runs (parkour)", List.of("pk", "runs"), commands.player());
         plugin.addCommand("parkouradmin", "Build and manage parkour runs", List.of("pkadmin"), commands.admin());
+        // Map protection is default-deny: let players press the course plates.
+        Services.find(dev.spacepunk.prison.api.ProtectionService.class)
+                .ifPresent(ps -> ps.allowUse("parkour", (p, b) -> manager.hitAt(b) != null));
         ticker = Bukkit.getScheduler().runTaskTimer(plugin, manager::tick, 2L, 2L);
         Objectives.register(ObjectiveTypes.PARKOUR_COMPLETE, "Finish maintenance runs");
 
@@ -67,6 +70,7 @@ public final class ParkourModule implements FeatureModule {
         listeners.forEach(HandlerList::unregisterAll);
         listeners.clear();
         if (manager != null) manager.endAll();
+        Services.find(dev.spacepunk.prison.api.ProtectionService.class).ifPresent(ps -> ps.clearRules("parkour"));
     }
 
     void reload() { config = ParkourConfig.load(new File(plugin.getDataFolder(), "parkour.yml"), plugin.getLogger()); }

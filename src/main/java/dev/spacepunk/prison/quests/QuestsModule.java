@@ -59,6 +59,13 @@ public final class QuestsModule implements FeatureModule {
 
         // One tick later, after every module is up: hooks into installed systems, then players already online (/reload).
         Bukkit.getScheduler().runTask(plugin, () -> {
+            if (Services.find(dev.spacepunk.prison.api.FishingService.class).isPresent()) {
+                manager.registerObjectiveType(ObjectiveTypes.CATCH_FISH, "Catch fish");
+            }
+            if (Services.find(dev.spacepunk.prison.api.UndercroftService.class).isPresent()) {
+                manager.registerObjectiveType(ObjectiveTypes.UNDERCROFT_WIN, "Win Undercroft fights");
+                manager.registerObjectiveType(ObjectiveTypes.SMUGGLE, "Smuggle contraband");
+            }
             Services.find(GangService.class).ifPresent(g -> {
                 manager.registerObjectiveType(ObjectiveTypes.GANG_JOIN, "Join a gang");
                 g.registerContractObjective("quests_done", "Quests and contracts finished");

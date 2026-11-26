@@ -1,5 +1,7 @@
 package dev.spacepunk.prison.station;
 
+import dev.spacepunk.prison.api.ProtectionService;
+import dev.spacepunk.prison.api.Services;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -9,11 +11,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -26,7 +25,6 @@ import java.util.UUID;
 
 /** Hub behaviour: join and respawn at the hub, terminals, and a protected, damage-free station world. */
 final class StationListener implements Listener {
-    static final String BUILD_PERMISSION = "spacepunk.station.build";
 
     private final StationModule module;
     private final Map<UUID, Long> lastUse = new HashMap<>();
@@ -60,7 +58,7 @@ final class StationListener implements Listener {
         if (key != null) {
             e.setCancelled(true);
             if (e.getHand() != EquipmentSlot.HAND) return;
-            if (e.getAction() == Action.LEFT_CLICK_BLOCK && p.hasPermission(BUILD_PERMISSION) && p.isSneaking()) return;
+            if (e.getAction() == Action.LEFT_CLICK_BLOCK && building(p)) return;
             long now = System.currentTimeMillis();
             Long last = lastUse.get(p.getUniqueId());
             if (last != null && now - last < 600) return;
@@ -69,26 +67,14 @@ final class StationListener implements Listener {
             module.runTerminal(p, key);
             return;
         }
-        // Decorations (barrels, brewing stands, buttons) are props for everyone but builders.
-        if (!p.hasPermission(BUILD_PERMISSION) && e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            e.setUseInteractedBlock(Event.Result.DENY);
-        }
-        if (!p.hasPermission(BUILD_PERMISSION) && e.getAction() == Action.PHYSICAL) e.setCancelled(true);
+        // Decorations (barrels, brewing stands, buttons) are props for everyone, admins included, unless in /buildmode.
+        if (building(p)) return;
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK) e.setUseInteractedBlock(Event.Result.DENY);
+        if (e.getAction() == Action.PHYSICAL) e.setCancelled(true);
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onBreak(BlockBreakEvent e) {
-        if (inStation(e.getBlock().getWorld()) && (module.building() || !e.getPlayer().hasPermission(BUILD_PERMISSION))) e.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPlace(BlockPlaceEvent e) {
-        if (inStation(e.getBlock().getWorld()) && (module.building() || !e.getPlayer().hasPermission(BUILD_PERMISSION))) e.setCancelled(true);
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onHanging(HangingBreakByEntityEvent e) {
-        if (inStation(e.getEntity().getWorld()) && !(e.getRemover() instanceof Player p && p.hasPermission(BUILD_PERMISSION))) e.setCancelled(true);
+    private static boolean building(Player p) {
+        return Services.find(ProtectionService.class).map(ps -> ps.buildMode(p.getUniqueId())).orElse(false);
     }
 
     @EventHandler(ignoreCancelled = true)

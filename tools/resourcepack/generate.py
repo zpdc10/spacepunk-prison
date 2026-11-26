@@ -1094,6 +1094,9 @@ def main():
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import raredrops_art
     raredrops_art.raredrops(sys.modules[__name__])
+    # Fishing items, rods and icons (fishing module); art lives in fishing_art.py.
+    import fishing_art
+    fishing_art.fishing(sys.modules[__name__])
     # Undercroft + guns (undercroft and guns modules); art lives in undercroft_art.py.
     import undercroft_art
     undercroft_art.undercroft(sys.modules[__name__])

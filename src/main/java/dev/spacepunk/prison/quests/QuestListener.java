@@ -2,10 +2,13 @@ package dev.spacepunk.prison.quests;
 
 import dev.spacepunk.prison.api.Currency;
 import dev.spacepunk.prison.api.ObjectiveTypes;
+import dev.spacepunk.prison.api.event.ContrabandSmuggledEvent;
 import dev.spacepunk.prison.api.event.CurrencyChangeEvent;
+import dev.spacepunk.prison.api.event.FishCaughtEvent;
 import dev.spacepunk.prison.api.event.GangMembershipEvent;
 import dev.spacepunk.prison.api.event.GradeChangeEvent;
 import dev.spacepunk.prison.api.event.MineBlocksBrokenEvent;
+import dev.spacepunk.prison.api.event.UndercroftKillEvent;
 import dev.spacepunk.prison.data.ProfileLoadedEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -82,6 +85,22 @@ final class QuestListener implements Listener {
         if (e.change() != GangMembershipEvent.Change.JOINED || e.player() == null) return;
         Player p = Bukkit.getPlayer(e.player());
         if (p != null) quests.progress(p, ObjectiveTypes.GANG_JOIN, 1, "gang:" + e.gangId());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onFish(FishCaughtEvent e) {
+        if (e.player() == null || !"fish".equals(e.kind())) return;
+        quests.progress(e.player(), ObjectiveTypes.CATCH_FISH, Math.max(1, e.amount()), e.id(), "rarity:" + e.rarity(), "zone:" + e.areaId());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onUndercroftKill(UndercroftKillEvent e) {
+        if (e.killer() != null) quests.progress(e.killer(), ObjectiveTypes.UNDERCROFT_WIN, 1, "ring:" + e.ring());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onSmuggle(ContrabandSmuggledEvent e) {
+        if (e.player() != null && e.items() > 0) quests.progress(e.player(), ObjectiveTypes.SMUGGLE, e.items());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
