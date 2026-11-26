@@ -76,6 +76,8 @@ here in the same PR that needs them, and the pack falls back to a vanilla look u
 | `spacepunk:module/<module_id>` | Drill modules: `magnet_coil`, `plasma_cutter`, `scavenger_rig`, `coolant_loop`, `overcharger`, `unknown` (fallback for modules without art yet) |
 | `spacepunk:ui/<name>` | Menu icons and filler panes, see the list below |
 | `spacepunk:ui/heat_gauge` | Heat gauge, 9 stages: set `custom_model_data` floats `[heat 0.0-1.0]` |
+| `spacepunk:ui/enchant/<enchant_id>` | Drill bay enchant icons (`bore_speed`, `yield`, `token_siphon`, `shaped_charge`, `jackhammer`, `cutting_laser`, `overclock`, `salvage_sense`, `coolant`, plus `locked`) |
+| `spacepunk:ui/socket_empty`, `ui/socket_locked`, `ui/modules`, `ui/frame_upgrade`, `ui/close` | Drill bay sockets and buttons |
 | `spacepunk:currency/token` | Token item/icon |
 | `spacepunk:currency/shard` | Prestige Shard icon |
 | `spacepunk:currency/credit` | Credits (scrip) icon |
