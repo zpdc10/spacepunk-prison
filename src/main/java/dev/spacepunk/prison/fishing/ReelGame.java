@@ -10,7 +10,6 @@ import java.util.Random;
  * fills; outside, it drains. Full = landed, empty = it got away. One {@link #tick(boolean)} per server tick.
  */
 final class ReelGame {
-    static final int TRACK = 30;
     static final int TIMEOUT_TICKS = 20 * 30;
 
     private final Random rng = new Random();
@@ -65,26 +64,24 @@ final class ReelGame {
         return Result.CONTINUE;
     }
 
-    /** The track as MiniMessage: dark cells, the green catch zone, the fish as a bright cell. */
-    String render(String fishColor) {
-        StringBuilder sb = new StringBuilder("<#3a3028>[ ");
-        int fishCell = (int) Math.round(fish * (TRACK - 1));
-        double half = zoneWidth / 2;
-        String last = null;
-        for (int i = 0; i < TRACK; i++) {
-            double pos = (i + 0.5) / TRACK;
-            boolean inZone = Math.abs(pos - zone) <= half;
-            String c;
-            if (i == fishCell) c = fishColor;
-            else if (inZone) c = wasInside ? "<#9cf27a>" : "<#4f8f3a>";
-            else c = "<#2a2622>";
-            if (!c.equals(last)) {
-                sb.append(c);
-                last = c;
-            }
-            sb.append('█');
-        }
-        sb.append("<#3a3028> ]");
-        return sb.toString();
+    /** Half the width of the visible target band on the XP bar: the fish counts as hooked while the bar sits in 0.5 ± this. */
+    static final double BAND = 0.2;
+
+    /** -1..1 while inside the catch zone; positive when the line is too tight (zone above the fish). */
+    double offset() {
+        return (zone - fish) / (zoneWidth / 2);
+    }
+
+    /**
+     * Line tension for the XP bar: the middle of the bar is "on the fish", sneaking pushes it up, the fish yanks it
+     * around. The band 0.5 ± {@link #BAND} is exactly the catch zone, whatever the rarity.
+     */
+    float bar() {
+        return (float) Math.max(0, Math.min(1, 0.5 + BAND * offset()));
+    }
+
+    /** Catch progress as a whole percent, shown as the XP level number. */
+    int percent() {
+        return (int) Math.max(0, Math.min(100, Math.round(progress * 100)));
     }
 }

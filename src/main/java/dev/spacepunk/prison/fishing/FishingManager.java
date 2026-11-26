@@ -368,7 +368,7 @@ final class FishingManager implements FishingService {
         final ReelGame game;
         final BossBar bar;
         final Location hook;
-        boolean lastReeling;
+        int state = Integer.MIN_VALUE;
 
         Session(Player player, Catch c, ReelGame game, BossBar bar, Location hook) {
             this.player = player;
@@ -385,12 +385,14 @@ final class FishingManager implements FishingService {
         Effects e = effects(p.getUniqueId());
         ReelGame g = new ReelGame(r.minigame(), e.zone, e.strength);
         BossBar bar = BossBar.bossBar(Text.mm(r.color() + "Something " + r.name().toUpperCase() + " <gray>is on the line"),
-                (float) g.progress, barColor(r.id()), BossBar.Overlay.NOTCHED_10);
+                (float) g.progress, barColor(r.id()), BossBar.Overlay.PROGRESS);
         p.showBossBar(bar);
         Session s = new Session(p, c, g, bar, hook);
         sessions.put(p.getUniqueId(), s);
         p.playSound(p.getLocation(), Sound.ENTITY_FISHING_BOBBER_SPLASH, 1f, 0.6f);
-        Text.send(p, r.color() + "It fights! <gray>Hold <white>SNEAK</white> to raise your catch zone and keep the fish inside it.");
+        render(s);
+        Text.send(p, r.color() + "It fights! <gray>Your <white>XP bar</white> is the line: hold <white>SNEAK</white> to pull it up, "
+                + "let go to let it drop. Keep it in the <white>middle</white> to reel. The number is your catch progress.");
     }
 
     private static BossBar.Color barColor(String rarity) {
@@ -420,42 +422,50 @@ final class FishingManager implements FishingService {
             boolean reeling = p.isSneaking();
             ReelGame.Result res = s.game.tick(reeling);
             if (res == ReelGame.Result.CONTINUE) {
-                if (s.game.ticks % 2 == 0) render(s);
-                if (reeling && s.game.ticks % 4 == 0) p.playSound(p.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 0.25f, 1.6f);
+                render(s);
+                if (reeling && s.game.wasInside && s.game.ticks % 4 == 0) p.playSound(p.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 0.25f, 1.6f);
                 if (s.game.ticks % 10 == 0) s.hook.getWorld().spawnParticle(Particle.SPLASH, s.hook, 6, 0.3, 0.1, 0.3, 0.05);
                 continue;
             }
             it.remove();
             hideBar(s);
-            hud(p, null);
             if (res == ReelGame.Result.LANDED) after.add(() -> land(p, s.c, s.hook));
             else after.add(() -> escaped(p, s.c));
         }
         after.forEach(Runnable::run);
     }
 
+    /**
+     * Every tick: the XP bar shows line tension and the level number the catch percent. This is a client-only display
+     * packet ({@link Player#sendExperienceChange}); the player's real XP is never touched, so nothing can be gained
+     * or lost, and {@link #hideBar} sends the real values back.
+     */
     private void render(Session s) {
+        ReelGame g = s.game;
+        s.player.sendExperienceChange(g.bar(), g.percent());
+        s.bar.progress((float) Math.max(0, Math.min(1, g.progress)));
+        int state = g.wasInside ? 0 : g.offset() > 0 ? 1 : -1;
+        if (state == s.state) return;
+        if (s.state != Integer.MIN_VALUE && state != 0) s.player.playSound(s.player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+        s.state = state;
         Rarity r = cfg.rarity(s.c.fish().rarity());
-        s.bar.progress((float) Math.max(0, Math.min(1, s.game.progress)));
-        String hint = s.game.wasInside ? "<#9cf27a>REELING" : "<#ff5a3c>SLIPPING";
-        hud(s.player, "<#5fb4c8>⚓ " + s.game.render(r.color()) + " " + hint);
-    }
-
-    private void hud(Player p, String text) {
-        var hud = Services.find(HudService.class);
-        if (hud.isPresent()) hud.get().segment(p, "fishing", text);
-        else p.sendActionBar(Text.mm(text == null ? "" : text));
+        String what = r.color() + r.name().toUpperCase() + " <gray>on the line  ";
+        s.bar.name(Text.mm(what + switch (state) {
+            case 0 -> "<#9cf27a><bold>REELING</bold> <gray>· keep the XP bar in the middle";
+            case 1 -> "<#ff5a3c><bold>TOO TIGHT</bold> <gray>· let go of sneak";
+            default -> "<#ffb43a><bold>TOO SLACK</bold> <gray>· hold sneak";
+        }));
     }
 
     private void hideBar(Session s) {
-        if (s.player.isOnline()) s.player.hideBossBar(s.bar);
+        Player p = s.player;
+        if (!p.isOnline()) return;
+        p.hideBossBar(s.bar);
+        p.sendExperienceChange(p.getExp(), p.getLevel());
     }
 
     void cancelAll() {
-        for (Session s : sessions.values()) {
-            hideBar(s);
-            hud(s.player, null);
-        }
+        for (Session s : sessions.values()) hideBar(s);
         sessions.clear();
     }
 
