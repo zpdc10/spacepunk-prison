@@ -7,3 +7,6 @@ worlds:
   # Switch off vanilla mechanics that don't fit the station: natural mob spawning (and remove stray mobs),
   # daylight cycle, phantoms, patrols, traders, raids, mob griefing, fire spread and advancement chat.
   vanilla-cleanup: true
+  # No vanilla XP at all (no orbs, no gains, XP zeroed on join, no enchanting/anvil/grindstone).
+  # The XP bar is only drawn by the fishing minigame.
+  disable-xp: true

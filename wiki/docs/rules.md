@@ -40,7 +40,7 @@ food bar never drains.
 - Sea creatures on the fishing decks can still hit you, but never for a killing blow.
 - Parkour still works the same: fall off and you're sent back to your last checkpoint.
 
-If you somehow do die outside a PvP zone, you keep your whole inventory and your XP.
+If you somehow do die outside a PvP zone, you keep your whole inventory.
 
 ## No weather, no stray mobs
 
@@ -48,6 +48,12 @@ It never rains or storms in any world, and time never moves on (the station hold
 No vanilla mobs spawn anywhere: no bats in the mines, no phantoms, raids, patrols or wandering traders. The only
 creatures you'll meet are the station's own (quest NPCs and fishing sea creatures). Fire doesn't spread and
 advancements aren't announced in chat.
+
+## No vanilla XP
+
+There's no vanilla experience: nothing drops XP orbs, and enchanting tables, anvils and grindstones don't work
+(upgrades come from your drill, rod and rig instead). The XP bar is only used by the
+[fishing](systems/fishing.md) reeling minigame.
 
 ## Respawning
 
