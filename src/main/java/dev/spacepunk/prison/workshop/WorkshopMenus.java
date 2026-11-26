@@ -464,7 +464,7 @@ final class WorkshopMenus {
                 } else {
                     l.add("<dark_gray>Raw ore. Feed it to machines with a Cargo Intake set to the locker.");
                 }
-                gui.set(i, iconFor(key, l), e -> {
+                gui.set(i, stacked(iconFor(key, l), n), e -> {
                     if (!good) return;
                     if (e.getClick() == ClickType.RIGHT || e.getClick() == ClickType.SHIFT_RIGHT) {
                         long paid = ws.sell(p, key, Long.MAX_VALUE);
@@ -497,6 +497,22 @@ final class WorkshopMenus {
     private int stageOrder(String key) {
         Good g = cfg().goods.get(BayData.base(key));
         return g == null ? -1 : g.stage().ordinal();
+    }
+
+    /**
+     * Shows a stored amount as the icon's stack number, like a normal item. Vanilla draws at most 99 (the
+     * max_stack_size limit), so bigger amounts show 99 with the compact total ("x1.2K") after the name.
+     */
+    private static ItemStack stacked(ItemStack icon, long n) {
+        int shown = (int) Math.max(1, Math.min(99, n));
+        icon.editMeta(meta -> {
+            meta.setMaxStackSize(99);
+            if (n > 99 && meta.hasDisplayName()) {
+                meta.displayName(meta.displayName().append(Text.item(" <gray>x" + Numbers.shortFormat(n))));
+            }
+        });
+        icon.setAmount(shown);
+        return icon;
     }
 
     private ItemStack iconFor(String key, List<String> lore) {
