@@ -1,0 +1,76 @@
+site_name: Spacepunk Prison Wiki
+site_description: How every system on the Spacepunk Prison Minecraft server works.
+repo_url: https://github.com/zpdc10/spacepunk-prison
+edit_uri: ""
+copyright: Spacepunk Prison (placeholder name). Numbers come straight from the server's config files.
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: deep orange
+      accent: amber
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    logo: material/pickaxe
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - toc.follow
+
+extra_css:
+  - stylesheets/station.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Currencies: currencies.md
+  - Core loop:
+      - Mines and grades: systems/mines.md
+      - Cargo and selling: systems/selling.md
+      - Prestige: systems/prestige.md
+      - The drill: systems/drill.md
+  - The station:
+      - Station hub and warps: systems/station.md
+      - Your HUD: systems/hud.md
+  - Ways to earn:
+      - Rare drops (salvage): systems/rare-drops.md
+      - Quests and contracts: systems/quests.md
+      - Maintenance runs (parkour): systems/parkour.md
+      - Fishing: systems/fishing.md
+      - Workshop (hull bays): systems/workshop.md
+  - Players and trade:
+      - The Black Market: systems/black-market.md
+      - Gangs (crews): systems/gangs.md
+  - High risk:
+      - The Undercroft: systems/undercroft.md
+      - Guns: systems/guns.md
+  - Reference:
+      - All commands: commands.md
+      - Rules of the station: rules.md
+      - For admins: admin.md
