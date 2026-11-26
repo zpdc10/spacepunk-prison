@@ -1097,6 +1097,9 @@ def main():
     # Undercroft + guns (undercroft and guns modules); art lives in undercroft_art.py.
     import undercroft_art
     undercroft_art.undercroft(sys.modules[__name__])
+    # Workshop machines, conveyor, goods and menu icons (workshop module); art lives in workshop_art.py.
+    import workshop_art
+    workshop_art.workshop(sys.modules[__name__])
     pack_meta()
     print(f"wrote {len(written)} files under {ROOT}")
 
