@@ -1,0 +1,197 @@
+# The Undercroft: the lawless lower hull and the only PvP zone. Its own void world, built by
+# "/undercroft admin generate" (or automatically the first time). The layout runs east (+X) from the guard
+# checkpoint through rings that get richer, deadlier and gated behind prestige.
+# /undercroft admin reload re-reads this file (regenerate to apply layout changes).
+
+world:
+  name: undercroft
+  auto-generate: true       # build the layout the first time the module starts
+  floor-y: 64
+  half-width: 36            # the zone spans z = -half-width .. +half-width
+  ceiling-height: 13
+  difficulty: EASY          # natural regen on; mobs never spawn here
+
+# Where players go when they leave or die. Uses the station hub when the station module provides one,
+# otherwise this world's spawn (default: the mines world).
+exit:
+  fallback-world: mines
+
+entry:
+  min-grade: 1
+  grace-seconds: 10         # nobody can hurt you, and you can't hurt anyone, right after you leave the checkpoint
+  new-player-grace-seconds: 30
+  new-player-max-grade: 5   # prestige 0 players up to this grade get the longer grace
+
+combat:
+  tag-seconds: 15           # combat tag after hitting or being hit by a player
+  # Commands allowed while tagged (everything else is blocked).
+  allowed-commands: [msg, tell, w, r, reply, gunsmith, undercroft, uc]
+  kill-on-logout: true      # logging out while tagged kills you (and drops your gear)
+
+checkpoint:
+  name: "Guard Checkpoint"
+  x-min: -16
+  x-max: 0                  # the first ring starts here
+
+# Rings in order, each from the previous ring's x-max (or the checkpoint) to its own x-max.
+# hot-ore: what its veins drop. ore-block: the vein block. prestige: needed to enter.
+rings:
+  - id: outer
+    name: "<#c8743a>Outer Bilge"
+    x-max: 64
+    prestige: 0
+    hot-ore: hot_scrap
+    ore-block: NETHER_GOLD_ORE
+    veins: 9
+    vein-size: 5
+    cover: 26
+    light: OCHRE_FROGLIGHT
+    ingredients: { rust_flakes: 0.12, sludge: 0.10, volt_salt: 0.03, cryo_gel: 0.03 }
+  - id: run
+    name: "<#9fd65a>Smuggler's Run"
+    x-max: 120
+    prestige: 1
+    hot-ore: hot_crystal
+    ore-block: NETHER_QUARTZ_ORE
+    veins: 8
+    vein-size: 6
+    cover: 22
+    light: VERDANT_FROGLIGHT
+    ingredients: { volt_salt: 0.12, cryo_gel: 0.10, sludge: 0.08, rust_flakes: 0.05 }
+  - id: sump
+    name: "<#ff6040>The Sump"
+    x-max: 160
+    prestige: 3
+    hot-ore: hot_core
+    ore-block: GILDED_BLACKSTONE
+    veins: 7
+    vein-size: 7
+    cover: 16
+    light: SHROOMLIGHT
+    ingredients: { volt_salt: 0.15, cryo_gel: 0.15, sludge: 0.15, rust_flakes: 0.15 }
+
+hot-ore:
+  depleted-block: BLACKSTONE
+  regrow-seconds: 60
+  # Fence value at grade 1; grows like ore prices with your grade.
+  kinds:
+    hot_scrap:   { name: "<#ff9a40>Hot Scrap", value: 30, lore: "Stamped with a dead company's serials." }
+    hot_crystal: { name: "<#8fffb0>Hot Crystal", value: 70, lore: "Still warm from somebody else's reactor." }
+    hot_core:    { name: "<#ff5040>Hot Core Slag", value: 160, lore: "Glows in the dark. So will you." }
+
+ingredients:
+  sludge:      { name: "<#8fbf3a>Toxic Sludge", lore: "Skimmed off the bilge pumps." }
+  rust_flakes: { name: "<#c8743a>Rust Flakes", lore: "Scraped from hull plates older than the station." }
+  cryo_gel:    { name: "<#8fd3ff>Cryo Gel", lore: "Leaked from a stasis pod. Someone's still in it." }
+  volt_salt:   { name: "<#ffe060>Volt Salt", lore: "Crystallised arc residue. Tingles." }
+
+# Stims: strong timed boosts, then a comedown. One at a time; taking another during a comedown stacks the comedowns.
+# effects: potion effect keys with level (1 = I). sell: sell-price multiplier. mining: extra mining speed (+0.5 = +50%).
+# gun-damage: multiplier on your gun hits. Durations in seconds.
+stims:
+  rust:
+    name: "<#c8743a>Rust"
+    lore: "Makes every number look bigger. Including prices."
+    duration: 240
+    high: { sell: 1.30 }
+    comedown-duration: 120
+    comedown: { sell: 0.85, effects: { hunger: 1 } }
+    fence-value: 150
+  overdrive:
+    name: "<#ffe060>Overdrive"
+    lore: "Your hands move before you tell them to."
+    duration: 240
+    high: { mining: 0.6, effects: { speed: 1 } }
+    comedown-duration: 120
+    comedown: { effects: { mining_fatigue: 1, slowness: 1 } }
+    fence-value: 180
+  coldsleep:
+    name: "<#8fd3ff>Coldsleep"
+    lore: "You stop feeling bullets. And your feet."
+    duration: 90
+    high: { effects: { resistance: 1, regeneration: 1 } }
+    comedown-duration: 60
+    comedown: { effects: { weakness: 1, slowness: 1 } }
+    fence-value: 220
+  static:
+    name: "<#c070ff>Static"
+    lore: "Everything is very loud and very slow. Aim for the loud."
+    duration: 90
+    high: { gun-damage: 1.20, effects: { strength: 1 } }
+    comedown-duration: 60
+    comedown: { effects: { weakness: 1, glowing: 1 } }
+    fence-value: 260
+
+# Drug labs. Cook here: you must stay within cook-radius until the batch is done, or it's ruined.
+# x/z are positions in the world; the lab block sits on the floor. recipes: what this lab can cook.
+labs:
+  lab-block: BREWING_STAND
+  cook-radius: 6
+  controller-cut: 0.25      # share of every batch owed to whoever controls the lab (gangs)
+  announce-cooking: true    # tell everyone in the Undercroft a batch is cooking
+  sites:
+    bilge_still:  { name: "<#c8743a>Bilge Still",  x: 32,  z: 22,  recipes: [rust, overdrive] }
+    rustworks:    { name: "<#9fd65a>Rustworks",    x: 92,  z: -20, recipes: [rust, overdrive, coldsleep] }
+    sump_kitchen: { name: "<#ff6040>Sump Kitchen", x: 140, z: 0,   recipes: [overdrive, coldsleep, static] }
+
+# Recipe ingredients, doses per batch and cook time. Deeper labs (ring 2+) add bonus-doses per ring past the first.
+recipes:
+  rust:      { ingredients: { rust_flakes: 2, sludge: 1 }, doses: 3, seconds: 20 }
+  overdrive: { ingredients: { volt_salt: 2, sludge: 1 }, doses: 3, seconds: 25 }
+  coldsleep: { ingredients: { cryo_gel: 2, rust_flakes: 1 }, doses: 2, seconds: 30 }
+  static:    { ingredients: { volt_salt: 1, cryo_gel: 1, sludge: 1 }, doses: 2, seconds: 35 }
+bonus-doses: 1
+
+bounty:
+  tag-value: 400            # Credits per tag at grade 1 (victim's grade), plus the victim's bounty
+  bounty-per-kill: 250      # added to the killer's bounty per kill (at the killer's grade)
+  points-per-tag: 1         # gang leaderboard points
+  repeat-cooldown-minutes: 30   # killing the same player again within this time drops no tag
+
+# Prices at the fence and the gate grow with your grade: value x growth^(grade - 1).
+fence:
+  price-grade-growth: 1.21
+  lining-price: 25000       # Smuggler's Lining for sale at the fence (grade 1 price)
+
+smuggling:
+  detect-chance: 0.40       # chance each unhidden contraband stack is found and confiscated
+  lining-hides: 3           # stacks one Smuggler's Lining hides from the scanner
+  bribe-base: 3000          # Credits at grade 1
+  bribe-share: 0.30         # plus this share of the contraband's fence value
+
+supply-drops:
+  enabled: true
+  interval-minutes: 12
+  warning-seconds: 30
+  despawn-minutes: 4
+  min-players-in-zone: 1    # only drop when at least this many players are in the Undercroft
+  rolls: 4
+  # Ring weights: deeper drops are rarer and better (loot multiplied by ring number).
+  ring-weights: [5, 3, 2]
+  # type: contraband (stims, ingredients, hot ore, lining, tech_crate), gun, ammo, parts.
+  loot:
+    - { type: contraband, id: tech_crate, min: 1, max: 1, weight: 4 }
+    - { type: parts, min: 2, max: 5, weight: 8 }
+    - { type: ammo, id: pistol, min: 12, max: 36, weight: 6 }
+    - { type: ammo, id: rifle, min: 4, max: 10, weight: 3 }
+    - { type: ammo, id: shell, min: 6, max: 12, weight: 3 }
+    - { type: ammo, id: cell, min: 4, max: 8, weight: 2 }
+    - { type: contraband, id: sludge, min: 2, max: 4, weight: 6 }
+    - { type: contraband, id: rust_flakes, min: 2, max: 4, weight: 6 }
+    - { type: contraband, id: cryo_gel, min: 1, max: 3, weight: 5 }
+    - { type: contraband, id: volt_salt, min: 1, max: 3, weight: 5 }
+    - { type: contraband, id: lining, min: 1, max: 1, weight: 2 }
+    - { type: gun, id: scrap_smg, min: 1, max: 1, weight: 1 }
+    - { type: gun, id: breach_shotgun, min: 1, max: 1, weight: 1 }
+
+# Smuggled tech crates only open outside the Undercroft. command entries run from the console ({player} = opener).
+tech-crate:
+  rolls: 2
+  loot:
+    - { type: parts, min: 4, max: 10, weight: 10 }
+    - { type: gun, id: bolt_rifle, min: 1, max: 1, weight: 2 }
+    - { type: gun, id: plasma_lance, min: 1, max: 1, weight: 1 }
+    - { type: tokens, min: 2000, max: 8000, weight: 4 }
+    - { type: command, command: "drill admin module {player} plasma_cutter", label: "<#e040c0>Plasma Cutter module", weight: 1 }
+    - { type: command, command: "drill admin module {player} coolant_loop", label: "<#6fe3ff>Coolant Loop module", weight: 1 }
+    - { type: command, command: "drill admin module {player} overcharger", label: "<#ff5040>Overcharger module", weight: 1 }
