@@ -92,6 +92,7 @@ public final class QuestsModule implements FeatureModule {
         releaseNpcChunks();
         tasks.forEach(BukkitTask::cancel);
         tasks.clear();
+        npcWatch = null;
         listeners.forEach(HandlerList::unregisterAll);
         listeners.clear();
         if (manager != null) {
@@ -117,6 +118,27 @@ public final class QuestsModule implements FeatureModule {
         int n = npcs.place(world);
         releaseNpcChunks();
         if (n > 0) plugin.getLogger().info("[quests] placed " + n + " quest NPC(s) on the Crew Deck");
+        if (npcWatch == null) {
+            // The hub can still be rebuilding (async) when it first reports ready, and can be rebuilt later. Check again
+            // after 30 seconds, then every 5 minutes, but only while the spot chunks are loaded anyway, so a villager
+            // that is only on disk is never doubled.
+            npcWatch = Bukkit.getScheduler().runTaskTimer(plugin, this::recheckNpcs, 600L, 6000L);
+            tasks.add(npcWatch);
+        }
+    }
+
+    private BukkitTask npcWatch;
+
+    private void recheckNpcs() {
+        if (!config.npcAutoPlace || config.npcSpots.isEmpty()) return;
+        org.bukkit.World world = Bukkit.getWorld(config.npcWorld);
+        if (world == null) return;
+        for (QuestConfig.NpcSpot spot : config.npcSpots.values()) {
+            int cx = (int) Math.floor(spot.x()) >> 4, cz = (int) Math.floor(spot.z()) >> 4;
+            if (!world.isChunkLoaded(cx, cz) || !world.getChunkAt(cx, cz).isEntitiesLoaded()) return;
+        }
+        int n = npcs.place(world);
+        if (n > 0) plugin.getLogger().info("[quests] re-placed " + n + " missing quest NPC(s) on the Crew Deck");
     }
 
     private final List<org.bukkit.Chunk> ticketed = new ArrayList<>();
