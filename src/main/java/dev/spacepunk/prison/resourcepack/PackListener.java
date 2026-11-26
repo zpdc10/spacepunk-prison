@@ -18,7 +18,7 @@ final class PackListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        long delay = Math.max(0, module.cfg().getLong("send-delay-ticks", 2));
+        long delay = Math.max(0, module.cfg().getLong("send-delay-ticks", 40));
         Bukkit.getScheduler().runTaskLater(module.plugin(), () -> {
             if (player.isOnline()) module.send(player);
         }, delay);
