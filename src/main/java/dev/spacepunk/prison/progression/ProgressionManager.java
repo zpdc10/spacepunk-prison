@@ -6,6 +6,7 @@ import dev.spacepunk.prison.api.ProfileService;
 import dev.spacepunk.prison.api.ProgressionService;
 import dev.spacepunk.prison.api.event.GradeChangeEvent;
 import dev.spacepunk.prison.api.event.OreSellEvent;
+import dev.spacepunk.prison.api.event.PrestigeAttemptEvent;
 import dev.spacepunk.prison.data.PlayerProfile;
 import dev.spacepunk.prison.util.Text;
 import org.bukkit.Bukkit;
@@ -169,13 +170,20 @@ final class ProgressionManager implements ProgressionService {
 
     // ---- Prestige ----
 
-    enum PrestigeResult { OK, NOT_MAX_GRADE, MAX_PRESTIGE, NOT_LOADED }
+    enum PrestigeResult { OK, NOT_MAX_GRADE, MAX_PRESTIGE, NOT_LOADED, BLOCKED }
 
     PrestigeResult canPrestige(Player player) {
         PlayerProfile p = profiles.get(player.getUniqueId()).orElse(null);
         if (p == null) return PrestigeResult.NOT_LOADED;
         if (p.prestige() >= cfg().maxPrestige) return PrestigeResult.MAX_PRESTIGE;
         if (p.grade() < MAX_GRADE) return PrestigeResult.NOT_MAX_GRADE;
+        // Other modules may block it (auction bids held in escrow would dodge the Credits wipe).
+        PrestigeAttemptEvent attempt = new PrestigeAttemptEvent(player);
+        Bukkit.getPluginManager().callEvent(attempt);
+        if (attempt.isCancelled()) {
+            if (attempt.denyMessage() != null) Text.send(player, attempt.denyMessage());
+            return PrestigeResult.BLOCKED;
+        }
         return PrestigeResult.OK;
     }
 

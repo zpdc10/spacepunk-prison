@@ -1,0 +1,195 @@
+# Gangs (crews). Reload with /gang admin reload.
+# Credits in the gang bank are player money: moving them never counts as "earned this run" for the
+# prestige Token payout (bank moves use reasons gang:deposit / gang:withdraw).
+
+# Prestige needed to found a gang, and to join one. Design: gangs unlock at Prestige 1.
+create-prestige: 1
+join-prestige: 1
+# Credits it costs to found a gang (taken from the founder's wallet).
+create-cost: 25000
+name-min: 3
+name-max: 16
+tag-min: 2
+tag-max: 5
+# Seconds an invite stays open.
+invite-seconds: 300
+# Members before any Bunks upgrade.
+base-max-members: 6
+# Colors a leader can pick for the gang tag (/gang color <name>).
+colors:
+  rust: "#c8743a"
+  oil: "#5a6b7a"
+  hazard: "#e0b020"
+  toxic: "#8bc34a"
+  coolant: "#4fc3f7"
+  plasma: "#ce6bff"
+  blood: "#c0392b"
+  chrome: "#cfd8dc"
+
+ranks:
+  # Lowest rank allowed to do each thing: recruit, member, officer, leader.
+  invite: officer
+  kick: officer
+  withdraw: officer
+  upgrade: officer
+  motd: officer
+
+chat:
+  # Gang chat: /gc <message>, or /gang chat to send all chat to the gang.
+  format: "<dark_gray>[<color>{tag}</color>]</dark_gray> <gray>{rank}</gray> <white>{player}</white><dark_gray>:</dark_gray> <#d8cfc0>{message}"
+  # Gang members can't hurt each other in PvP zones (Undercroft) when false.
+  friendly-fire: false
+
+bank:
+  # Prestige lock. Prestiging wipes your Credits, so the bank must not be a place to hide them:
+  #  - Credits you deposit are "parked" under your name for the rest of your run.
+  #  - From deposit-lock-grade on (21 = Core Foundry), you can't deposit, and nobody else can withdraw
+  #    your parked Credits (you still can).
+  #  - When you prestige, whatever you still have parked is wiped from the bank with your wallet.
+  #    Credits the gang already spent on upgrades, or that gangmates withdrew before you got close
+  #    to prestige, are not touched. Contract and weekly rewards are never parked.
+  deposit-lock-grade: 21
+  # Parked Credits of someone who left the gang stay locked this many days, then become gang money.
+  ex-member-release-days: 14
+  min-deposit: 100
+  # Bank capacity before any Vault upgrade.
+  base-capacity: 5000000
+  log-size: 60
+
+points:
+  # Gang points feed gang level (lifetime) and the weekly leaderboard.
+  per-block-mined: 0.05
+  # One point per this many Credits a member earns from the server (selling, workshop, fishing...).
+  credits-per-point: 20000
+  # Same list as progression.yml prestige.rewards.income-reasons: which Credits gains are server income.
+  income-reasons: ["sell:", "income:"]
+  per-rankup: 25
+  per-prestige: 2500
+# Lifetime points needed for each gang level (level 1 is free).
+levels: [0, 2500, 10000, 30000, 75000, 160000, 300000, 520000, 850000, 1300000]
+
+upkeep:
+  # Taken from the bank every interval. If the bank can't pay, gang perks (sell bonus) switch off
+  # until it can. Retried hourly.
+  enabled: true
+  interval-hours: 24
+  per-member: 2500
+  per-upgrade-level: 5000
+
+# Gang upgrades, bought with bank Credits. cost = base-cost * growth^(level-1).
+# Effects are fixed by id: bunks = +value members, vault = x(1+value) bank capacity,
+# fence = +value sell price for every member, dispatch = +value weekly contracts.
+upgrades:
+  bunks:
+    name: "Bunks"
+    icon: RED_BED
+    description: "More crew bunks: +2 member slots per level."
+    max-level: 5
+    base-cost: 400000
+    growth: 2.2
+    value: 2
+    min-gang-level: [1, 2, 3, 5, 7]
+  vault:
+    name: "Strongbox"
+    icon: IRON_BLOCK
+    description: "Reinforced vault: bank holds +100% per level."
+    max-level: 5
+    base-cost: 250000
+    growth: 2.5
+    value: 1.0
+    min-gang-level: [1, 2, 4, 6, 8]
+  fence:
+    name: "Fence Network"
+    icon: EMERALD
+    description: "Crooked buyers: every member sells ore for +2% per level."
+    max-level: 5
+    base-cost: 750000
+    growth: 2.4
+    value: 0.02
+    min-gang-level: [2, 3, 5, 7, 9]
+  dispatch:
+    name: "Dispatch Board"
+    icon: WRITABLE_BOOK
+    description: "More work for the crew: +1 weekly contract per level."
+    max-level: 2
+    base-cost: 600000
+    growth: 3.0
+    value: 1
+    min-gang-level: [3, 6]
+
+contracts:
+  # Weekly gang contracts, rolled from the pool at the weekly reset. target = base + per-member * members.
+  # Objectives from modules that aren't installed yet are skipped when rolling.
+  # Built in: blocks_mined, ore_sold, credits_earned, rankups, prestiges.
+  # Other modules feed: fish_caught, goods_processed, pvp_kills, contraband_smuggled, parkour_runs, quests_done.
+  slots: 3
+  pool:
+    dig_deep:
+      name: "Strip the Seams"
+      objective: blocks_mined
+      base: 50000
+      per-member: 25000
+      points: 2000
+      credits: 300000
+    haul:
+      name: "Full Holds"
+      objective: ore_sold
+      base: 150000
+      per-member: 60000
+      points: 1500
+      credits: 250000
+    payday:
+      name: "Payday"
+      objective: credits_earned
+      base: 5000000
+      per-member: 2500000
+      points: 2000
+      credits: 400000
+    climb:
+      name: "Clearance Drive"
+      objective: rankups
+      base: 6
+      per-member: 3
+      points: 1500
+      credits: 200000
+    catch:
+      name: "Sludge Harvest"
+      objective: fish_caught
+      base: 300
+      per-member: 120
+      points: 1500
+      credits: 250000
+    refine:
+      name: "Factory Floor"
+      objective: goods_processed
+      base: 2000
+      per-member: 800
+      points: 2000
+      credits: 350000
+    undercroft:
+      name: "Blood in the Hull"
+      objective: pvp_kills
+      base: 15
+      per-member: 5
+      points: 3000
+      credits: 500000
+    smuggle:
+      name: "Through the Checkpoint"
+      objective: contraband_smuggled
+      base: 40
+      per-member: 15
+      points: 3000
+      credits: 500000
+
+weekly:
+  # Weekly reset: Monday 00:00 in this time zone ("" = the server's zone).
+  zone: ""
+  # Bank Credits paid to the top weekly gangs at reset (1st, 2nd, 3rd...).
+  rewards: [2000000, 1000000, 500000]
+
+# Undercroft turf (drug labs, control points). The undercroft module sets owners through GangService;
+# this is the display name of each territory id it uses.
+territories:
+  lab_rust: "Rust Lab"
+  lab_overdrive: "Overdrive Lab"
+  lab_coldsleep: "Coldsleep Lab"
