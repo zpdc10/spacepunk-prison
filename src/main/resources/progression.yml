@@ -1,0 +1,121 @@
+# Progression: clearance grades, prestige, cargo hold and selling.
+# Every number here is a tuning knob. Reload with /progression reload.
+# Pace model and the assumptions behind these defaults: docs/progression-balance.md
+# (about 70 hours of active play from grade 1 to the first prestige).
+
+grades:
+  # Credits to go from grade g to g+1 = base-cost * growth^(g-1) * (1 + cost-per-prestige * prestige).
+  base-cost: 4000
+  growth: 1.45
+  # Optional exact prices that replace the formula for a grade (still scaled by prestige), e.g. "10: 120000".
+  cost-overrides: {}
+  # Shown as the grade's name. {grade} is replaced with the number.
+  name-format: "Grade {grade}"
+  grades-per-deck: 5
+  decks:
+    - "<#9c8a6e>Scrapyard"
+    - "<#c8743a>Reactor Ducts"
+    - "<#7fb8d6>Cryo Vaults"
+    - "<#8f6fb3>Hull Breach"
+    - "<#e0562e>Core Foundry"
+
+prestige:
+  max: 100
+  # Every rank-up costs this much more per prestige level (0.5 = +50% per prestige).
+  cost-per-prestige: 0.5
+  # What a prestige pays out when reaching prestige level P. Prestige is the main bulk source of Tokens,
+  # so this should dwarf what mining drops during a run.
+  rewards:
+    # Tokens = tokens-base * tokens-growth^(P-1)  (P1: 25K, P5: 76K, P10: 375K, P20: 7.6M with the defaults)
+    tokens-base: 25000
+    tokens-growth: 1.35
+    # Prestige Shards = shards-base + shards-per-level * P
+    shards-base: 10
+    shards-per-level: 2
+    # Console commands run on each prestige, for extra rewards ({player}, {prestige} are replaced). Example:
+    #   - "lp user {player} permission set spacepunk.prestige.{prestige}"
+    commands: []
+  # Seconds the player has to type /prestige confirm.
+  confirm-seconds: 30
+
+selling:
+  # Sell multiplier = 1 + per-grade * (grade - 1) + per-prestige * prestige. Boosters stack on top via OreSellEvent.
+  bonus-per-grade: 0.02
+  bonus-per-prestige: 0.10
+  # Price for any vanilla block not listed below (custom spacepunk: items must be listed). 0 = unlisted blocks are worthless.
+  default-price: 1
+  # Base Credits per unit. Keys are vanilla material names or namespaced item ids. Target average value of a mine at grade g is about 2 * 1.21^(g-1)
+  # (grade 1: 2, grade 10: 11, grade 15: 29, grade 20: 76, grade 25: 197). The mines' block mixes set the real average.
+  prices:
+    # Deck 1, Scrapyard (grades 1-5)
+    STONE: 1
+    COBBLESTONE: 1
+    ANDESITE: 2
+    COAL_ORE: 4
+    COPPER_ORE: 6
+    IRON_ORE: 9
+    RAW_COPPER_BLOCK: 14
+    # Deck 2, Reactor Ducts (6-10)
+    DEEPSLATE: 3
+    TUFF: 3
+    DEEPSLATE_COPPER_ORE: 7
+    DEEPSLATE_IRON_ORE: 10
+    REDSTONE_ORE: 13
+    DEEPSLATE_REDSTONE_ORE: 15
+    RAW_IRON_BLOCK: 22
+    DEEPSLATE_GOLD_ORE: 28
+    RAW_GOLD_BLOCK: 45
+    # Deck 3, Cryo Vaults (11-15)
+    PACKED_ICE: 8
+    CALCITE: 9
+    BLUE_ICE: 11
+    LAPIS_ORE: 22
+    DEEPSLATE_LAPIS_ORE: 26
+    AMETHYST_BLOCK: 34
+    LAPIS_BLOCK: 45
+    DIAMOND_ORE: 60
+    DEEPSLATE_DIAMOND_ORE: 70
+    # Deck 4, Hull Breach (16-20)
+    BLACKSTONE: 20
+    BASALT: 20
+    NETHER_QUARTZ_ORE: 45
+    GILDED_BLACKSTONE: 60
+    OBSIDIAN: 80
+    QUARTZ_BLOCK: 95
+    EMERALD_ORE: 120
+    DEEPSLATE_EMERALD_ORE: 135
+    CRYING_OBSIDIAN: 150
+    EMERALD_BLOCK: 220
+    # Deck 5, Core Foundry (21-25)
+    SMOOTH_BASALT: 50
+    NETHER_GOLD_ORE: 110
+    ANCIENT_DEBRIS: 260
+    DIAMOND_BLOCK: 420
+    NETHERITE_BLOCK: 700
+    # Processed goods from the future workshop use custom ids, e.g.:
+    # "spacepunk:copper_ingot": 40
+
+cargo:
+  # Ore units the hold carries at level 0; each level multiplies it by capacity-growth.
+  base-capacity: 500
+  capacity-growth: 1.5
+  max-level: 12
+  # Credits for the upgrade from level L to L+1 = upgrade-base-cost * upgrade-growth^L.
+  upgrade-base-cost: 1500
+  upgrade-growth: 2.4
+  # Seconds between "cargo hold full" warnings.
+  full-warning-seconds: 4
+
+auto-sell:
+  # The Auto-Seller is a one-time cargo upgrade. When on, mined ore is sold instantly instead of stored.
+  required-grade: 8
+  cost: 50000
+  # Share of the normal price auto-sell pays (convenience has a small cut).
+  rate: 0.9
+
+display:
+  # Show grade and prestige in front of names in the tab list.
+  tab-prefix: true
+  tab-format: "<dark_gray>[</dark_gray>{prestige}<gray>G{grade}</gray><dark_gray>]</dark_gray> "
+  # Used for {prestige} above when prestige > 0.
+  prestige-format: "<light_purple>P{prestige}</light_purple> "
