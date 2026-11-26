@@ -1,0 +1,54 @@
+# The Black Market (auction house). Players list what they're holding as buy-it-now (/ah sell <price> [hours]) or as
+# a timed auction (/ah auction <start bid> [hours]). Fees and tax remove Credits from the economy (a money sink).
+# Money from other players never counts toward the prestige Token payout (see progression.yml income-reasons).
+
+fees:
+  # Paid up front when listing, never refunded: price x listing-percent x the duration's multiplier, at least listing-min.
+  listing-percent: 1.0
+  listing-min: 25
+  # Taken from the seller's proceeds on every sale.
+  sales-tax-percent: 5.0
+
+bids:
+  # A new bid must beat the top bid by this much (at least increment-min Credits).
+  increment-percent: 5.0
+  increment-min: 10
+  # A bid in the last N seconds pushes the end out to N seconds from now, so sniping doesn't work.
+  anti-snipe-window-seconds: 60
+  anti-snipe-extend-seconds: 60
+
+durations:
+  default-bin: 24
+  default-auction: 12
+  # Allowed listing lengths in hours, and the listing-fee multiplier for each.
+  fee-multiplier:
+    "6": 0.75
+    "12": 1.0
+    "24": 1.5
+    "48": 2.5
+
+limits:
+  min-price: 10
+  max-price: 1000000000000000
+  # Stalls per player: base + per-prestige x prestige, up to max.
+  listings:
+    base: 3
+    per-prestige: 1
+    max: 14
+  # New listings are refused while this many items wait in the collection bin.
+  max-claims: 45
+
+announce:
+  # Broadcast sales at or above the threshold (Credits).
+  big-sales: true
+  threshold: 1000000
+
+# Materials that can't be listed (the drill is always blocked: it's soulbound).
+blocked-materials:
+  - BEDROCK
+  - BARRIER
+  - COMMAND_BLOCK
+  - STRUCTURE_VOID
+
+# Menu icons use the resource pack's spacepunk:ui/* models.
+use-item-models: true
