@@ -65,6 +65,11 @@ Every player command on the server. Aliases are in brackets.
 | `/ah auction <start bid> [hours]` | Auction the held item |
 | `/ah mine` | Your listings |
 | `/ah claims` | Collect purchases, unsold items and proceeds |
+| `/trade <player>` (`/tr`) | Ask a player to trade items and Credits |
+| `/trade accept/deny <player>` | Answer a trade request (or click it in chat) |
+| `/trade history` | Your last 10 trades |
+| `/trade locks` | Your prestige trade locks |
+| `/trade toggle` | Turn trade requests off or on |
 | `/gang` (`/crew`, `/gangs`) | Crew terminal |
 | `/gc <message>` (`/crewchat`) | Crew chat |
 | `/gang chat` | Toggle crew chat mode |

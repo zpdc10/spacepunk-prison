@@ -2,7 +2,7 @@
 
 The Black Market is the station's player auction house. Sell modules, relics, workshop goods, fish, lures and anything
 else you can hold to other players for <span class="cur credits">Credits</span>, either as buy-it-now listings or as
-timed auctions.
+timed auctions. To swap with one player directly, use [direct trading](trading.md).
 
 ## Commands
 

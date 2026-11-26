@@ -37,6 +37,7 @@ public final class SpacepunkPrison extends JavaPlugin {
             "dev.spacepunk.prison.fishing.FishingModule",
             "dev.spacepunk.prison.raredrops.RareDropsModule",
             "dev.spacepunk.prison.auction.AuctionModule",
+            "dev.spacepunk.prison.trade.TradeModule",
             "dev.spacepunk.prison.undercroft.UndercroftModule",
             "dev.spacepunk.prison.guns.GunsModule",
             "dev.spacepunk.prison.workshop.WorkshopModule",
