@@ -119,13 +119,20 @@ final class ProgressionCommands {
             Long until = prestigeConfirm.get(id);
             if (!confirming || until == null || until < System.currentTimeMillis()) {
                 int next = progression.prestige(id) + 1;
+                long earned = progression.runEarnings(id);
+                double mult = c.earningsMultiplier(next, earned);
+                long capCredits = ProgressionConfig.clamp(c.runCost(next - 1) * c.earningsCap);
                 prestigeConfirm.put(id, System.currentTimeMillis() + c.confirmSeconds * 1000L);
                 Text.send(p, "<light_purple><bold>Prestige " + next + "</bold></light_purple>\n"
-                        + "<gray>  You get: " + economy.format(Currency.TOKENS, c.tokensFor(next))
+                        + "<gray>  Token cache: " + economy.format(Currency.TOKENS, c.tokenCache(next))
+                        + "<gray> x<white>" + String.format("%.2f", mult) + "</white> for the "
+                        + economy.format(Currency.CREDITS, earned) + "<gray> earned this run"
+                        + " <dark_gray>(stops growing at " + Numbers.shortFormat(capCredits) + ")</dark_gray>\n"
+                        + "<gray>  You get: " + economy.format(Currency.TOKENS, c.tokensFor(next, earned))
                         + "<gray>, " + economy.format(Currency.SHARDS, c.shardsFor(next))
                         + "<gray>, sell bonus <green>+" + Math.round(c.bonusPerPrestige * 100) + "%</green> forever\n"
                         + "<gray>  You keep: your drill, Tokens, Shards and cargo upgrades\n"
-                        + "<red>  You lose: your grade (back to 1), all Credits, and ore in your cargo hold\n"
+                        + "<red>  You lose: your grade (back to 1), all Credits, and ore in your cargo hold (<white>/sell</white> first so it counts)\n"
                         + "<gray>  Rank-ups will cost <white>x" + String.format("%.2f", 1 + c.costPerPrestige * next) + "</white> base.\n"
                         + "<yellow>Type <white>/prestige confirm</white> within " + c.confirmSeconds + " seconds.");
                 return;
@@ -209,7 +216,8 @@ final class ProgressionCommands {
                             + "<gray>, prestige " + prof.prestige()
                             + ", sell x" + String.format("%.2f", progression.sellMultiplier(target.getUniqueId()))
                             + (d == null ? "" : ", cargo L" + d.level + " " + Numbers.shortFormat(d.used) + "/" + Numbers.shortFormat(cargo.capacity(d))
-                            + ", auto-sell " + (d.autoSellUnlocked ? (d.autoSell ? "on" : "off") : "locked")));
+                            + ", auto-sell " + (d.autoSellUnlocked ? (d.autoSell ? "on" : "off") : "locked")
+                            + ", earned this run " + Numbers.shortFormat(d.runEarnings)));
                     return;
                 }
                 if (args.length < 3) { Text.send(s, "<red>Give a number."); return; }

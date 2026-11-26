@@ -65,6 +65,26 @@ Auto-Seller also cost Credits, which adds a few hours.
 
 ## Prestige
 
-Prestige is the main bulk source of Tokens (rare drops while mining are a trickle). Each prestige pays
-`25,000 × 1.35^(P-1)` Tokens and `10 + 2P` Shards, and gives +10% sell bonus forever. Grade, Credits and
-cargo contents reset. The drill, Tokens, Shards and cargo upgrades are kept.
+Prestige is the main bulk source of Tokens (rare drops while mining are a trickle). Grade, Credits and
+cargo contents reset. The drill, Tokens, Shards and cargo upgrades are kept. Each prestige to level P pays:
+
+- **Tokens** = `cache × earnings multiplier`
+  - cache = `25,000 × 1.35^(P-1)` (P1 25K, P5 76K, P10 375K, P20 7.6M)
+  - earnings multiplier = `min(4, earned ÷ run cost)^0.5`
+  - earned = all Credits **the server paid you** since the last prestige: selling ore now, and later
+    workshop goods, fishing, contracts and so on. Money from other players (pay, trades, auction sales,
+    gang bank withdrawals) never counts, so parking money with an alt, in items or in a bank before
+    prestiging can't raise the payout. The wallet is wiped either way.
+  - run cost = Credits for all 24 rank-ups of the run just finished (66M on the first run).
+  - A normal run earns about its own run cost, so the multiplier is about 1.0. Grinding at grade 25
+    until you've earned 2× gives 1.41×, and 4× (the cap) gives 2×. The square root means each extra hour
+    pays less than the last.
+- **Shards** = `10 + 2P`, and **+10% sell bonus** forever.
+
+### Rule for other modules
+
+When a module pays a player Credits **from the server**, call `EconomyService.give(..., reason)` with a
+reason starting `income:` (for example `income:fishing`, `income:workshop`). Selling already uses `sell:`.
+Player-to-player transfers must use any other reason (`pay`, `trade`, `auction`, `gang-bank`). The list is
+`prestige.rewards.income-reasons` in `progression.yml`. Later systems that store value (auction house,
+gang bank) should also lock deposits and withdrawals briefly around a prestige.
