@@ -32,7 +32,7 @@ public final class DrillCommand implements BasicCommand {
         DrillManager drills = module.drills();
         if (args.length == 0 || !args[0].equalsIgnoreCase("admin")) {
             if (!(sender instanceof Player p)) {
-                Text.send(sender, "<gray>/drill admin <module|frame|level|heat|give|reset|reload> ...");
+                Text.send(sender, "<gray>/drill admin <module|schematic|frame|level|heat|give|reset|reload> ...");
                 return;
             }
             if (drills.data(p.getUniqueId()) == null) {
@@ -81,8 +81,21 @@ public final class DrillCommand implements BasicCommand {
                 if (args.length >= 5) {
                     try { amount = Math.max(1, Math.min(64, Integer.parseInt(args[4]))); } catch (NumberFormatException ignored) { }
                 }
-                for (int i = 0; i < amount; i++) drills.give(target, drills.items().module(m));
-                Text.send(sender, "<gray>Gave " + target.getName() + " " + amount + "x " + m.coloredName());
+                int mk = 1;
+                if (args.length >= 6) {
+                    try { mk = Math.max(1, Math.min(cfg.maxMark, Integer.parseInt(args[5]))); } catch (NumberFormatException ignored) { }
+                }
+                for (int i = 0; i < amount; i++) drills.give(target, drills.items().module(m, mk));
+                Text.send(sender, "<gray>Gave " + target.getName() + " " + amount + "x " + m.coloredName(mk));
+            }
+            case "schematic" -> {
+                if (args.length < 4) { usage(sender); return; }
+                String which = args[3].toLowerCase(Locale.ROOT);
+                int n = 0;
+                for (String id : cfg.modules.keySet()) {
+                    if ((which.equals("all") || which.equals(id)) && drills.learn(target.getUniqueId(), id)) n++;
+                }
+                Text.send(sender, "<gray>Taught " + target.getName() + " " + n + " schematic" + (n == 1 ? "" : "s") + ".");
             }
             case "frame" -> {
                 if (args.length < 4) { usage(sender); return; }
@@ -118,8 +131,11 @@ public final class DrillCommand implements BasicCommand {
                 d.frame = cfg.firstFrame().id();
                 d.levels.clear();
                 d.sockets.clear();
+                d.rig.clear();
+                d.gear.clear();
+                d.expansion = 0;
                 drills.changed(target);
-                Text.send(sender, "<gray>Reset " + target.getName() + "'s drill (modules in sockets were deleted).");
+                Text.send(sender, "<gray>Reset " + target.getName() + "'s drill (fitted modules were deleted; schematics kept).");
             }
             default -> {
                 usage(sender);
@@ -132,7 +148,8 @@ public final class DrillCommand implements BasicCommand {
     private static void usage(CommandSender s) {
         Text.send(s, """
                 <gray>/drill admin give <player>
-                /drill admin module <player> <module> [amount]
+                /drill admin module <player> <module> [amount] [mark]
+                /drill admin schematic <player> <module|all>
                 /drill admin frame <player> <frame>
                 /drill admin level <player> <enchant> <level>
                 /drill admin heat <player> <amount>
@@ -146,10 +163,11 @@ public final class DrillCommand implements BasicCommand {
         DrillConfig cfg = module.drills().cfg();
         return switch (args.length) {
             case 0, 1 -> List.of("admin");
-            case 2 -> List.of("give", "module", "frame", "level", "heat", "reset", "reload");
+            case 2 -> List.of("give", "module", "schematic", "frame", "level", "heat", "reset", "reload");
             case 3 -> Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
             case 4 -> switch (args[1].toLowerCase(Locale.ROOT)) {
                 case "module" -> List.copyOf(cfg.modules.keySet());
+                case "schematic" -> { List<String> l = new java.util.ArrayList<>(cfg.modules.keySet()); l.add("all"); yield l; }
                 case "frame" -> cfg.frames.stream().map(FrameDef::id).toList();
                 case "level" -> Arrays.stream(Enchant.values()).map(Enchant::id).toList();
                 default -> List.of();

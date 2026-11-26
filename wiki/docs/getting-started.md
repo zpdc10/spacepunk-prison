@@ -33,7 +33,7 @@ You never need to leave the game to learn a system:
 2. **Go mining.** Take the **Mine Lifts** (north wing) or type `/mine`. It sends you to the best mine your grade
    unlocks. Grade 1 is the **Slag Heap** on the Scrapyard deck.
 3. **Fill your cargo hold.** Mined ore goes straight into your [cargo hold](systems/selling.md), not your
-   inventory. A boss bar shows how full it is.
+   inventory. A bar on your sidebar shows how full it is.
 4. **Sell.** Type `/sell` or use a sell terminal in the Exchange (east wing). You get
    <span class="cur credits">Credits</span>.
 5. **Rank up.** `/rankup` buys your next clearance grade. Grade 2 costs 4,000 Credits and opens the Rust Pit.

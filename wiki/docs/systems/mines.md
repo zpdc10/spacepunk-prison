@@ -31,8 +31,9 @@ The **Mine Lifts** in the station's north wing have a lift per deck and a "best 
   you arrive.
 - Mines are **shared** with everyone who has that grade. **PvP is off** and there is **no fall damage** in the mines
   world. You can only break blocks inside the pit.
-- A mine **refills** once 65% of its blocks are gone, or every 10 minutes if anything was mined. Players inside get
-  a 3-second warning and are moved out of the way.
+- A mine **resets** once 80% of its blocks are gone (20% left). Players in the room get a **1-minute countdown**,
+  then are moved out of the way while it refills.
+- **Ladders** run up every pit wall, three per wall, so you can always climb back to the walkway.
 - A boss bar shows the mine's name and how much ore is left while you're near it.
 - The north wall of each room has a doorway to that mine's daily [maintenance run](parkour.md).
 

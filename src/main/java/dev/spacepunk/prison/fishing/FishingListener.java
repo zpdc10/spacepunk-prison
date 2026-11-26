@@ -155,17 +155,17 @@ final class FishingListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityInteract(PlayerInteractEntityEvent e) {
-        if (e.getRightClicked() instanceof Interaction i && w().isMarket(i)) {
+        if (e.getRightClicked() instanceof Interaction i && (w().isMarket(i) || w().isTerminal(i))) {
             e.setCancelled(true);
-            if (e.getHand() == EquipmentSlot.HAND) module.menus().open(e.getPlayer(), "market");
+            if (e.getHand() == EquipmentSlot.HAND) module.menus().open(e.getPlayer(), w().isMarket(i) ? "market" : "waters");
         }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onHitMarket(EntityDamageByEntityEvent e) {
-        if (e.getEntity() instanceof Interaction i && w().isMarket(i)) {
+        if (e.getEntity() instanceof Interaction i && (w().isMarket(i) || w().isTerminal(i))) {
             e.setCancelled(true);
-            if (e.getDamager() instanceof Player p) module.menus().open(p, "market");
+            if (e.getDamager() instanceof Player p) module.menus().open(p, w().isMarket(i) ? "market" : "waters");
         }
     }
 
@@ -250,7 +250,8 @@ final class FishingListener implements Listener {
         Player p = e.getPlayer();
         if (!w().isWaters(p.getWorld())) return;
         if (e.getTo().getY() < module.cfg().baseY - 40) {
-            Location hub = w().hub();
+            Area from = w().areaNear(e.getTo());
+            Location hub = from != null ? w().arrival(from) : w().hub();
             if (hub != null) {
                 p.setFallDistance(0);
                 p.teleportAsync(hub);

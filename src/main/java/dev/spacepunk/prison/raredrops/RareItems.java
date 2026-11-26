@@ -41,7 +41,7 @@ final class RareItems {
         meta.displayName(Text.item(d.coloredName()));
         if (cfg.useItemModels) meta.setItemModel(new NamespacedKey(NS, "raredrop/" + d.model()));
         meta.setMaxStackSize(64);
-        meta.setEnchantmentGlintOverride(d.tier().index() >= 3);
+        meta.setEnchantmentGlintOverride(d.tier().index() >= 3 || "PRISTINE".equals(d.state()));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
         meta.lore(Text.lore(lore(d)));
         item.setItemMeta(meta);
@@ -54,6 +54,11 @@ final class RareItems {
             case RELIC -> "Relic";
             case CACHE -> "Salvage Cache";
             case FRAGMENT -> "Blueprint Fragment";
+            case PART -> switch (d.state() == null ? "" : d.state()) {
+                case "FRIED" -> "Scrap Part · Fried";
+                case "PRISTINE" -> "Scrap Part · Pristine";
+                default -> "Scrap Part";
+            };
         };
         lore.add(d.tier().colored("<bold>" + d.tier().name().toUpperCase() + "</bold> " + kind));
         if (!d.lore().isEmpty()) lore.add("<#8a8070><i>" + d.lore());
@@ -70,8 +75,21 @@ final class RareItems {
             }
             case FRAGMENT -> {
                 int need = cfg.fragmentsNeeded(d.moduleRarity());
-                lore.add("<gray>Assemble <white>" + need + "</white> into a random");
-                lore.add("<gray>" + titleCase(d.moduleRarity()) + " drill module in <white>/salvage</white>.");
+                lore.add("<gray>Decode <white>" + need + "</white> into a new " + titleCase(d.moduleRarity()));
+                lore.add("<gray>module schematic in <white>/salvage</white>.");
+            }
+            case PART -> {
+                switch (d.state() == null ? "" : d.state()) {
+                    case "FRIED" -> {
+                        lore.add("<gray>Burnt out. Repair it at the <white>Refurbisher</white>");
+                        lore.add("<gray>in your workshop (it may come out pristine).");
+                    }
+                    case "PRISTINE" -> {
+                        lore.add("<gold>Perfect condition.</gold> <gray>Counts as a working part,");
+                        lore.add("<gray>and fuses modules to <white>Mk IV</white> and <white>Mk V</white>.");
+                    }
+                    default -> lore.add("<gray>Builds drill, rod and weapon modules at the <white>Assembly Bench</white>.");
+                }
             }
         }
         lore.add("<dark_gray>Tradeable on the Black Market (/ah)");

@@ -29,7 +29,8 @@ Every player command on the server. Aliases are in brackets.
 | `/cargo` (`/hold`, `/backpack`, `/bp`) | Open your cargo hold |
 | `/autosell` | Install or toggle the Auto-Seller |
 | `/drill` (`/pickaxe`, `/pick`) | Open the drill bay |
-| `/salvage` | Relic collections, blueprint assembly and your stash |
+| `/rig [drill\|rod\|exo\|gun <gun>]` (`/modules`) | Open your Module Rig, Rod Rig, Exo-Rig or a Weapon Rig (tabs switch between them) |
+| `/salvage` | Relic collections and decoding blueprints into module schematics |
 
 ## Quests and parkour
 
@@ -49,6 +50,7 @@ Every player command on the server. Aliases are in brackets.
 | `/waters [pool]` (`/pools`) | Travel to the fishing pools |
 | `/fish` (`/fishing`) | Fish Market, bait, collections, leaderboards |
 | `/rod` | Get your rod back, or open the rod bay |
+| `/rig rod` | Open the Rod Rig |
 
 ## Workshop
 
@@ -68,6 +70,11 @@ Every player command on the server. Aliases are in brackets.
 | `/ah auction <start bid> [hours]` | Auction the held item |
 | `/ah mine` | Your listings |
 | `/ah claims` | Collect purchases, unsold items and proceeds |
+| `/trade <player>` (`/tr`) | Ask a player to trade items and Credits |
+| `/trade accept/deny <player>` | Answer a trade request (or click it in chat) |
+| `/trade history` | Your last 10 trades |
+| `/trade locks` | Your prestige trade locks |
+| `/trade toggle` | Turn trade requests off or on |
 | `/gang` (`/crew`, `/gangs`) | Crew terminal |
 | `/gc <message>` (`/crewchat`) | Crew chat |
 | `/gang chat` | Toggle crew chat mode |
@@ -81,3 +88,4 @@ Every player command on the server. Aliases are in brackets.
 | `/fence` | Sell contraband (outside the Undercroft) |
 | `/gunsmith` (`/guns`) | Buy guns and ammo |
 | `/gun` | How guns work |
+| `/rig gun <gun>` | Open a gun's Weapon Rig |

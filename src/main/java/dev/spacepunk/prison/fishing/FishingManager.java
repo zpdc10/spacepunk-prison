@@ -184,7 +184,13 @@ final class FishingManager implements FishingService {
         }
         BaitDef b = activeBait(d);
         if (b != null) e.add(b.effects());
+        for (Map.Entry<String, Double> m : rodModules(id).entrySet()) e.add(m.getKey(), m.getValue() - 1.0);
         return e;
+    }
+
+    /** Rod Rig module multipliers (drill module system): stat -> multiplier. */
+    private Map<String, Double> rodModules(UUID id) {
+        return Services.find(dev.spacepunk.prison.api.DrillService.class).map(s -> s.gearMultipliers(id, "rod")).orElse(Map.of());
     }
 
     BaitDef activeBait(FishingData d) {
@@ -209,7 +215,7 @@ final class FishingManager implements FishingService {
         double bonus = 1.0;
         if (d != null) {
             bonus += cfg.levelBonus * (d.level - 1);
-            bonus += valueEffect(d);
+            bonus += valueEffect(id, d);
             if (fishId != null) {
                 FishDef f = cfg.fish.get(fishId);
                 FishingData.Species s = d.species.get(fishId);
@@ -221,7 +227,7 @@ final class FishingManager implements FishingService {
     }
 
     /** Fillet + lure value bonus (bait is used up per catch, so it does not count when selling later). */
-    private double valueEffect(FishingData d) {
+    private double valueEffect(UUID id, FishingData d) {
         double v = 0;
         for (EnchantDef def : cfg.enchants.values()) {
             if ("value".equals(def.effect())) v += def.perLevel() * d.enchant(def.id());
@@ -231,6 +237,8 @@ final class FishingManager implements FishingService {
             LureDef l = cfg.lures.get(d.lure(i));
             if (l != null) v += l.effects().value;
         }
+        Double mod = rodModules(id).get("value");
+        if (mod != null) v += mod - 1.0;
         return v;
     }
 
@@ -969,6 +977,11 @@ final class FishingManager implements FishingService {
     }
 
     // ------------------------------------------------------------------ FishingService
+
+    @Override public int rodTier(UUID player) {
+        FishingData d = data(player);
+        return d == null ? 0 : d.rodTier;
+    }
 
     @Override public int fishingLevel(UUID player) {
         FishingData d = data(player);

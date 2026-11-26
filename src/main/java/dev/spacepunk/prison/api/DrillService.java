@@ -34,9 +34,59 @@ public interface DrillService {
      */
     java.util.Map<String, Double> moduleWeights(String rarity);
 
-    /** A new drill module item for this module id, or null if the id is unknown. */
+    /** A new Mk I drill module item for this module id, or null if the id is unknown. */
     ItemStack createModuleItem(String moduleId);
+
+    /** A new drill module item at a mark (1 = Mk I), or null if the id is unknown. */
+    ItemStack createModuleItem(String moduleId, int mark);
 
     /** True if the item is a drill module item. */
     boolean isModule(ItemStack item);
+
+    /** Module id of a module item, or null. */
+    String moduleId(ItemStack item);
+
+    /** Mark of a module item (1 = Mk I), 0 if it isn't one. */
+    int moduleMark(ItemStack item);
+
+    /** Every drill module id, in config order. */
+    java.util.List<String> moduleIds();
+
+    /** Coloured display name (MiniMessage) of a module id. */
+    String moduleName(String moduleId);
+
+    /** Rarity name of a module ("COMMON".."LEGENDARY"), or null if unknown. */
+    String moduleRarity(String moduleId);
+
+    /** True if the player has learned this module's schematic (Assembly Bench recipe). Online players only. */
+    boolean knowsSchematic(UUID player, String moduleId);
+
+    /** Teaches a schematic. False if already known, unknown module, or the player isn't loaded. */
+    boolean learnSchematic(UUID player, String moduleId);
+
+    /**
+     * Teaches a random schematic of a rarity that the player doesn't know yet (weighted like module finds).
+     * Returns the module id, or null if they already know every one of that rarity.
+     */
+    String learnRandomSchematic(UUID player, String rarity);
+
+    /** Multiplier on scrap part find odds from drill modules (1.0 = none). */
+    double scrapMultiplier(UUID player);
+
+    /**
+     * Stat multipliers from the modules on one of the player's other rigs: rigKey "rod" (Rod Rig) or
+     * "gun:<gun id>" (that gun's Weapon Rig). Stat -> multiplier (1.0 or missing = no change). Empty if nothing is
+     * fitted. Rod stats are fishing effect names (bite-speed, rare-luck, ...): add (multiplier - 1) to the effect.
+     * Gun stats: damage, fire-rate, spread, recoil, magazine, reload-time, range, headshot.
+     */
+    java.util.Map<String, Double> gearMultipliers(UUID player, String rigKey);
+
+    /**
+     * Rolls a module find for an activity: kind "drill" / "rod" / "gun" / "exo", source a drill.yml module-drops key
+     * (e.g. "parkour", "contract"). Gives and announces the module on a hit.
+     */
+    void rollModuleFind(org.bukkit.entity.Player player, String kind, String source);
+
+    /** Opens a module rig menu: "drill", "rod", "exo" or "gun:<gun id>". */
+    void openRig(org.bukkit.entity.Player player, String rigKey);
 }

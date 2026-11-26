@@ -56,6 +56,13 @@ public final class DrillListener implements Listener {
         Player p = e.player();
         boolean fresh = drills.load(e.profile());
         boolean given = drills.ensureDrill(p);
+        int returned = drills.migrateSockets(p);
+        if (returned > 0) {
+            Text.send(p, "<#c8743a>Drill refit:</#c8743a> <gray>modules now fit on a <white>module rig</white> by shape. Your "
+                    + returned + " module" + (returned == 1 ? " is" : "s are") + " back in your inventory: shift + right-click the drill to fit them.");
+        }
+        drills.ejectMisfits(p);
+        drills.applyExo(p);
         if (fresh) {
             Text.send(p, "<gray>Station issue: one <#8a6a55>Rusted Drill</#8a6a55>. It's bound to you. Don't lose it (you can't).");
             Text.send(p, "<gray>Shift + right-click it to open the drill bay. Press <white>Q</white> to vent heat.");

@@ -165,7 +165,7 @@ public final class FishingModule implements FeatureModule {
         warps.forEach(ws::unregister);
         warps.clear();
         ws.register(new WarpService.Warp("fishing", cfg.hubName, WarpService.PLANETSIDE, Material.FISHING_ROD,
-                List.of("<gray>The station waters: Fish Market,", "<gray>leaderboards and bridges to every pool."),
+                List.of("<gray>The station waters: Fish Market,", "<gray>leaderboards and the Dock Terminal."),
                 p -> world.hub(), p -> world.world() == null ? "<red>The waters are flooded shut." : null));
         warps.add("fishing");
         for (Area a : cfg.areas.values()) {

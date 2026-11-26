@@ -1,0 +1,43 @@
+# Direct player-to-player trading (/trade <player>). Both players put up items and/or Credits in a shared window,
+# both accept, and after a short countdown the swap happens. Any change resets both accepts.
+# Traded Credits use the reasons trade:send / trade:receive, which never count as server income
+# (see progression.yml income-reasons), so they don't feed prestige stats, gang points or quests.
+
+# How long a /trade request stays open.
+request-seconds: 60
+# Countdown after both players accept. Any change to either side cancels it.
+countdown-seconds: 5
+# Seconds to type a Credits amount in chat after clicking the Credits button.
+chat-input-seconds: 30
+# Blocks between the two players; -1 lets anyone on the server trade (any world).
+max-distance: -1
+# Most Credits one side can put in a single trade.
+max-credits: 1000000000000000
+
+prestige-lock:
+  # From this grade on you can't put Credits in a trade (21 = Core Foundry, same as the gang bank deposit lock).
+  # Prestige wipes Credits, so this stops handing them to a friend right before prestiging. 0 turns it off.
+  credit-lock-grade: 21
+  # Credits you send someone are tracked for your current run. When you prestige, that person can't send Credits
+  # back to you for this many days (or until they prestige themselves). 0 turns it off.
+  return-lock-days: 30
+
+log:
+  # Every trade is appended to plugins/SpacepunkPrison/trades.log (items in full). This many recent trades are
+  # also kept for /trade history and /trade admin log.
+  keep-in-game: 1000
+
+# Materials that can't be traded (the drill is always blocked: it's soulbound).
+blocked-materials:
+  - BEDROCK
+  - BARRIER
+  - COMMAND_BLOCK
+  - STRUCTURE_VOID
+
+# Items carrying any of these persistent data keys (this plugin's namespace) can't be traded. rod_owner = the
+# soulbound fishing rod.
+blocked-item-keys:
+  - rod_owner
+
+# Menu icons use the resource pack's spacepunk:ui/* models.
+use-item-models: true

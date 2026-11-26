@@ -43,6 +43,12 @@ announce:
   big-sales: true
   threshold: 1000000
 
+prestige-lock:
+  # From this grade on you can't buy or bid (21 = Core Foundry, same as the gang bank and /trade Credit locks), so
+  # Credits can't be handed to a friend through an overpriced listing right before prestige. Selling still works.
+  # 0 turns it off.
+  spend-lock-grade: 21
+
 # Materials that can't be listed (the drill is always blocked: it's soulbound).
 blocked-materials:
   - BEDROCK

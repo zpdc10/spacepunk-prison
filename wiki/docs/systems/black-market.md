@@ -2,7 +2,7 @@
 
 The Black Market is the station's player auction house. Sell modules, relics, workshop goods, fish, lures and anything
 else you can hold to other players for <span class="cur credits">Credits</span>, either as buy-it-now listings or as
-timed auctions.
+timed auctions. To swap with one player directly, use [direct trading](trading.md).
 
 ## Commands
 
@@ -33,6 +33,13 @@ The Exchange has **Black Market** and **Auction Claims** terminals.
 - A new bid must beat the top bid by **5%** (at least 10 Credits).
 - **No sniping:** a bid in the last 60 seconds pushes the end out to 60 seconds from now.
 - If you're outbid, your Credits come back to you.
+
+## Prestige lock
+
+From **Grade 21** (Core Foundry) you can't buy or bid until you prestige. You can still list and sell. Prestige
+wipes Credits, and this stops anyone from overpaying for a friend's junk listing to park Credits with them first.
+It's the same grade as the gang bank and [trading](trading.md) locks. You also can't prestige while you're the top
+bidder on an auction.
 
 ## Big sales
 

@@ -5,8 +5,13 @@ import dev.spacepunk.prison.drill.DrillConfig.FrameDef;
 import dev.spacepunk.prison.drill.DrillConfig.ModuleDef;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * All drill effect numbers in one place, so the listener, heat and menu agree.
@@ -100,20 +105,99 @@ public final class DrillMath {
         return String.format(Locale.ROOT, "%.1f%%", p).replace(".0%", "%");
     }
 
-    /** Active modules: sockets the current frame actually has. */
-    public static List<ModuleDef> activeModules(DrillConfig c, DrillData d) {
-        FrameDef f = c.frame(d.frame);
-        List<ModuleDef> out = new ArrayList<>();
-        for (int i = 0; i < f.sockets(); i++) {
-            ModuleDef m = c.module(d.socket(i));
-            if (m != null) out.add(m);
-        }
+    public static String roman(int n) {
+        return switch (n) {
+            case 1 -> "Mk I";
+            case 2 -> "Mk II";
+            case 3 -> "Mk III";
+            case 4 -> "Mk IV";
+            case 5 -> "Mk V";
+            case 6 -> "Mk VI";
+            default -> "Mk " + n;
+        };
+    }
+
+    /** Stats a module, family bonus or combo can change, with their menu labels. */
+    public static final Map<String, String> STATS = new LinkedHashMap<>();
+    /** On/off effects. */
+    public static final Map<String, String> FLAGS = new LinkedHashMap<>();
+
+    static {
+        STATS.put("break-speed", "break speed");
+        STATS.put("yield", "ore per block");
+        STATS.put("tokens", "Token finds");
+        STATS.put("rare", "rare drop odds");
+        STATS.put("scrap", "scrap part finds");
+        STATS.put("sell", "sell price");
+        STATS.put("heat-capacity", "heat limit");
+        STATS.put("hand-heat", "heat from hand mining");
+        STATS.put("cooling", "cooling");
+        STATS.put("proc-heat", "heat from enchants");
+        STATS.put("shaped-chance", "Shaped Charge chance");
+        STATS.put("shaped-radius", "Shaped Charge radius");
+        STATS.put("shaped-heat", "Shaped Charge heat");
+        STATS.put("jack-chance", "Jackhammer chance");
+        STATS.put("laser-chance", "Cutting Laser chance");
+        STATS.put("laser-length", "Cutting Laser length");
+        STATS.put("overclock-chance", "Overclock chance");
+        STATS.put("burst", "Overclock and vent bursts");
+        STATS.put("stall", "overheat stall time");
+        STATS.put("cache-chance", "Token cache chance");
+        // Rod Rig (fishing effects: the multiplier minus 1 is added to the effect)
+        STATS.put("bite-speed", "bite speed");
+        STATS.put("double-catch", "double catch chance");
+        STATS.put("rare-luck", "rare fish odds");
+        STATS.put("treasure", "treasure odds");
+        STATS.put("creature", "sea creature odds");
+        STATS.put("zone", "catch zone");
+        STATS.put("strength", "line strength");
+        STATS.put("value", "fish value");
+        // Weapon Rig
+        STATS.put("damage", "damage");
+        STATS.put("fire-rate", "fire rate");
+        STATS.put("spread", "bullet spread");
+        STATS.put("recoil", "recoil");
+        STATS.put("magazine", "magazine size");
+        STATS.put("reload-time", "reload time");
+        STATS.put("range", "range");
+        STATS.put("headshot", "headshot damage");
+        // Exo-Rig (player attributes; sell multiplies ore sale prices)
+        STATS.put("speed", "movement speed");
+        STATS.put("health", "max health");
+        STATS.put("armor", "armor");
+        STATS.put("toughness", "knockback resistance");
+        STATS.put("jump", "jump height");
+        STATS.put("fall", "fall damage");
+        STATS.put("sell", "sell price");
+        STATS.put("gadget-cooldown", "gadget recharge time");
+        FLAGS.put("auto-sell", "Auto-sells everything you mine");
+        FLAGS.put("gadget-dash", "Gadget: grapple dash (sneak + F)");
+        FLAGS.put("gadget-scan", "Gadget: scanner pulse, nearby players glow (sneak + F)");
+        FLAGS.put("gadget-stim", "Gadget: stim shot, regeneration + absorption (sneak + F)");
+        FLAGS.put("gadget-cloak", "Gadget: phase cloak, 5 s invisible (sneak + F)");
+    }
+
+    /** "+50% Token finds" for a multiplier, coloured by whether it's an upside. */
+    public static String effectLine(String stat, double mult, boolean pro) {
+        String label = STATS.getOrDefault(stat, stat);
+        double pct = (mult - 1) * 100;
+        String num = (pct >= 0 ? "+" : "") + (Math.abs(pct) < 10 ? String.format(Locale.ROOT, "%.1f", pct).replace(".0", "") : Long.toString(Math.round(pct))) + "%";
+        return (pro ? "<green>+ " : "<red>- ") + "<white>" + num + "</white> " + label;
+    }
+
+    /** Lore lines for a module's effects at a mark (drain = extra power on cons from neighbours). */
+    public static List<String> effectLines(DrillConfig c, ModuleDef m, int mk, double drain) {
+        List<String> out = new ArrayList<>();
+        for (String f : m.flags()) out.add((f.startsWith("no-") ? "<red>- " : "<green>+ ") + FLAGS.getOrDefault(f, f));
+        for (Map.Entry<String, Double> e : m.pros().entrySet()) out.add(effectLine(e.getKey(), Math.pow(e.getValue(), c.proPower(mk)), true));
+        for (Map.Entry<String, Double> e : m.cons().entrySet()) out.add(effectLine(e.getKey(), Math.pow(e.getValue(), c.conPower(mk) * drain), false));
         return out;
     }
 
     /** Effective numbers for one player's drill, modules included. Cheap to build; rebuild after any change. */
     public static final class Effective {
         public final FrameDef frame;
+        public final ModuleRig rig;
         public final double breakSpeed;
         public final double yield;
         public final double siphonChance;
@@ -127,65 +211,56 @@ public final class DrillMath {
         public final double overclockChance;
         public final double overclockSeconds;
         public final double rareMultiplier;
+        public final double scrapMultiplier;
         public final double cacheChance;
         public final double heatCapacity;
         public final double decayPerSecond;
         public final double handHeatMultiplier;
+        public final double procHeatMultiplier;
         public final double tokenMultiplier;
         public final double burstMultiplier;
         public final double stallMultiplier;
         public final double sellMultiplier;
         public final boolean autoSell;
+        private final Map<String, Double> mul;
 
         public Effective(DrillConfig c, DrillData d) {
             frame = c.frame(d.frame);
-            List<ModuleDef> mods = activeModules(c, d);
-            breakSpeed = DrillMath.breakSpeed(c, frame, d.level(Enchant.BORE_SPEED));
-            yield = yieldMultiplier(c, d.level(Enchant.YIELD));
+            rig = ModuleRig.build(c, d);
+            ModuleRig.Totals t = rig.totals(c);
+            mul = new HashMap<>(t.mul());
+            Set<String> flags = t.flags();
+
+            breakSpeed = DrillMath.breakSpeed(c, frame, d.level(Enchant.BORE_SPEED)) * m("break-speed");
+            yield = yieldMultiplier(c, d.level(Enchant.YIELD)) * m("yield");
             siphonChance = chance(c.enchant(Enchant.TOKEN_SIPHON), d.level(Enchant.TOKEN_SIPHON));
             siphonAmount = siphonAmountMultiplier(c, d.level(Enchant.TOKEN_SIPHON));
-
-            double radiusMul = 1, shapedHeatMul = 1, rareMul = 1, capMul = 1, handHeatMul = 1, tokenMul = 1,
-                    jackMul = 1, burstMul = 1, stallMul = 1, sellMul = 1;
-            boolean noOverclock = false, noLaser = false, magnet = false;
-            for (ModuleDef m : mods) {
-                radiusMul *= m.p("radius-multiplier", 1);
-                shapedHeatMul *= m.p("heat-multiplier", 1);
-                rareMul *= m.p("rare-multiplier", 1);
-                capMul *= m.p("capacity-multiplier", 1);
-                handHeatMul *= m.p("hand-heat-multiplier", 1);
-                tokenMul *= m.p("token-multiplier", 1);
-                jackMul *= m.p("jackhammer-multiplier", 1);
-                burstMul *= m.p("burst-multiplier", 1);
-                stallMul *= m.p("stall-multiplier", 1);
-                sellMul *= m.p("sell-multiplier", 1);
-                switch (m.id()) {
-                    case "coolant_loop" -> noOverclock = true;
-                    case "seismic_dampener" -> noLaser = true;
-                    case "magnet_coil" -> magnet = true;
-                    default -> { }
-                }
-            }
-            if (magnet) tokenMul = 0;
-
-            shapedChance = chance(c.enchant(Enchant.SHAPED_CHARGE), d.level(Enchant.SHAPED_CHARGE));
-            shapedRadius = (int) Math.round(DrillMath.shapedRadius(c, d.level(Enchant.SHAPED_CHARGE)) * radiusMul);
-            shapedHeat = c.enchant(Enchant.SHAPED_CHARGE).p("heat", 6) * shapedHeatMul;
-            jackChance = chance(c.enchant(Enchant.JACKHAMMER), d.level(Enchant.JACKHAMMER)) * jackMul;
-            laserChance = noLaser ? 0 : chance(c.enchant(Enchant.CUTTING_LASER), d.level(Enchant.CUTTING_LASER));
-            laserLength = DrillMath.laserLength(c, d.level(Enchant.CUTTING_LASER));
-            overclockChance = noOverclock ? 0 : chance(c.enchant(Enchant.OVERCLOCK), d.level(Enchant.OVERCLOCK));
-            overclockSeconds = DrillMath.overclockSeconds(c, d.level(Enchant.OVERCLOCK)) * burstMul;
-            rareMultiplier = DrillMath.rareMultiplier(c, d.level(Enchant.SALVAGE_SENSE)) * rareMul;
-            cacheChance = DrillMath.cacheChance(c, d.level(Enchant.SALVAGE_SENSE));
-            heatCapacity = DrillMath.heatCapacity(c, frame, d.level(Enchant.COOLANT)) * capMul;
-            decayPerSecond = DrillMath.decayPerSecond(c, d.level(Enchant.COOLANT));
-            handHeatMultiplier = handHeatMul;
-            tokenMultiplier = tokenMul;
-            burstMultiplier = burstMul;
-            stallMultiplier = stallMul;
-            sellMultiplier = sellMul;
-            autoSell = magnet;
+            shapedChance = Math.min(1, chance(c.enchant(Enchant.SHAPED_CHARGE), d.level(Enchant.SHAPED_CHARGE)) * m("shaped-chance"));
+            shapedRadius = (int) Math.max(1, Math.min(12, Math.round(DrillMath.shapedRadius(c, d.level(Enchant.SHAPED_CHARGE)) * m("shaped-radius"))));
+            procHeatMultiplier = m("proc-heat");
+            shapedHeat = c.enchant(Enchant.SHAPED_CHARGE).p("heat", 6) * m("shaped-heat") * procHeatMultiplier;
+            jackChance = Math.min(1, chance(c.enchant(Enchant.JACKHAMMER), d.level(Enchant.JACKHAMMER)) * m("jack-chance"));
+            laserChance = Math.min(1, chance(c.enchant(Enchant.CUTTING_LASER), d.level(Enchant.CUTTING_LASER)) * m("laser-chance"));
+            laserLength = (int) Math.max(1, Math.min(80, Math.round(DrillMath.laserLength(c, d.level(Enchant.CUTTING_LASER)) * m("laser-length"))));
+            overclockChance = Math.min(1, chance(c.enchant(Enchant.OVERCLOCK), d.level(Enchant.OVERCLOCK)) * m("overclock-chance"));
+            burstMultiplier = m("burst");
+            overclockSeconds = DrillMath.overclockSeconds(c, d.level(Enchant.OVERCLOCK)) * burstMultiplier;
+            rareMultiplier = DrillMath.rareMultiplier(c, d.level(Enchant.SALVAGE_SENSE)) * m("rare");
+            scrapMultiplier = m("scrap");
+            cacheChance = DrillMath.cacheChance(c, d.level(Enchant.SALVAGE_SENSE)) * m("cache-chance");
+            heatCapacity = Math.max(10, DrillMath.heatCapacity(c, frame, d.level(Enchant.COOLANT)) * m("heat-capacity"));
+            decayPerSecond = DrillMath.decayPerSecond(c, d.level(Enchant.COOLANT)) * m("cooling");
+            handHeatMultiplier = m("hand-heat");
+            tokenMultiplier = m("tokens");
+            stallMultiplier = m("stall");
+            sellMultiplier = m("sell");
+            autoSell = flags.contains("auto-sell");
         }
+
+        /** Combined multiplier on a stat from modules, family bonuses and combos (1.0 = none). */
+        public double m(String stat) { return mul.getOrDefault(stat, 1.0); }
+
+        /** Every changed stat, for the rig summary. */
+        public Map<String, Double> multipliers() { return java.util.Collections.unmodifiableMap(mul); }
     }
 }

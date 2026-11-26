@@ -21,6 +21,25 @@ public final class GunsConfig {
                          double spread, double sneakSpread, double recoil, int pellets, int pierce,
                          double falloffStart, double falloffMin, int zoom, String sound, float pitch, Color tracer,
                          long price, int parts, int prestige) {
+        /**
+         * This gun with Weapon Rig module multipliers applied (stat -> multiplier, see DrillService#gearMultipliers).
+         * Returns this when nothing changes.
+         */
+        public GunDef tuned(java.util.Map<String, Double> m) {
+            if (m == null || m.isEmpty()) return this;
+            double dmg = damage * m.getOrDefault("damage", 1.0);
+            double rate = Math.max(0.1, m.getOrDefault("fire-rate", 1.0));
+            int delay = Math.max(1, (int) Math.round(fireDelay / rate));
+            int bDelay = burstDelay <= 0 ? burstDelay : Math.max(1, (int) Math.round(burstDelay / rate));
+            int mag = Math.max(1, (int) Math.round(magazine * m.getOrDefault("magazine", 1.0)));
+            int reload = Math.max(4, (int) Math.round(reloadTicks * m.getOrDefault("reload-time", 1.0)));
+            double rng = Math.max(4, range * m.getOrDefault("range", 1.0));
+            double sp = m.getOrDefault("spread", 1.0);
+            return new GunDef(id, name, lore, ammo, dmg, headshot * m.getOrDefault("headshot", 1.0), delay, burst, bDelay, mag, reload,
+                    rng, spread * sp, sneakSpread * sp, recoil * m.getOrDefault("recoil", 1.0), pellets, pierce,
+                    Math.min(rng, falloffStart * m.getOrDefault("range", 1.0)), falloffMin, zoom, sound, pitch, tracer, price, parts, prestige);
+        }
+
         /** Damage multiplier at this distance. */
         public double falloff(double distance) {
             if (distance <= falloffStart || range <= falloffStart) return 1.0;

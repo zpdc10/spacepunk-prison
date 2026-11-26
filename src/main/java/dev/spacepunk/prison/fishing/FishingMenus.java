@@ -234,6 +234,24 @@ final class FishingMenus implements Listener {
             }
             rerender(p, menu);
         });
+        // Rod Rig (module system, drill module)
+        dev.spacepunk.prison.api.DrillService rigs = dev.spacepunk.prison.api.Services.find(dev.spacepunk.prison.api.DrillService.class).orElse(null);
+        if (rigs != null) {
+            List<String> rl = new ArrayList<>();
+            rl.add("<gray>Fit shaped <white>rod modules</white> on a grid for");
+            rl.add("<gray>bigger bonuses than lures, each with a downside.");
+            rl.add("<gray>A better rod tier means a bigger rig.");
+            java.util.Map<String, Double> mods = rigs.gearMultipliers(p.getUniqueId(), "rod");
+            if (!mods.isEmpty()) {
+                rl.add("");
+                Effects me = new Effects();
+                for (java.util.Map.Entry<String, Double> x : mods.entrySet()) me.add(x.getKey(), x.getValue() - 1.0);
+                for (String line : me.describe()) rl.add((line.startsWith("-") ? "<red>" : "<green>") + line);
+            }
+            rl.add("");
+            rl.add("<#c8743a>Click</#c8743a> <gray>to open the Rod Rig <dark_gray>(/rig rod)");
+            menu.set(44, items().icon(Material.CRAFTER, "ui/fuse", "<#5fb4c8>Rod Rig", rl), click -> rigs.openRig(p, "rod"));
+        }
         menu.set(46, items().icon(Material.PRISMARINE_SHARD, "fishing/scale", "<#9cf27a>Scales: " + Numbers.shortFormat(d.scales),
                 List.of("<gray>Gut fish at the Fish Market, fight sea", "<gray>creatures and find treasure for more.")), null);
         menu.bottom = click -> {

@@ -102,7 +102,7 @@ final class FishingConfig {
         worldName = y.getString("world.name", "station_waters");
         autoBuild = y.getBoolean("world.auto-build", true);
         baseY = y.getInt("world.base-y", 64);
-        spacing = Math.max(24, y.getInt("world.spacing", 44));
+        spacing = Math.max(160, y.getInt("world.island-spacing", 400));
         List<Integer> ps = y.getIntegerList("world.pool-size");
         poolX = ps.size() > 0 ? Math.max(5, ps.get(0)) : 19;
         poolDepth = ps.size() > 1 ? Math.max(2, ps.get(1)) : 6;

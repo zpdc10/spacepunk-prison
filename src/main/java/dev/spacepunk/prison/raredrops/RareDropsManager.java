@@ -307,7 +307,11 @@ final class RareDropsManager {
 
     enum AssembleResult { OK, NOT_ENOUGH, NO_MODULES, NO_DRILL, NOT_LOADED }
 
-    /** Consumes fragments of a rarity from the inventory and gives a random drill module of that rarity. */
+    /**
+     * Decodes fragments of a rarity from the inventory into a drill module schematic the player doesn't know yet
+     * (learned for good, built at the workshop's Assembly Bench). Once every schematic of that rarity is known,
+     * the fragments assemble a random module of the rarity instead.
+     */
     AssembleResult assemble(Player p, String rarity) {
         RareData d = data.get(p.getUniqueId());
         if (d == null) return AssembleResult.NOT_LOADED;
@@ -319,6 +323,23 @@ final class RareDropsManager {
         if (count(p, frag) < need) return AssembleResult.NOT_ENOUGH;
         Map<String, Double> pool = drill.moduleWeights(rarity);
         if (pool.isEmpty()) return AssembleResult.NO_MODULES;
+        boolean big = java.util.Set.of("EPIC", "LEGENDARY").contains(rarity.toUpperCase(java.util.Locale.ROOT));
+
+        String learned = drill.learnRandomSchematic(p.getUniqueId(), rarity);
+        if (learned != null) {
+            take(p, frag, need);
+            d.schematicsDecoded++;
+            save(p.getUniqueId());
+            String name = drill.moduleName(learned);
+            p.playSound(Sound.sound(Key.key("block.enchantment_table.use"), Sound.Source.MASTER, 1f, 0.9f));
+            p.playSound(Sound.sound(Key.key("ui.toast.challenge_complete"), Sound.Source.MASTER, 0.7f, 1.3f));
+            p.showTitle(Title.title(Text.mm(name), Text.mm("<gray>Schematic decoded")));
+            Text.send(p, "<gray>You learned the " + name + " <gray>schematic. Build it at your workshop's <white>Assembly Bench</white>.");
+            if (big) Bukkit.broadcast(Text.mm(Text.PREFIX + "<white>" + p.getName() + "</white> <gray>decoded the " + name + " <gray>schematic."));
+            return AssembleResult.OK;
+        }
+
+        // Every schematic of this rarity is known: assemble a random module instead.
         double total = pool.values().stream().mapToDouble(Double::doubleValue).sum();
         double r = ThreadLocalRandom.current().nextDouble() * total;
         String chosen = null;
@@ -337,13 +358,21 @@ final class RareDropsManager {
         p.playSound(Sound.sound(Key.key("block.smithing_table.use"), Sound.Source.MASTER, 1f, 0.9f));
         p.playSound(Sound.sound(Key.key("ui.toast.challenge_complete"), Sound.Source.MASTER, 0.7f, 1.3f));
         p.showTitle(Title.title(module.effectiveName(), Text.mm("<gray>Module assembled")));
-        if (java.util.Set.of("EPIC", "LEGENDARY").contains(rarity.toUpperCase(java.util.Locale.ROOT))) {
+        if (big) {
             Bukkit.broadcast(Text.mm(Text.PREFIX + "<white>" + p.getName() + "</white> <gray>assembled ").append(name)
                     .append(Text.mm(" <gray>from blueprint fragments.")));
         } else {
             p.sendMessage(Text.mm(Text.PREFIX + "<gray>Assembled ").append(name));
         }
         return AssembleResult.OK;
+    }
+
+    /** True if the player knows every schematic of this rarity (fragments then assemble modules). */
+    boolean allKnown(Player p, String rarity) {
+        DrillService drill = Services.find(DrillService.class).orElse(null);
+        if (drill == null) return true;
+        for (String id : drill.moduleWeights(rarity).keySet()) if (!drill.knowsSchematic(p.getUniqueId(), id)) return false;
+        return true;
     }
 
     int count(Player p, Drop drop) {

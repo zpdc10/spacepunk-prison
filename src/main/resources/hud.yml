@@ -1,4 +1,4 @@
-# Player HUD: sidebar scoreboard, action bar, tab list and the cargo hold boss bar.
+# Player HUD: sidebar scoreboard, action bar and tab list.
 # Text is MiniMessage. Reload with /hud reload.
 
 sidebar:
@@ -8,6 +8,9 @@ sidebar:
   footer: "<#4a4038>/sell  /cargo  /rankup  /drill"
   # Ticks between sidebar refreshes (only changed lines are sent).
   refresh-ticks: 10
+  # Cargo fill share where the sidebar's cargo bar turns yellow, then red.
+  cargo-warn-at: 0.6
+  cargo-danger-at: 0.9
 
 tab:
   enabled: true
@@ -28,14 +31,6 @@ action-bar:
   gain-seconds: 2.5
   # How long a flash notice (enchant procs, vents, warnings) stays up.
   flash-seconds: 2.0
-
-cargo-bar:
-  enabled: true
-  # The cargo hold boss bar shows while mining and for this long after the last block.
-  linger-seconds: 20
-  # Fill share where the bar turns yellow, then red.
-  warn-at: 0.6
-  danger-at: 0.9
 
 mining:
   # A soft pickup click on every block that goes into the hold (to the miner only).

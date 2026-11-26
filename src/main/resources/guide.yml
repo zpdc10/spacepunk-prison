@@ -262,7 +262,7 @@ chapters:
       - on: objective:enchant_upgrade
         text: "Buy an enchant level"
         hint: ["<white>Shift + right-click</white> your drill and click an enchant you can afford. Bore Speed starts at 15 Tokens."]
-    done: "Your frame caps each enchant. The <white>Salvaged</white> frame (Grade 10) raises the caps and adds a module socket."
+    done: "Your frame caps each enchant. The <white>Salvaged</white> frame (Grade 10) raises the caps and unlocks the <white>Module Rig</white>."
     pages:
       - |
         <h>YOUR DRILL</h>
@@ -291,19 +291,60 @@ chapters:
       - |
         <h>FRAMES</h>
 
-        The frame caps every enchant and adds module sockets. Kept forever.
+        The frame caps every enchant and sets your Module Rig size. Kept forever.
 
-        <em>Rusted</em> start
-        <em>Salvaged</em> G10, 175K Credits
-        <em>Industrial</em> P1, 5 Shards
-        <em>Military</em> P5, 30 Shards
-        <em>Prototype</em> P15, 120 Shards
+        <em>Rusted</em> start, no rig
+        <em>Salvaged</em> G10, 175K, 2x2
+        <em>Industrial</em> P1, 5 Shards, 3x3
+        <em>Military</em> P5, 30 Shards, 4x3
+        <em>Prototype</em> P15, 120 Shards, 5x4
       - |
-        <h>MODULES</h>
+        <h>THE MODULE RIG</h>
 
-        Rare parts you slot into frame sockets in the drill bay. Each has an upside and a downside.
+        A grid in the drill bay. Modules are shaped pieces: fit them together like a puzzle.
 
-        Found: mining salvage, blueprint fragments ([[/salvage]]), the workshop Assembly Bench, parkour, fishing and Undercroft loot.
+        Click a module in your inventory to hold it, <em>rotate</em>, then click a cell.
+
+        Every module has an upside and a downside.
+      - |
+        <h>RIG RULES</h>
+
+        <em>Orange core cells</em> take only Legendary modules.
+        One of each module.
+        Families have a limit: 2 Arc, 1 Void.
+        Some need the edge, or a neighbour of a family. Broken rules put a module <bad>offline</bad>.
+
+        Shards buy extra rig columns.
+      - |
+        <h>FAMILIES AND COMBOS</h>
+
+        2+ modules of one family give a <em>set bonus</em>: Thermal, Kinetic, Salvage, Arc, Void.
+
+        Some pairs placed side by side unlock a <em>hidden combo</em>. Find them yourself.
+      - |
+        <h>MODULE MARKS</h>
+
+        <em>Fuse</em> two of the same module and mark into the next mark, up to Mk V.
+
+        Higher marks: bigger upside, smaller downside. Mk III and up also cost scrap parts.
+
+        Modules are kept through prestige and can be traded.
+      - |
+        <h>ROD AND WEAPON RIGS</h>
+
+        The same system for your other gear. [[/rig]] has a tab per rig.
+
+        <em>Rod Rig</em> [[/rig rod]] grows with your rod tier. Rod modules come from fishing.
+
+        <em>Weapon Rigs</em> [[/rig gun]] one per gun model. Weapon modules come from the Undercroft.
+      - |
+        <h>EXO-RIG</h>
+
+        A body rig, always on: speed, health, armour, jumps, sell price. [[/rig exo]]
+
+        Buy the frame in the rig (Grade 5). Exo modules come from parkour and contracts.
+
+        <em>Gadget</em> modules: <em>sneak + F</em> to dash, scan, stim or cloak.
       - |
         <h>HEAT</h>
 
@@ -500,7 +541,7 @@ chapters:
 
         Expand your bay for more machines.
         Upgrade machines to Mk II and III: faster, with a chance of Refined and Pristine goods.
-        The <em>Assembly Bench</em> builds drill modules from components.
+        The <em>Assembly Bench</em> builds drill modules you have a schematic for, from goods and scrap parts. The <em>Refurbisher</em> repairs fried parts.
 
         Runs while online; catches up 4 h at half speed.
 
@@ -576,6 +617,14 @@ chapters:
         Five pools, one per deck, each with its own fish.
         <em>Sea creatures</em> (3.5% of bites) fight; bosses drop the best loot.
         Treasure, bait, lures, collections and a weekly biggest-catch board.
+      - |
+        <h>ROD RIG</h>
+
+        Rod modules are shaped pieces you fit on a grid: [[/rig rod]] or the rod bay.
+
+        Bigger bonuses than lures, each with a downside. A better rod tier gives a bigger rig.
+
+        Found while fishing, or built at the workshop Assembly Bench.
 
   quests:
     name: "Quests and Contracts"
@@ -667,12 +716,12 @@ chapters:
     icon: AMETHYST_SHARD
     bar-color: PURPLE
     wiki: "systems/rare-drops/"
-    summary: ["Rare finds while mining: caches,", "relics and module blueprints."]
+    summary: ["Rare finds while mining: caches,", "relics and schematic fragments."]
     triggers: ["objective:rare_drop", "menu:raredrops."]
-    title: ["<#b07cff><bold>SALVAGE FIND", "<gray>Right-click caches to open. <white>/salvage</white> for relics and blueprints."]
+    title: ["<#b07cff><bold>SALVAGE FIND", "<gray>Right-click caches to open. <white>/salvage</white> for relics and schematics."]
     brief:
       - "<gray>Mining sometimes digs something up. <white>Caches</white>: right-click to open for Credits and Tokens."
-      - "<gray><white>Relics</white> fill collections for a permanent sell bonus. <white>Blueprint fragments</white> assemble into drill modules."
+      - "<gray><white>Relics</white> fill collections for a permanent sell bonus. <white>Blueprint fragments</white> decode into module schematics."
       - "<gray>All of it lives in <white>/salvage</white>. Anything that doesn't fit your inventory goes to your stash there."
     pages:
       - |
@@ -680,7 +729,7 @@ chapters:
 
         Each block you break by hand has a small chance of a find. <em>Salvage Sense</em> raises it.
 
-        [[/salvage]] collections, blueprints, stash
+        [[/salvage]] collections, schematics, stash
       - |
         <h>CACHES</h>
 
@@ -694,9 +743,48 @@ chapters:
       - |
         <h>BLUEPRINTS</h>
 
-        5 fragments of one rarity (4 Legendary) assemble a random drill module of that rarity in [[/salvage]].
+        5 fragments of one rarity (4 Legendary) decode a <em>schematic</em> in [[/salvage]]: you learn to build that module at the workshop Assembly Bench, forever.
+
+        Know them all? Fragments build a random module instead.
 
         Spare finds sell on the Black Market.
+
+  scrap:
+    name: "Scrap Parts"
+    color: "<#c8a070>"
+    icon: COPPER_INGOT
+    bar-color: YELLOW
+    wiki: "systems/drill/"
+    summary: ["Electronics found in every activity.", "Build and upgrade modules."]
+    triggers: ["objective:scrap_find"]
+    title: ["<#c8a070><bold>SCRAP PART", "<gray>Parts build and upgrade <white>drill modules</white>"]
+    brief:
+      - "<gray>Mining, fishing, parkour, contracts, the workshop and the Undercroft all turn up <white>scrap parts</white>."
+      - "<gray>Most are <red>fried</red>: repair them at the workshop <white>Refurbisher</white>. A few come <#ffe08a>pristine</#ffe08a>."
+      - "<gray>Parts build modules at the <white>Assembly Bench</white> and fuse modules to higher marks."
+    pages:
+      - |
+        <h>SCRAP PARTS</h>
+
+        Wiring, circuit boards, capacitors, servos, power cells and the rare <em>quantum core</em> turn up anywhere.
+
+        Each activity also has its own <em>signature part</em>: seismic sensors from mining, sonar arrays from fishing...
+      - |
+        <h>CONDITION</h>
+
+        <bad>Fried</bad> broken. Repair it.
+        <em>Working</em> ready to use.
+        <em>Pristine</em> rare. Needed for Mk IV and V.
+
+        The workshop <em>Refurbisher</em> repairs fried parts for Credits and goods, with a chance of pristine.
+      - |
+        <h>USING PARTS</h>
+
+        <em>Assembly Bench</em> (workshop terminal): build a module you have a schematic for.
+
+        <em>Fuse</em> (drill bay, Module Rig): two of a module plus parts make the next mark.
+
+        Parts are tradable and kept through prestige.
 
   blackmarket:
     name: "The Black Market"
@@ -874,6 +962,14 @@ chapters:
         Plasma Lance: P1
 
         Bigger ones need <em>gun parts</em> from supply drops and tech crates.
+      - |
+        <h>WEAPON RIGS</h>
+
+        Each gun model has a module grid: [[/rig gun]] or the gunsmith.
+
+        Damage, fire rate, mags, spread... every module has a downside.
+
+        Found on Undercroft kills and smuggling runs, or built at the Assembly Bench.
 
 # Info boards. Text floats above a clickable ⓘ (right-click or hit it for the chapter's book). Boards are not saved
 # into the world: they appear whenever their chunk is loaded, so editing this list moves them.

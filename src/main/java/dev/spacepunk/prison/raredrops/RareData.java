@@ -18,6 +18,8 @@ final class RareData {
     long totalFinds;
     long cachesOpened;
     long modulesAssembled;
+    long schematicsDecoded;
+    long scrapFound;
 
     void normalize() {
         if (catalogued == null) catalogued = new LinkedHashSet<>();

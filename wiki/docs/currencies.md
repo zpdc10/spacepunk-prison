@@ -25,7 +25,7 @@ Your balances show on the sidebar and in the tab list footer. `/balance` (`/bal`
 - Opening salvage caches dug up while mining.
 - Daily parkour reward rolls.
 - Selling hot ore, stims and bounty tags at the Undercroft fence.
-- Other players: Black Market sales and gang bank withdrawals.
+- Other players: Black Market sales, direct trades (`/trade`) and gang bank withdrawals.
 
 **What you spend them on:** clearance grades (`/rankup`), cargo hold upgrades, the Auto-Seller, the Salvaged drill
 frame, workshop machines, conveyors and bay expansions, bait, guns and ammo, Smuggler's Linings and bribes,
@@ -35,7 +35,7 @@ founding a gang and paying into its bank, and Black Market purchases.
 
 !!! info "Server income vs player money"
     Credits the **server** pays you (selling, fishing, workshop, quests, salvage caches, the fence, parkour) are
-    "server income". Credits from **other players** (auction sales, gang bank) are not. Only server
+    "server income". Credits from **other players** (auction sales, direct trades, gang bank) are not. Only server
     income counts toward gang points and quest goals like "earn X Credits", so moving money between alts never
     helps.
 
@@ -71,7 +71,7 @@ at P20.
 **Other sources:**
 
 - **Token Siphon** (drill enchant): +0.015% find chance per level, so level 10 is about +25% Tokens, capped at +250%.
-- **Token Condenser** module: Tokens ×1.5. The **Magnet Coil** module turns mining Token drops off.
+- **Token Condenser** module: Tokens +30%. The **Magnet Coil** module cuts mining Tokens by 70%.
 - **Salvage Sense** Token caches while mining, scaled the same way.
 - Fishing Token Pouch treasure (20 to 50, scaled).
 - Quests, contracts and Contract Track tiers.

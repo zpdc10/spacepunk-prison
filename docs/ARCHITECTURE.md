@@ -29,7 +29,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `mines/` + `mines.yml` | mines | `MineService`, fires `MineBlocksBrokenEvent`, mine refills, `/mine` |
 | `progression/` + `progression.yml` | progression | `ProgressionService`, grades 1-25, prestige, cargo hold, selling, `/rankup` `/prestige` `/sell` |
 | `drill/` + `drill.yml` | drill | The drill item, frames, enchants, modules, heat, drill menu |
-| `hud/` + `hud.yml` | hud | `HudService` (shared action bar), sidebar, tab list, cargo boss bar, per-break feedback, `/hud` |
+| `hud/` + `hud.yml` | hud | `HudService` (shared action bar), sidebar, tab list, per-break feedback, `/hud` |
 | `gangs/` + `gangs.yml` | gangs | `GangService`, crews and ranks, gang bank (prestige lock), crew chat, upgrades, weekly contracts and leaderboard, turf ownership, `/gang` `/gc` |
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
 | `raredrops/` + `raredrops.yml` | rare drops | Tiered finds while mining, relic collections (sell bonus via `OreSellEvent`), salvage caches, blueprint fragments → drill modules, `/salvage` |
@@ -80,7 +80,7 @@ use `HudService#flash` for a short notice, or `HudService#segment(player, key, t
 `HudService#sidebarSection(player, key, lines)` (quests shows the tracked quest as section `quests`). Fall back to `sendActionBar` only if the service is missing.
 The sidebar uses a per-player scoreboard, so any future nametag/team feature must add its teams to each
 player's board (ask the hud module for a hook) instead of the main scoreboard. Boss bars: mines shows the
-current mine's fill, hud shows the cargo hold while mining.
+current mine's fill; the hud uses none (cargo lives on the sidebar).
 
 ## Money that never counts toward prestige
 

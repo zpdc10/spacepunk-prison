@@ -309,6 +309,7 @@ final class QuestManager implements QuestService {
                 d.done.add(a.id);
                 QuestConfig.Character ch = def == null ? null : cfg().character(def.character());
                 if (def != null) for (String line : def.outro()) say(p, ch, line);
+                dev.spacepunk.prison.api.ScrapDrops.roll(p, dev.spacepunk.prison.api.ScrapService.STORY, 1);
                 boolean chapterEnd = def != null && isLastOfChapter(def);
                 String head = chapterEnd ? "CHAPTER COMPLETE" : "STORY";
                 Text.send(p, "<#c8743a><bold>" + head + "</bold> <white>" + a.name + (rewards.isEmpty() ? "" : " <dark_gray>· " + rewards));
@@ -333,6 +334,8 @@ final class QuestManager implements QuestService {
                 Text.send(p, "<gold><bold>CONTRACT</bold> <white>" + a.name + (rewards.isEmpty() ? "" : " <dark_gray>· " + rewards));
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 0.8f);
                 Bukkit.getScheduler().runTask(plugin, () -> progress(p, ObjectiveTypes.CONTRACT_COMPLETE, 1, kind.key));
+                dev.spacepunk.prison.api.ScrapDrops.roll(p, dev.spacepunk.prison.api.ScrapService.CONTRACT, 1);
+                dev.spacepunk.prison.api.Services.find(dev.spacepunk.prison.api.DrillService.class).ifPresent(ds -> ds.rollModuleFind(p, "exo", "contract"));
                 if (kind == QuestKind.DAILY && !d.dailyBonus && !d.daily.isEmpty() && d.daily.stream().allMatch(x -> x.done)) {
                     d.dailyBonus = true;
                     Ctx ctx = ctx(p, d);

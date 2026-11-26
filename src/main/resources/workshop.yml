@@ -355,45 +355,235 @@ offline:
   max-hours: 4
   efficiency: 0.5
 
-# Assembly Bench (workshop menu): turn components into drill modules. command runs from the console
-# ({player} = name). Requires the drill module's admin command.
+# Assembly Bench (workshop menu): build drill modules from schematics the player has learned (decode blueprint
+# fragments in /salvage; drill.yml starting-schematics are known from the start). Keys are drill module ids.
+# components = goods from the Bay Locker, parts = scrap parts (raredrops.yml parts:, working or pristine) from the
+# inventory, credits = Credits. grade = minimum grade.
 assembly:
-  magnet_coil:
-    name: "Magnet Coil"
-    grade: 10
-    credits: 250000
-    components: { wiring_harness: 16, induction_coil: 4 }
-    command: "drill admin module {player} magnet_coil 1"
+  servo_actuator:
+    grade: 1
+    credits: 8000
+    components: { crushed_steel: 64 }
+    parts: { servo_motor: 2, copper_wiring: 2 }
+  ore_sifter:
+    grade: 1
+    credits: 8000
+    components: { crushed_copper: 64 }
+    parts: { circuit_board: 2, copper_wiring: 1 }
   coolant_loop:
-    name: "Cryo Coolant Loop"
-    grade: 13
-    credits: 1500000
-    components: { cryo_coil: 4, armor_plate: 4 }
-    command: "drill admin module {player} coolant_loop 1"
+    grade: 4
+    credits: 40000
+    components: { copper_concentrate: 48 }
+    parts: { capacitor: 2, copper_wiring: 2 }
+  heat_sink_fins:
+    grade: 4
+    credits: 40000
+    components: { steel_concentrate: 48 }
+    parts: { copper_wiring: 3 }
+  magnet_coil:
+    grade: 8
+    credits: 250000
+    components: { copper_ingot: 32, steel_ingot: 16 }
+    parts: { copper_wiring: 4, capacitor: 2, power_cell: 1 }
   scavenger_rig:
-    name: "Scavenger Rig"
-    grade: 15
-    credits: 3000000
-    components: { circuit_board: 4, armor_plate: 8 }
-    command: "drill admin module {player} scavenger_rig 1"
+    grade: 10
+    credits: 600000
+    components: { steel_ingot: 32, graphite: 16 }
+    parts: { servo_motor: 3, circuit_board: 2, sonar_array: 1 }
+  arc_capacitor:
+    grade: 10
+    credits: 600000
+    components: { conduit_filament: 24 }
+    parts: { capacitor: 4, power_cell: 1 }
+  thermal_recycler:
+    grade: 12
+    credits: 1500000
+    components: { conductive_alloy: 12 }
+    parts: { power_cell: 2, capacitor: 2, gyro_stabilizer: 1 }
   plasma_cutter:
-    name: "Plasma Cutter"
-    grade: 18
+    grade: 15
     credits: 8000000
-    components: { focusing_array: 4, circuit_board: 6 }
-    command: "drill admin module {player} plasma_cutter 1"
+    components: { hardened_steel: 16, circuit_alloy: 8 }
+    parts: { power_cell: 4, seismic_sensor: 1, logic_chip: 1 }
   seismic_dampener:
-    name: "Seismic Dampener"
-    grade: 20
-    credits: 20000000
-    components: { weapon_receiver: 2, induction_coil: 8 }
-    command: "drill admin module {player} seismic_dampener 1"
+    grade: 16
+    credits: 12000000
+    components: { wiring_harness: 8, armor_plate: 4 }
+    parts: { seismic_sensor: 2, servo_motor: 4 }
+  graviton_lens:
+    grade: 17
+    credits: 16000000
+    components: { focusing_array: 2, induction_coil: 4 }
+    parts: { gyro_stabilizer: 2, sonar_array: 1 }
   token_condenser:
-    name: "Token Condenser"
+    grade: 20
+    credits: 30000000
+    components: { void_capacitor: 2, wiring_harness: 8 }
+    parts: { logic_chip: 3, data_core: 1 }
+  overcharger:
     grade: 22
-    credits: 50000000
+    credits: 120000000
+    components: { reactor_core: 1, induction_coil: 8 }
+    parts: { military_relay: 3, power_cell: 6, quantum_core: 1 }
+  quantum_sorter:
+    grade: 23
+    credits: 200000000
+    components: { reactor_core: 1, void_capacitor: 4 }
+    parts: { quantum_core: 1, data_core: 2, logic_chip: 4 }
+  singularity_core:
+    grade: 24
+    credits: 300000000
+    components: { reactor_core: 2, cryo_coil: 4 }
+    parts: { quantum_core: 1, military_relay: 2, seismic_sensor: 3 }
+  # ---- Rod modules (Rod Rig) ----
+  reel_servo:
+    grade: 1
+    credits: 8000
+    components: { crushed_steel: 48 }
+    parts: { servo_motor: 2 }
+  sonar_pinger:
+    grade: 3
+    credits: 25000
+    components: { crushed_copper: 64 }
+    parts: { sonar_array: 1, copper_wiring: 2 }
+  kevlar_spool:
+    grade: 7
+    credits: 200000
+    components: { steel_ingot: 24 }
+    parts: { copper_wiring: 4, servo_motor: 1 }
+  salvage_magnet:
+    grade: 8
+    credits: 250000
+    components: { copper_ingot: 32 }
+    parts: { capacitor: 3, copper_wiring: 2 }
+  chum_injector:
+    grade: 9
+    credits: 400000
+    components: { graphite: 16, copper_ingot: 16 }
+    parts: { power_cell: 2, sonar_array: 1 }
+  fillet_laser:
+    grade: 15
+    credits: 8000000
+    components: { circuit_alloy: 8, hardened_steel: 12 }
+    parts: { logic_chip: 2, power_cell: 2 }
+  twin_reel:
+    grade: 16
+    credits: 12000000
+    components: { wiring_harness: 6, armor_plate: 4 }
+    parts: { servo_motor: 4, gyro_stabilizer: 1 }
+  leviathan_sonar:
+    grade: 23
+    credits: 200000000
+    components: { reactor_core: 1, focusing_array: 2 }
+    parts: { quantum_core: 1, sonar_array: 3, data_core: 1 }
+  # ---- Weapon modules (Weapon Rigs) ----
+  extended_mag:
+    grade: 1
+    credits: 8000
+    components: { crushed_steel: 48 }
+    parts: { copper_wiring: 2 }
+  recoil_damper:
+    grade: 3
+    credits: 25000
+    components: { steel_concentrate: 32 }
+    parts: { servo_motor: 2 }
+  laser_sight:
+    grade: 7
+    credits: 200000
+    components: { copper_ingot: 24 }
+    parts: { circuit_board: 3, capacitor: 1 }
+  hair_trigger:
+    grade: 8
+    credits: 250000
+    components: { steel_ingot: 24 }
+    parts: { capacitor: 3, military_relay: 1 }
+  speed_loader:
+    grade: 9
+    credits: 400000
+    components: { steel_ingot: 24, graphite: 8 }
+    parts: { servo_motor: 3, copper_wiring: 2 }
+  long_barrel:
+    grade: 15
+    credits: 8000000
+    components: { hardened_steel: 16 }
+    parts: { military_relay: 2, gyro_stabilizer: 1 }
+  hollow_point_press:
+    grade: 16
+    credits: 12000000
+    components: { armor_plate: 6, conductive_alloy: 8 }
+    parts: { military_relay: 2, servo_motor: 3 }
+  smart_targeter:
+    grade: 23
+    credits: 200000000
+    components: { reactor_core: 1, induction_coil: 6 }
+    parts: { quantum_core: 1, data_core: 2, logic_chip: 2 }
+  # ---- Exo modules (Exo-Rig) ----
+  servo_greaves:
+    grade: 5
+    credits: 40000
+    components: { crushed_steel: 64 }
+    parts: { servo_motor: 2 }
+  ceramic_plate:
+    grade: 5
+    credits: 40000
+    components: { steel_concentrate: 48 }
+    parts: { copper_wiring: 2 }
+  shock_absorbers:
+    grade: 8
+    credits: 250000
+    components: { steel_ingot: 24 }
+    parts: { gyro_stabilizer: 1, servo_motor: 2 }
+  bio_monitor:
+    grade: 9
+    credits: 400000
+    components: { copper_ingot: 24, graphite: 8 }
+    parts: { data_core: 1, circuit_board: 2 }
+  trader_uplink:
+    grade: 10
+    credits: 600000
+    components: { conduit_filament: 16 }
+    parts: { logic_chip: 1, circuit_board: 3 }
+  reactive_mesh:
+    grade: 16
+    credits: 12000000
+    components: { armor_plate: 8, wiring_harness: 4 }
+    parts: { military_relay: 2, capacitor: 4 }
+  grapple_launcher:
+    grade: 9
+    credits: 400000
+    components: { steel_ingot: 32 }
+    parts: { servo_motor: 3, power_cell: 1 }
+  scanner_pulse:
+    grade: 12
+    credits: 1500000
+    components: { conductive_alloy: 12 }
+    parts: { sonar_array: 2, circuit_board: 2 }
+  stim_injector:
+    grade: 17
+    credits: 16000000
+    components: { induction_coil: 4, circuit_alloy: 8 }
+    parts: { power_cell: 4, data_core: 1 }
+  phase_cloak:
+    grade: 24
+    credits: 300000000
     components: { reactor_core: 2, void_capacitor: 4 }
-    command: "drill admin module {player} token_condenser 1"
+    parts: { quantum_core: 1, military_relay: 3, logic_chip: 3 }
+
+# Refurbisher (workshop menu): repairs fried scrap parts into working ones. pristine = chance a repair comes
+# out Pristine instead. Upgrade it for better odds (credits + Bay Locker components, minimum grade).
+refurbisher:
+  grade: 1
+  levels:
+    - { name: "Mk I", pristine: 0.05 }
+    - { name: "Mk II", pristine: 0.10, credits: 150000, grade: 6, components: { copper_ingot: 32 } }
+    - { name: "Mk III", pristine: 0.18, credits: 4000000, grade: 14, components: { conductive_alloy: 24, hardened_steel: 16 } }
+  # Cost to repair one fried part, by the part's tier (raredrops.yml tiers). components come from the Bay Locker.
+  costs:
+    common: { credits: 1000, components: { slag_dust: 16 } }
+    uncommon: { credits: 5000, components: { crushed_copper: 16 } }
+    rare: { credits: 30000, components: { copper_concentrate: 12 } }
+    epic: { credits: 200000, components: { steel_ingot: 12 } }
+    legendary: { credits: 2000000, components: { conductive_alloy: 8 } }
 
 # Decor Locker (Machine Shop, second page): building blocks for decorating your bay.
 decor:

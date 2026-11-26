@@ -12,6 +12,7 @@ file in `plugins/SpacepunkPrison/` and reload without a restart.
 | Drill | `drill.yml` | `/drill admin give/module/frame/level/heat/reset <player> ...`, `/drill admin reload` |
 | Rare drops | `raredrops.yml` | `/salvage give/roll/reset/reload` |
 | Black Market | `auction.yml` | in `/ah` |
+| Trading | `trade.yml` | `/trade admin log [player] / cancel <player> / reload`. Every trade is also appended to `trades.log` with the items in full |
 | Station hub | `station.yml` | `/stationadmin` (`/sadmin`) `build / setspawn / setwarp ID [category] [name] / delwarp / warps / reload` |
 | HUD | `hud.yml` | `/hud reload` |
 | Quests | `quests.yml` | `/questadmin` (`/qadmin`) `npc / reset / complete / points / reroll / info / types / reload` |

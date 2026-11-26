@@ -41,6 +41,7 @@ frames:
     cost-currency: TOKENS
     cost: 0
     sockets: 0
+    # Module rig: a grid of cells that modules fit into by shape. No rig on this frame.
     # Block break speed multiplier before Bore Speed (1.0 = a plain netherite pickaxe).
     base-speed: 0.5
     # Extra heat capacity on top of heat.base-capacity.
@@ -55,9 +56,10 @@ frames:
     cost-currency: CREDITS
     cost: 175000
     sockets: 1
+    rig: { width: 2, height: 2 }
     base-speed: 0.65
     heat-capacity: 25
-    lore: "Stripped from a decommissioned loader. One module socket."
+    lore: "Stripped from a decommissioned loader. A small module rig."
   industrial:
     name: Industrial
     color: "#d0a040"
@@ -66,6 +68,7 @@ frames:
     cost-currency: SHARDS
     cost: 5
     sockets: 2
+    rig: { width: 3, height: 3 }
     base-speed: 0.85
     heat-capacity: 60
     lore: "Foundry-grade housing. Heavy, loud, reliable."
@@ -77,6 +80,8 @@ frames:
     cost-currency: SHARDS
     cost: 30
     sockets: 3
+    # core = cells that only take Legendary modules (every Legendary must cover one). [x, y] from the top left.
+    rig: { width: 4, height: 3, core: [[3, 1]] }
     base-speed: 1.1
     heat-capacity: 110
     lore: "Breaching drill from the station's security armory."
@@ -88,6 +93,7 @@ frames:
     cost-currency: SHARDS
     cost: 120
     sockets: 4
+    rig: { width: 5, height: 4, core: [[4, 1], [4, 2]] }
     base-speed: 1.5
     heat-capacity: 180
     lore: "Experimental core-tapping rig. Nobody knows who built it."
@@ -244,76 +250,737 @@ heat:
     perfect-max: 0.95
     perfect-multiplier: 2.0
 
-# Modules: found while mining (or given by admins), slotted into frame sockets. Each changes how the drill plays.
-# rarity: COMMON, RARE, EPIC, LEGENDARY. weight = share of salvage finds. model = spacepunk:module/<model> (default: the id).
+# ---------------------------------------------------------------------------------------------------------------
+# Modules: physical parts fitted on the frame's module rig (shift + right-click the drill, Module Rig).
+# Each has a shape (DOT 1x1, BAR2 1x2, BAR3 1x3, ELL 3-cell L, TEE, ZIG, SQUARE 2x2) that must fit the grid.
+#
+# pros / cons map a stat to its Mk I multiplier (1.5 = +50%, 0.85 = -15%). Every module keeps a downside.
+# Stats: break-speed, yield, tokens, rare, scrap, sell, heat-capacity, hand-heat, cooling, proc-heat,
+#   shaped-chance, shaped-radius, shaped-heat, jack-chance, laser-chance, laser-length, overclock-chance,
+#   burst, stall, cache-chance. Flags (true): auto-sell.
+# rarity: COMMON, RARE, EPIC, LEGENDARY. Legendary modules need a core cell. weight = share of finds.
+# family: set bonuses and limits (families: below). rules: edge (must touch the rig's border), needs: <family>
+#   (must touch one), avoid: <family> (must not touch one), drain: x (cons of every touching module are
+#   raised to this extra power). A module that breaks a rule goes offline until it's moved.
+# core-part: the scrap part (raredrops.yml parts:) it needs to fuse to high marks. model = spacepunk:module/<model>.
+# ---------------------------------------------------------------------------------------------------------------
+
+# Marks: fuse two identical modules of the same mark into the next mark (Module Rig, Fuse Modules).
+# pros become value^pro-power, cons become value^con-power, per mark Mk I..Mk V.
+module-marks:
+  max: 5
+  pro-power: [1.0, 1.2, 1.4, 1.6, 1.8]
+  con-power: [1.0, 0.85, 0.7, 0.55, 0.4]
+  # Scrap parts (the module's core-part) needed to fuse INTO this mark. state = minimum quality.
+  fuse-parts:
+    3: { state: WORKING, amount: 2 }
+    4: { state: PRISTINE, amount: 1 }
+    5: { state: PRISTINE, amount: 3 }
+
+# Rig expansions, bought in order with Shards in the Module Rig. Each adds columns to the right of the rig.
+# frame = the lowest frame that can take it. Kept forever (through prestige).
+rig-expansion:
+  - { shards: 15, columns: 1, frame: industrial }
+  - { shards: 75, columns: 1, frame: military }
+
+# Schematics every player knows from the start (the Assembly Bench in the workshop builds known schematics).
+starting-schematics: [servo_actuator, ore_sifter, reel_servo, extended_mag, servo_greaves]
+
+# Rod Rig and Weapon Rigs: the same module system for fishing rods and guns (/rig rod, /rig gun).
+# rod = one grid per rod tier, in fishing.yml rod.tiers order. gun = one grid per gun id (each gun model has its
+# own rig, shared by every copy of that gun you carry). core = Legendary-only cells. Max 7 wide, 4 tall.
+gear-rigs:
+  rod:
+    - { width: 2, height: 1 }                    # Bent Wire Rod
+    - { width: 2, height: 2 }                    # Scrap Spinner
+    - { width: 3, height: 2 }                    # Carbon Line
+    - { width: 3, height: 3, core: [[2, 1]] }    # Mag-Rail Rod
+    - { width: 4, height: 3, core: [[3, 1]] }    # Void Angler
+  gun:
+    rivet_pistol: { width: 2, height: 2 }
+    scrap_smg: { width: 3, height: 2 }
+    breach_shotgun: { width: 3, height: 2 }
+    bolt_rifle: { width: 4, height: 2, core: [[3, 1]] }
+    plasma_lance: { width: 4, height: 3, core: [[3, 1]] }
+    default: { width: 2, height: 2 }
+
+# Chance per event to find a random module of that kind (weighted by module weight). Like Token drops: uncommon,
+# not rare. Rod modules come from fishing, weapon modules from the Undercroft. Both are also built at the
+# workshop Assembly Bench from schematics.
+module-drops:
+  rod:
+    fish: 0.0015
+    treasure: 0.01
+    sea-creature: 0.02
+  gun:
+    undercroft-kill: 0.03
+    smuggle: 0.05
+  # Exo modules: activities with no gear of their own. parkour = per daily reward roll, contract = per contract done.
+  exo:
+    parkour: 0.12
+    contract: 0.06
+
+# Exo-Rig (/rig exo): a body rig that is always on, whatever you're doing. Bought in order; kept through prestige.
+# Exo stats: speed, health (x20 = hit points: 1.1 = +2), armor (x20 = armor points), toughness (knockback
+# resistance), jump, fall (fall damage, lower is better), sell (ore sale price), gadget-cooldown (lower is better).
+# Gadget modules (family gadget, one per rig) add an ability: sneak + swap hands (F) fires it.
+exo-rig:
+  tiers:
+    - { name: Scrap Harness,  grade: 5,  currency: CREDITS, cost: 60000,   width: 2, height: 2 }
+    - { name: Field Exo,      grade: 14, currency: CREDITS, cost: 6000000, width: 3, height: 2 }
+    - { name: Combat Exo,     prestige: 1, currency: SHARDS, cost: 10,     width: 3, height: 3, core: [[2, 1]] }
+    - { name: Prototype Exo,  prestige: 5, currency: SHARDS, cost: 50,     width: 4, height: 3, core: [[3, 1]] }
+  # Seconds between uses, by gadget.
+  gadget-cooldowns:
+    gadget-dash: 8
+    gadget-scan: 30
+    gadget-stim: 45
+    gadget-cloak: 60
+
+# Families: running several online modules of a family gives the listed bonuses (each threshold adds on).
+# max = how many of the family one rig can run.
+families:
+  thermal:
+    name: Thermal
+    color: "#60b8ff"
+    lore: "Coolant, fins and heat recyclers."
+    bonuses:
+      2: { heat-capacity: 1.15 }
+      3: { cooling: 1.3, hand-heat: 0.85 }
+  kinetic:
+    name: Kinetic
+    color: "#e0a040"
+    lore: "Motors, hammers and lenses for the area enchants."
+    bonuses:
+      2: { shaped-chance: 1.1, jack-chance: 1.1, laser-chance: 1.1 }
+      3: { break-speed: 1.08, proc-heat: 0.85 }
+  salvage:
+    name: Salvage
+    color: "#9ccf6a"
+    lore: "Sorters and sifters that pull value out of the slag."
+    bonuses:
+      2: { rare: 1.15 }
+      3: { scrap: 1.25, tokens: 1.1 }
+  arc:
+    name: Arc
+    color: "#ff70d0"
+    max: 2
+    lore: "High-voltage parts. Unstable: a rig can only run two."
+    bonuses:
+      2: { burst: 1.25, overclock-chance: 1.15 }
+  void:
+    name: Void
+    color: "#a070ff"
+    max: 1
+    lore: "Core-tapping tech. One per rig, and it drains its neighbours."
+  # ---- Rod Rig families ----
+  sonar:
+    name: Sonar
+    color: "#5fb4c8"
+    lore: "Pingers and scanners that find what's down there."
+    bonuses:
+      2: { rare-luck: 1.05 }
+      3: { creature: 1.2, treasure: 1.2 }
+  tackle:
+    name: Tackle
+    color: "#d8c090"
+    lore: "Reels, spools and line gear."
+    bonuses:
+      2: { strength: 1.1 }
+      3: { bite-speed: 1.06, double-catch: 1.02 }
+  # ---- Exo-Rig families ----
+  plating:
+    name: Plating
+    color: "#b0b8c0"
+    lore: "Armour plates and life support."
+    bonuses:
+      2: { armor: 1.05 }
+      3: { health: 1.1, toughness: 1.1 }
+  servo:
+    name: Servo
+    color: "#e0c060"
+    lore: "Leg servos and shock absorbers."
+    bonuses:
+      2: { speed: 1.03 }
+      3: { jump: 1.05, fall: 0.8 }
+  gadget:
+    name: Gadget
+    color: "#c070ff"
+    max: 1
+    lore: "Active tools: sneak + F fires one. A rig can only drive one."
+  # ---- Weapon Rig families ----
+  ballistic:
+    name: Ballistic
+    color: "#e08050"
+    lore: "Mags, triggers and presses: more lead, faster."
+    bonuses:
+      2: { magazine: 1.1 }
+      3: { damage: 1.05 }
+  optics:
+    name: Optics
+    color: "#90e0ff"
+    lore: "Sights and barrels that put rounds where you look."
+    bonuses:
+      2: { spread: 0.9 }
+      3: { headshot: 1.1, recoil: 0.85 }
+
 modules:
-  magnet_coil:
-    name: Magnet Coil
-    rarity: RARE
-    weight: 30
-    material: BREEZE_ROD
-    lore: "A coil that drags ore straight to the station's buyers."
-    pros: ["Auto-sells everything you mine"]
-    cons: ["No Token drops"]
-  plasma_cutter:
-    name: Plasma Cutter
-    rarity: EPIC
-    weight: 15
-    material: BLAZE_ROD
-    lore: "Superheated plasma lance bolted to the charge chamber."
-    pros: ["Shaped Charge radius x2"]
-    cons: ["Shaped Charge heat x2"]
-    radius-multiplier: 2.0
-    heat-multiplier: 2.0
-  scavenger_rig:
-    name: Scavenger Rig
-    rarity: RARE
-    weight: 30
-    material: TRIAL_KEY
-    lore: "Sorting arms that pick the good bits out of the slag."
-    pros: ["Rare drop and module odds x2"]
-    cons: ["Sell price -15%"]
-    rare-multiplier: 2.0
-    sell-multiplier: 0.85
+  # ---- Common ----
+  servo_actuator:
+    name: Servo Actuator
+    rarity: COMMON
+    family: kinetic
+    shape: DOT
+    weight: 40
+    material: LIGHTNING_ROD
+    lore: "A salvaged loader servo bolted to the bore head."
+    pros: { break-speed: 1.08 }
+    cons: { hand-heat: 1.2 }
+    core-part: servo_motor
+  ore_sifter:
+    name: Ore Sifter
+    rarity: COMMON
+    family: salvage
+    shape: BAR2
+    weight: 40
+    material: IRON_BARS
+    lore: "A shaker screen that catches the ore the bore throws."
+    pros: { yield: 1.06 }
+    cons: { tokens: 0.85 }
+    core-part: circuit_board
   coolant_loop:
     name: Cryo Coolant Loop
     rarity: COMMON
-    weight: 45
+    family: thermal
+    shape: ELL
+    weight: 40
     material: PRISMARINE_SHARD
     lore: "Stolen from the Cryo Vaults. Still frosty."
-    pros: ["Heat capacity +60%"]
-    cons: ["Overclock can't fire"]
-    capacity-multiplier: 1.6
-  token_condenser:
-    name: Token Condenser
+    pros: { heat-capacity: 1.4 }
+    cons: { overclock-chance: 0.5 }
+    core-part: capacitor
+  heat_sink_fins:
+    name: Heat Sink Fins
+    rarity: COMMON
+    family: thermal
+    shape: BAR2
+    weight: 35
+    material: IRON_TRAPDOOR
+    lore: "Copper fins. Useless unless they can breathe."
+    pros: { cooling: 1.6 }
+    cons: { break-speed: 0.95 }
+    rules: { edge: true }
+    core-part: copper_wiring
+  # ---- Rare ----
+  magnet_coil:
+    name: Magnet Coil
+    rarity: RARE
+    family: salvage
+    shape: ELL
+    weight: 30
+    material: BREEZE_ROD
+    lore: "A coil that drags ore straight to the station's buyers."
+    pros: { auto-sell: true, sell: 1.03 }
+    cons: { tokens: 0.3 }
+    core-part: copper_wiring
+  scavenger_rig:
+    name: Scavenger Rig
+    rarity: RARE
+    family: salvage
+    shape: BAR3
+    weight: 30
+    material: TRIAL_KEY
+    lore: "Sorting arms that pick the good bits out of the slag."
+    pros: { rare: 1.6, scrap: 1.3 }
+    cons: { sell: 0.85 }
+    core-part: servo_motor
+  arc_capacitor:
+    name: Arc Capacitor
+    rarity: RARE
+    family: arc
+    shape: DOT
+    weight: 25
+    material: COPPER_BULB
+    lore: "Holds a charge big enough to kick the overclock awake."
+    pros: { overclock-chance: 1.6 }
+    cons: { proc-heat: 1.25 }
+    rules: { avoid: thermal }
+    core-part: capacitor
+  thermal_recycler:
+    name: Thermal Recycler
+    rarity: RARE
+    family: thermal
+    shape: TEE
+    weight: 25
+    material: BLAST_FURNACE
+    lore: "Feeds waste heat back into the bore on every vent."
+    pros: { burst: 1.5 }
+    cons: { heat-capacity: 0.85 }
+    core-part: power_cell
+  # ---- Epic ----
+  plasma_cutter:
+    name: Plasma Cutter
     rarity: EPIC
+    family: kinetic
+    shape: BAR3
     weight: 15
-    material: ECHO_SHARD
-    # No pack art yet: uses the fallback module model.
-    model: unknown
-    lore: "Condenses token residue out of the exhaust. Runs hot."
-    pros: ["Tokens x1.5"]
-    cons: ["Heat from hand mining x2.5"]
-    token-multiplier: 1.5
-    hand-heat-multiplier: 2.5
+    material: BLAZE_ROD
+    lore: "Superheated plasma lance. Melts itself without coolant beside it."
+    pros: { shaped-radius: 1.5 }
+    cons: { shaped-heat: 2.0 }
+    rules: { needs: thermal }
+    core-part: power_cell
   seismic_dampener:
     name: Seismic Dampener
     rarity: EPIC
+    family: kinetic
+    shape: ELL
     weight: 12
     material: RECOVERY_COMPASS
-    # No pack art yet: uses the fallback module model.
-    model: unknown
     lore: "Tunes the hammer to the deck's resonance."
-    pros: ["Jackhammer fires twice as often"]
-    cons: ["Cutting Laser can't fire"]
-    jackhammer-multiplier: 2.0
+    pros: { jack-chance: 1.6 }
+    cons: { laser-chance: 0.4 }
+    core-part: seismic_sensor
+  graviton_lens:
+    name: Graviton Lens
+    rarity: EPIC
+    family: kinetic
+    shape: BAR3
+    weight: 12
+    material: SPYGLASS
+    lore: "Bends the cutting beam down the length of the deck."
+    pros: { laser-length: 1.5, laser-chance: 1.2 }
+    cons: { shaped-chance: 0.5 }
+    rules: { edge: true }
+    core-part: gyro_stabilizer
+  token_condenser:
+    name: Token Condenser
+    rarity: EPIC
+    family: salvage
+    shape: TEE
+    weight: 15
+    material: ECHO_SHARD
+    lore: "Condenses token residue out of the exhaust. Runs hot, hates sparks."
+    pros: { tokens: 1.3 }
+    cons: { hand-heat: 2.0 }
+    rules: { avoid: arc }
+    core-part: logic_chip
+  # ---- Legendary (need a core cell) ----
   overcharger:
     name: Overcharger
     rarity: LEGENDARY
+    family: arc
+    shape: TEE
     weight: 5
     material: NETHER_STAR
     lore: "Bypasses every safety limiter. Don't tell maintenance."
-    pros: ["Overclock and vent bursts last x2"]
-    cons: ["Overheat stalls last x2"]
-    burst-multiplier: 2.0
-    stall-multiplier: 2.0
+    pros: { burst: 1.7, overclock-chance: 1.2 }
+    cons: { stall: 2.0 }
+    core-part: military_relay
+  quantum_sorter:
+    name: Quantum Sorter
+    rarity: LEGENDARY
+    family: void
+    shape: SQUARE
+    weight: 4
+    material: HEART_OF_THE_SEA
+    lore: "Sorts ore it hasn't mined yet. Nobody asks how."
+    pros: { rare: 1.5, yield: 1.12, scrap: 1.25 }
+    cons: { break-speed: 0.85 }
+    rules: { drain: 1.3 }
+    core-part: data_core
+  singularity_core:
+    name: Singularity Core
+    rarity: LEGENDARY
+    family: void
+    shape: SQUARE
+    weight: 3
+    material: CONDUIT
+    lore: "A pinhole of collapsed hull plating, humming in a cage."
+    pros: { shaped-chance: 1.3, jack-chance: 1.3, laser-chance: 1.3 }
+    cons: { heat-capacity: 0.7 }
+    rules: { drain: 1.3 }
+    core-part: seismic_sensor
+
+  # ================= Rod modules (kind: rod), fitted on the Rod Rig =================
+  # Rod stats are the fishing effects: the multiplier minus 1 is added to that effect (1.10 bite-speed = +0.10,
+  # like a lure). rare-luck, treasure, creature, bite-speed, double-catch, zone, strength, value, scrap.
+  reel_servo:
+    kind: rod
+    name: Reel Servo
+    rarity: COMMON
+    family: tackle
+    shape: DOT
+    weight: 40
+    material: PRISMARINE_SHARD
+    lore: "A loader servo that winds the line for you."
+    pros: { bite-speed: 1.08 }
+    cons: { zone: 0.99 }
+    core-part: servo_motor
+  sonar_pinger:
+    kind: rod
+    name: Sonar Pinger
+    rarity: COMMON
+    family: sonar
+    shape: BAR2
+    weight: 40
+    material: PRISMARINE_SHARD
+    lore: "Pings the tank. The big ones ping back."
+    pros: { rare-luck: 1.10 }
+    cons: { bite-speed: 0.95 }
+    core-part: sonar_array
+  kevlar_spool:
+    kind: rod
+    name: Kevlar Spool
+    rarity: RARE
+    family: tackle
+    shape: ELL
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Hull-breach rated line. Heavy, and the junk snags on it."
+    pros: { strength: 1.20, zone: 1.02 }
+    cons: { treasure: 0.85 }
+    core-part: copper_wiring
+  salvage_magnet:
+    kind: rod
+    name: Salvage Magnet
+    rarity: RARE
+    shape: BAR2
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Drags the bottom for anything metal. Scares off the rare stuff."
+    pros: { treasure: 1.5, scrap: 1.3 }
+    cons: { rare-luck: 0.9 }
+    rules: { edge: true }
+    core-part: capacitor
+  chum_injector:
+    kind: rod
+    name: Chum Injector
+    rarity: RARE
+    family: sonar
+    shape: TEE
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Pumps something awful into the water. Something awful comes."
+    pros: { creature: 1.5 }
+    cons: { value: 0.95 }
+    core-part: power_cell
+  fillet_laser:
+    kind: rod
+    name: Fillet Laser
+    rarity: EPIC
+    family: tackle
+    shape: ZIG
+    weight: 10
+    material: PRISMARINE_SHARD
+    lore: "Cleans the catch on the hook. Fish don't love the light show."
+    pros: { value: 1.10 }
+    cons: { bite-speed: 0.9 }
+    rules: { needs: tackle }
+    core-part: logic_chip
+  twin_reel:
+    kind: rod
+    name: Twin Reel
+    rarity: EPIC
+    family: tackle
+    shape: SQUARE
+    weight: 10
+    material: PRISMARINE_SHARD
+    lore: "Two lines, one rod, double the tangles."
+    pros: { double-catch: 1.06 }
+    cons: { strength: 0.85, zone: 0.99 }
+    core-part: servo_motor
+  leviathan_sonar:
+    kind: rod
+    name: Leviathan Sonar
+    rarity: LEGENDARY
+    family: sonar
+    shape: BAR3
+    weight: 4
+    material: PRISMARINE_SHARD
+    lore: "Military deep-scan array. Things that should stay asleep wake up."
+    pros: { rare-luck: 1.3, creature: 1.4 }
+    cons: { bite-speed: 0.85 }
+    core-part: sonar_array
+
+  # ================= Exo modules (kind: exo), fitted on the Exo-Rig =================
+  servo_greaves:
+    kind: exo
+    name: Servo Greaves
+    rarity: COMMON
+    family: servo
+    shape: DOT
+    weight: 40
+    material: PRISMARINE_SHARD
+    lore: "Leg braces off a loader suit. Light, and thin."
+    pros: { speed: 1.06 }
+    cons: { armor: 0.95 }
+    core-part: servo_motor
+  ceramic_plate:
+    kind: exo
+    name: Ceramic Plate
+    rarity: COMMON
+    family: plating
+    shape: BAR2
+    weight: 40
+    material: PRISMARINE_SHARD
+    lore: "A cracked heat tile from the hull. Stops a rivet. Heavy."
+    pros: { armor: 1.15 }
+    cons: { speed: 0.96 }
+    core-part: copper_wiring
+  shock_absorbers:
+    kind: exo
+    name: Shock Absorbers
+    rarity: RARE
+    family: servo
+    shape: BAR2
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Hydraulic knees. Jump off anything."
+    pros: { fall: 0.6, jump: 1.1 }
+    cons: { armor: 0.97 }
+    core-part: gyro_stabilizer
+  bio_monitor:
+    kind: exo
+    name: Bio-Monitor
+    rarity: RARE
+    family: plating
+    shape: ELL
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Keeps your heart going. Reports you to the warden's ledger."
+    pros: { health: 1.1 }
+    cons: { sell: 0.97 }
+    core-part: data_core
+  trader_uplink:
+    kind: exo
+    name: Trader Uplink
+    rarity: RARE
+    shape: DOT
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Patched into the Exchange feed. Sells high, draws power from your life support."
+    pros: { sell: 1.05 }
+    cons: { health: 0.95 }
+    rules: { edge: true }
+    core-part: logic_chip
+  reactive_mesh:
+    kind: exo
+    name: Reactive Mesh
+    rarity: EPIC
+    family: plating
+    shape: SQUARE
+    weight: 10
+    material: PRISMARINE_SHARD
+    lore: "Stiffens when hit. Also when you try to run."
+    pros: { armor: 1.2, toughness: 1.2 }
+    cons: { speed: 0.93 }
+    rules: { needs: plating }
+    core-part: military_relay
+  grapple_launcher:
+    kind: exo
+    name: Grapple Launcher
+    rarity: RARE
+    family: gadget
+    shape: BAR2
+    weight: 15
+    material: PRISMARINE_SHARD
+    lore: "A cargo hook on a gas spring. Sneak + F to dash."
+    pros: { gadget-dash: true }
+    cons: { armor: 0.97 }
+    core-part: servo_motor
+  scanner_pulse:
+    kind: exo
+    name: Scanner Pulse
+    rarity: RARE
+    family: gadget
+    shape: TEE
+    weight: 15
+    material: PRISMARINE_SHARD
+    lore: "A guard-drone sensor. Sneak + F lights up everyone nearby."
+    pros: { gadget-scan: true }
+    cons: { speed: 0.98 }
+    core-part: sonar_array
+  stim_injector:
+    kind: exo
+    name: Stim Injector
+    rarity: EPIC
+    family: gadget
+    shape: ELL
+    weight: 8
+    material: PRISMARINE_SHARD
+    lore: "Med-bay auto-injector, refilled with something stronger. Sneak + F."
+    pros: { gadget-stim: true }
+    cons: { health: 0.95 }
+    core-part: power_cell
+  phase_cloak:
+    kind: exo
+    name: Phase Cloak
+    rarity: LEGENDARY
+    family: gadget
+    shape: ZIG
+    weight: 3
+    material: PRISMARINE_SHARD
+    lore: "Bends light around you for a few seconds. Sneak + F. Don't ask what it bends inside."
+    pros: { gadget-cloak: true, speed: 1.03 }
+    cons: { health: 0.9 }
+    core-part: quantum_core
+
+  # ================= Weapon modules (kind: gun), fitted on a gun model's Weapon Rig =================
+  # Gun stats multiply the gun's numbers: damage, fire-rate, spread, recoil, magazine, reload-time, range, headshot.
+  # Lower spread, recoil and reload-time are better.
+  extended_mag:
+    kind: gun
+    name: Extended Mag
+    rarity: COMMON
+    family: ballistic
+    shape: BAR2
+    weight: 40
+    material: PRISMARINE_SHARD
+    lore: "Welded two mags together. Takes longer to seat."
+    pros: { magazine: 1.3 }
+    cons: { reload-time: 1.15 }
+    core-part: copper_wiring
+  recoil_damper:
+    kind: gun
+    name: Recoil Damper
+    rarity: COMMON
+    family: optics
+    shape: DOT
+    weight: 40
+    material: PRISMARINE_SHARD
+    lore: "A gas piston from a cargo lift. Slows the action a touch."
+    pros: { recoil: 0.75 }
+    cons: { fire-rate: 0.95 }
+    core-part: servo_motor
+  laser_sight:
+    kind: gun
+    name: Laser Sight
+    rarity: RARE
+    family: optics
+    shape: BAR2
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Cut from a mining scanner. Sits on the rail, kicks the muzzle up."
+    pros: { spread: 0.75 }
+    cons: { recoil: 1.1 }
+    rules: { edge: true }
+    core-part: circuit_board
+  hair_trigger:
+    kind: gun
+    name: Hair Trigger
+    rarity: RARE
+    family: ballistic
+    shape: ELL
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Filed-down sear. Fast, and wild."
+    pros: { fire-rate: 1.15 }
+    cons: { spread: 1.2 }
+    core-part: capacitor
+  speed_loader:
+    kind: gun
+    name: Speed Loader
+    rarity: RARE
+    family: ballistic
+    shape: TEE
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Spring-fed and greedy: it won't take a full load."
+    pros: { reload-time: 0.75 }
+    cons: { magazine: 0.85 }
+    core-part: servo_motor
+  long_barrel:
+    kind: gun
+    name: Long Barrel
+    rarity: EPIC
+    family: optics
+    shape: BAR3
+    weight: 10
+    material: PRISMARINE_SHARD
+    lore: "A coolant pipe, rifled by hand. Reaches out and touches people."
+    pros: { range: 1.3, damage: 1.06 }
+    cons: { fire-rate: 0.9 }
+    core-part: military_relay
+  hollow_point_press:
+    kind: gun
+    name: Hollow-Point Press
+    rarity: EPIC
+    family: ballistic
+    shape: SQUARE
+    weight: 10
+    material: PRISMARINE_SHARD
+    lore: "Presses every round as it feeds. Hits hard, but fewer fit."
+    pros: { damage: 1.12 }
+    cons: { headshot: 0.9, magazine: 0.9 }
+    rules: { needs: ballistic }
+    core-part: military_relay
+  smart_targeter:
+    kind: gun
+    name: Smart Targeter
+    rarity: LEGENDARY
+    family: optics
+    shape: ZIG
+    weight: 4
+    material: PRISMARINE_SHARD
+    lore: "Guard-issue fire control. It thinks for you, slowly."
+    pros: { headshot: 1.25, spread: 0.8 }
+    cons: { fire-rate: 0.88 }
+    core-part: data_core
+
+# Hidden combos: the two modules fitted side by side (touching), both online. Players discover them.
+# effects multiply stats like a module's pros; clears switches off flags.
+combos:
+  cold_fusion:
+    name: Cold Fusion
+    modules: [coolant_loop, overcharger]
+    lore: "Overheat stalls are short, and the coolant stops choking the overclock."
+    effects: { stall: 0.45, overclock-chance: 2.0 }
+  strip_miner:
+    name: Strip Miner
+    modules: [magnet_coil, ore_sifter]
+    lore: "The sifter skims Tokens off the magnet's haul."
+    effects: { tokens: 2.5 }
+  chain_reaction:
+    name: Chain Reaction
+    modules: [plasma_cutter, seismic_dampener]
+    lore: "Charges and hammers set each other off."
+    effects: { shaped-chance: 1.25, jack-chance: 1.25 }
+  event_horizon:
+    name: Event Horizon
+    modules: [singularity_core, graviton_lens]
+    lore: "The lens focuses the singularity: lasers reach twice as far."
+    effects: { laser-length: 1.5, shaped-chance: 1.6 }
+  # ---- Rod Rig combos ----
+  deep_trawl:
+    name: Deep Trawl
+    modules: [salvage_magnet, sonar_pinger]
+    lore: "The sonar paints every wreck on the bottom for the magnet."
+    effects: { treasure: 1.5, scrap: 1.5 }
+  feeding_frenzy:
+    name: Feeding Frenzy
+    modules: [chum_injector, twin_reel]
+    lore: "Two lines in a churning school: everything bites at once."
+    effects: { double-catch: 1.05, creature: 1.3 }
+  # ---- Weapon Rig combos ----
+  double_tap:
+    name: Double Tap
+    modules: [hair_trigger, speed_loader]
+    lore: "The loader keeps pace with the trigger."
+    effects: { fire-rate: 1.1, reload-time: 0.85 }
+  marksman:
+    name: Marksman
+    modules: [long_barrel, laser_sight]
+    lore: "The dot and the barrel finally agree."
+    effects: { headshot: 1.15, range: 1.2 }
+  # ---- Exo-Rig combos ----
+  juggernaut:
+    name: Juggernaut
+    modules: [reactive_mesh, ceramic_plate]
+    lore: "Plate over mesh: you stop being knocked around."
+    effects: { health: 1.1, toughness: 1.3 }
+  free_runner:
+    name: Free Runner
+    modules: [servo_greaves, shock_absorbers]
+    lore: "Servos and shocks in step: faster, higher, softer landings."
+    effects: { speed: 1.05, jump: 1.05, fall: 0.7 }

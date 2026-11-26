@@ -1,13 +1,14 @@
 # Rare drops (salvage)
 
 Every block you break in a mine has a small chance to dig something up: a **salvage cache** full of loot, a
-collectible **relic**, or a **module blueprint** fragment.
+collectible **relic**, or a **module blueprint** fragment. Every activity on the station can also turn up
+**scrap parts**, which build and upgrade drill modules.
 
 ## Commands
 
 | Command | What it does |
 | --- | --- |
-| `/salvage` | Open the salvage menu: relic collections, blueprint assembly and your stash |
+| `/salvage` | Open the salvage menu: relic collections and decoding blueprint fragments into schematics |
 
 The Exchange has a **Salvage** terminal.
 
@@ -17,7 +18,7 @@ The Exchange has a **Salvage** terminal.
   Cutting Laser) roll at 15% of that, and one batch gives at most 3 finds.
 - **Salvage Sense** adds +4% odds per level, and the **Scavenger Rig** module doubles them.
 - A find picks a tier, then an item of that tier that can drop on your deck.
-- Anything that doesn't fit in your inventory goes to your `/salvage` **stash**. Nothing is ever dropped in the mine.
+- Finds go straight to your inventory. If it's full, they drop at your feet.
 
 | Tier | Share of finds | Roughly how often (base odds, ~3,000 hand-broken blocks an hour) | Announced |
 | --- | --- | --- | --- |
@@ -41,10 +42,14 @@ gains nothing. Cache Credits count as server income.
 | Armored Strongbox | Rare | 3,500 to 5,500 | 25 to 60 |
 | Warden's Vault Core | Epic | 15,000 to 22,000 | 150 to 300 |
 
-## Module blueprints
+## Module schematics
 
-Blueprint fragments drop on every deck. Collect enough of one rarity and assemble them in `/salvage` for a random
-[drill module](drill.md) of that rarity.
+Blueprint fragments drop on every deck. Collect enough of one rarity and **decode** them in `/salvage` to learn a
+random [module](drill.md#3-modules-and-the-module-rig) **schematic** (drill, rod, weapon or exo) of that rarity you don't know yet. A
+schematic is a permanent recipe: build the module as often as you like at your workshop's
+[Assembly Bench](workshop.md#the-assembly-bench).
+
+Once you know every schematic of a rarity, its fragments assemble a random module of that rarity instead.
 
 | Fragment | Drops as | Needed |
 | --- | --- | --- |
@@ -52,6 +57,51 @@ Blueprint fragments drop on every deck. Collect enough of one rarity and assembl
 | Rare Module Blueprint | Rare | 5 |
 | Epic Module Blueprint | Epic | 5 |
 | Legendary Module Blueprint | Legendary | 4 |
+
+Everyone starts knowing the Servo Actuator, Ore Sifter, Reel Servo, Extended Mag and Servo Greaves schematics.
+Fragments can decode into drill, [rod](fishing.md#the-rod-rig), [weapon](guns.md#weapon-rigs) or [exo](exo-rig.md)
+module schematics.
+
+## Scrap parts
+
+Salvaged electronics and machine parts. They come from **every activity**, not just mining, and they're what the
+Assembly Bench needs to build modules and what fusing needs for Mk III to Mk V.
+
+**Condition.** Every part is found in one of three states: **Fried** (80%), **Working** (14%) or **Pristine** (6%).
+Fried parts must be repaired at the workshop [Refurbisher](workshop.md#the-refurbisher) before use. Pristine parts
+count as working and are needed to fuse modules to Mk IV and Mk V.
+
+| Part | Tier | Found in |
+| --- | --- | --- |
+| Copper Wiring | Common | Every activity |
+| Circuit Board | Common | Every activity |
+| Capacitor | Uncommon | Every activity |
+| Servo Motor | Uncommon | Every activity |
+| Power Cell | Uncommon | Every activity |
+| Quantum Core | Legendary | Every activity, very rarely |
+| Seismic Sensor | Rare | Mining only |
+| Sonar Array | Rare | Fishing and sea creatures only |
+| Gyro Stabilizer | Rare | Daily parkour only |
+| Logic Chip | Rare | Workshop only |
+| Military Relay | Epic | Undercroft kills and smuggling only |
+| Encrypted Data Core | Epic | Contracts and story quests only |
+
+**How often**
+
+| Activity | Chance |
+| --- | --- |
+| Mining | 0.1% per hand-broken block (about 3 to 4 an hour) |
+| Fishing | 5% per catch |
+| Sea creature kill | 30% |
+| Daily parkour reward | Always: 2 parts per rewarded run |
+| Workshop | 5% each minute your bay is processing while you're online |
+| Undercroft kill | 25% per player downed |
+| Smuggling | 60% per run that gets contraband out |
+| Daily or weekly contract | 60% |
+| Story quest step | Always |
+
+The Scavenger Rig, the Quantum Sorter and the Salvage family bonus raise every source. Parts go to your inventory, or
+drop at your feet if it's full. They're kept through prestige and can be traded.
 
 ## Relic collections
 
@@ -72,5 +122,5 @@ All six sets together add +30% to your sell price, forever. Spare relics are wor
 
 ## How it ties into progression
 
-Caches top up Credits and Tokens, blueprints are a steady path to drill modules, and relic sets are one of the
+Caches top up Credits and Tokens, blueprints and scrap parts are the path to drill modules, and relic sets are one of the
 biggest permanent sell bonuses in the game. Finding a rare drop also counts for [tutorials and contracts](quests.md).

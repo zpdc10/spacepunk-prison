@@ -194,23 +194,74 @@ public final class MineManager implements MineService {
         if (1.0 - m.fillRatio() >= config.settings().refillMinedFraction()) requestRefill(m, "mined out");
     }
 
-    /** Refill with a warning to players inside. */
+    /** Seconds before a pending refill at which nearby players get a chat line or a title. */
+    private static final java.util.Set<Integer> CHAT_AT = java.util.Set.of(60, 30, 10);
+    private static final java.util.Set<Integer> TITLE_AT = java.util.Set.of(10, 5, 4, 3, 2, 1);
+
+    /**
+     * Refill after a countdown (refill.warn-seconds) while anyone is in or around the mine; immediately if the
+     * mine room is empty. Mining continues during the countdown; the boss bar shows the time left.
+     */
     public void requestRefill(Mine m, String reason) {
         if (!m.placed() || m.refilling() || m.refillPending()) return;
         int warn = config.settings().warnSeconds();
-        List<Player> inside = playersInside(m);
-        if (warn <= 0 || inside.isEmpty()) {
+        List<Player> near = playersNear(m);
+        if (warn <= 0 || near.isEmpty()) {
             refillNow(m);
             return;
         }
         m.refillPending(true);
-        for (Player p : inside) {
-            Text.send(p, "<yellow>" + m.displayName() + " <gray>is " + reason + ". Refilling in <white>" + warn + "s<gray>, stand clear.");
+        m.refillAt(System.currentTimeMillis() + warn * 1000L);
+        m.lastAnnounced(warn);
+        for (Player p : near) {
+            Text.send(p, "<yellow>" + m.displayName() + " <gray>is " + reason + ". Resetting in <white>" + formatSeconds(warn)
+                    + "<gray>. You'll be moved to the entrance when it resets.");
         }
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            m.refillPending(false);
-            if (mines.get(m.id()) == m) refillNow(m);
-        }, warn * 20L);
+    }
+
+    /** Runs every second for mines with a pending refill: countdown messages, then the refill. */
+    private void countdowns(long now) {
+        for (Mine m : mines.values()) {
+            if (!m.refillPending()) continue;
+            int left = (int) Math.ceil((m.refillAt() - now) / 1000.0);
+            if (left <= 0) {
+                m.refillPending(false);
+                refillNow(m);
+                continue;
+            }
+            if (left >= m.lastAnnounced()) continue;
+            m.lastAnnounced(left);
+            if (!CHAT_AT.contains(left) && !TITLE_AT.contains(left)) continue;
+            for (Player p : playersNear(m)) {
+                if (CHAT_AT.contains(left)) {
+                    Text.send(p, "<yellow>" + m.displayName() + " <gray>resets in <white>" + formatSeconds(left) + "<gray>.");
+                }
+                if (TITLE_AT.contains(left)) {
+                    p.showTitle(net.kyori.adventure.title.Title.title(
+                            Text.mm("<yellow>" + left),
+                            Text.mm("<gray>" + m.displayName() + " is resetting"),
+                            net.kyori.adventure.title.Title.Times.times(java.time.Duration.ZERO,
+                                    java.time.Duration.ofMillis(1100), java.time.Duration.ofMillis(200))));
+                }
+            }
+        }
+    }
+
+    private static String formatSeconds(int s) {
+        if (s >= 60 && s % 60 == 0) return (s / 60) + (s == 60 ? " minute" : " minutes");
+        return s + (s == 1 ? " second" : " seconds");
+    }
+
+    /** Players in the mine room: the pit, the walkway and up to the ceiling. */
+    List<Player> playersNear(Mine m) {
+        List<Player> out = new ArrayList<>();
+        if (m.region() == null) return out;
+        int h = config.settings().rimWidth() + 2;
+        int up = config.settings().roomHeight() + 2;
+        for (Player p : plugin.getServer().getOnlinePlayers()) {
+            if (m.region().near(p.getLocation(), h, 1, up)) out.add(p);
+        }
+        return out;
     }
 
     /** Refill immediately: move players out, fill, then rescue anyone who walked back in. */
@@ -248,6 +299,7 @@ public final class MineManager implements MineService {
     void tick() {
         int interval = config.settings().refillIntervalSeconds();
         long now = System.currentTimeMillis();
+        countdowns(now);
         if (interval > 0) {
             for (Mine m : mines.values()) {
                 if (m.placed() && !m.refilling() && m.fillRatio() < 1.0
@@ -267,7 +319,9 @@ public final class MineManager implements MineService {
             if (m.region() == null) continue;
             BossBar bar = m.bar();
             int pct = (int) Math.round(m.fillRatio() * 100);
-            String state = m.refilling() ? "<yellow>refilling" : "<gray>" + pct + "% ore left";
+            String state = m.refilling() ? "<yellow>refilling"
+                    : m.refillPending() ? "<red>resets in " + Math.max(0, (int) Math.ceil((m.refillAt() - System.currentTimeMillis()) / 1000.0)) + "s"
+                    : "<gray>" + pct + "% ore left";
             bar.name(Text.mm(m.color() + m.displayName() + " <dark_gray>| " + state
                     + " <dark_gray>| <gray>Grade " + m.requiredGrade()));
             bar.progress((float) m.fillRatio());

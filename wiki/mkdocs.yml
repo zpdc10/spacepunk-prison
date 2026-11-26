@@ -55,6 +55,7 @@ nav:
       - Cargo and selling: systems/selling.md
       - Prestige: systems/prestige.md
       - The drill: systems/drill.md
+      - Exo-Rig: systems/exo-rig.md
   - The station:
       - Station hub and warps: systems/station.md
       - Your HUD: systems/hud.md
@@ -66,6 +67,7 @@ nav:
       - Workshop (hull bays): systems/workshop.md
   - Players and trade:
       - The Black Market: systems/black-market.md
+      - Direct trading: systems/trading.md
       - Gangs (crews): systems/gangs.md
   - High risk:
       - The Undercroft: systems/undercroft.md

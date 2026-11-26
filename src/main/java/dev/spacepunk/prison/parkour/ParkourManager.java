@@ -437,6 +437,8 @@ final class ParkourManager {
             roll(p, c, mineName);
             Services.find(GangService.class).ifPresent(g -> g.addContractProgress(p.getUniqueId(), "parkour_runs", 1));
             Objectives.report(p, ObjectiveTypes.PARKOUR_COMPLETE, 1, "mine:" + c.mineId, "deck:" + ParkourConfig.deckOf(c.grade));
+            dev.spacepunk.prison.api.ScrapDrops.roll(p, dev.spacepunk.prison.api.ScrapService.PARKOUR, 2);
+            dev.spacepunk.prison.api.Services.find(dev.spacepunk.prison.api.DrillService.class).ifPresent(ds -> ds.rollModuleFind(p, "exo", "parkour"));
         } else {
             Text.send(p, "<gray>Finished in <white>" + time(millis) + "</white>" + (s != null && s.best > 0 ? " <dark_gray>(best "
                     + time(s.best) + ")" : "") + ". <gray>Next reward roll in <white>" + untilReset() + "</white>.");

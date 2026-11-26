@@ -50,7 +50,7 @@ final class SalvageMenu implements Listener {
         String title = switch (view) {
             case MAIN -> "<dark_gray>Salvage Bay";
             case COLLECTIONS -> "<dark_gray>Salvage Bay · Collections";
-            case ASSEMBLY -> "<dark_gray>Salvage Bay · Assembly";
+            case ASSEMBLY -> "<dark_gray>Salvage Bay · Schematics";
         };
         h.inventory = Bukkit.createInventory(h, size, Text.mm(title));
         render(p, h);
@@ -76,14 +76,16 @@ final class SalvageMenu implements Listener {
                 inv.setItem(4, rare.items().icon(Material.SPYGLASS, "ui/info", "<#c8743a>Salvage Record", List.of(
                         "<gray>Rare finds: <white>" + RareDropsManager.fmt(d.totalFinds),
                         "<gray>Caches cracked: <white>" + RareDropsManager.fmt(d.cachesOpened),
+                        "<gray>Schematics decoded: <white>" + RareDropsManager.fmt(d.schematicsDecoded),
                         "<gray>Modules assembled: <white>" + RareDropsManager.fmt(d.modulesAssembled),
+                        "<gray>Scrap parts salvaged: <white>" + RareDropsManager.fmt(d.scrapFound),
                         "<gray>Collection sell bonus: <green>+" + RareDropsManager.pct(rare.sellMultiplier(p.getUniqueId()) - 1))));
                 inv.setItem(10, rare.items().icon(Material.BOOK, "ui/rank", "<#c8743a>Collections", List.of(
                         "<gray>Relics catalogued: <white>" + done + "</white> / " + total,
                         "<gray>Finish a deck's set for a", "<gray>permanent sell bonus.", "", "<#c8743a>Click to open")));
                 List<String> asm = new ArrayList<>();
-                asm.add("<gray>Turn blueprint fragments into");
-                asm.add("<gray>random drill modules.");
+                asm.add("<gray>Decode blueprint fragments into");
+                asm.add("<gray>module schematics (drill, rod, weapon).");
                 asm.add("");
                 for (String r : RARITIES) {
                     Drop f = cfg.fragmentFor(r);
@@ -91,7 +93,7 @@ final class SalvageMenu implements Listener {
                 }
                 asm.add("");
                 asm.add("<#c8743a>Click to open");
-                inv.setItem(12, rare.items().icon(Material.SMITHING_TABLE, "ui/upgrade", "<#c8743a>Assembly Bay", asm));
+                inv.setItem(12, rare.items().icon(Material.SMITHING_TABLE, "ui/upgrade", "<#c8743a>Schematic Decoder", asm));
                 long stashed = d.stashed();
                 inv.setItem(14, rare.items().icon(Material.CHEST, null, "<#c8743a>Overflow Stash", List.of(
                         "<gray>Rare drops always go to your inventory", "<gray>(or your feet when it's full). Older",
@@ -141,12 +143,17 @@ final class SalvageMenu implements Listener {
                     ItemMeta m = icon.getItemMeta();
                     List<String> lore = new ArrayList<>();
                     lore.add("<gray>Fragments: " + (have >= need ? "<green>" : "<red>") + have + "</green></red><gray> / " + need);
-                    lore.add("<gray>Possible modules: <white>" + pool);
+                    boolean allKnown = rare.allKnown(p, r);
+                    lore.add("<gray>" + RareItems.titleCase(r) + " schematics: <white>" + pool);
+                    lore.add(allKnown ? "<gray>You know them all: fragments now" : "<gray>Decodes a schematic you don't know yet.");
+                    if (allKnown) lore.add("<gray>assemble a random " + RareItems.titleCase(r) + " module.");
+                    lore.add("<dark_gray>Build known schematics at your");
+                    lore.add("<dark_gray>workshop's Assembly Bench.");
                     lore.add("");
                     lore.add(pool == 0 ? "<dark_gray>No " + RareItems.titleCase(r) + " modules exist yet"
-                            : have >= need ? "<#c8743a>Click to assemble" : "<dark_gray>Find more while mining");
+                            : have >= need ? (allKnown ? "<#c8743a>Click to assemble" : "<#c8743a>Click to decode") : "<dark_gray>Find more while mining");
                     m.lore(Text.lore(lore));
-                    m.displayName(Text.item(f.tier().colored(RareItems.titleCase(r) + " Module Blueprint")));
+                    m.displayName(Text.item(f.tier().colored(RareItems.titleCase(r) + " Module Blueprints")));
                     icon.setItemMeta(m);
                     inv.setItem(ASSEMBLY_SLOTS[i], icon);
                 }
