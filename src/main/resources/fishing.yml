@@ -13,8 +13,9 @@ world:
   # Build the hub and the five pools automatically the first time the world is created.
   auto-build: true
   base-y: 64
-  # Distance between pool centres along +X from the hub.
-  spacing: 44
+  # Distance between the hub and each pool's deck module along +X. They are separate (no bridges): players fly to
+  # each one from a Dock Terminal, /waters or the Shuttle Board. Far enough apart that you can't see the next one.
+  island-spacing: 400
   # Water size [x, depth, z] of each pool.
   pool-size: [19, 6, 19]
   # Walkway width around each pool.
