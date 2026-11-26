@@ -7,3 +7,6 @@ softdepend: [FastAsyncWorldEdit, WorldEdit, LuckPerms]
 permissions:
   spacepunk.admin:
     default: op
+  spacepunk.resourcepack.bypass:
+    description: Not kicked for declining the resource pack (staff testing)
+    default: false

@@ -1,0 +1,34 @@
+# Spacepunk resource pack hosting. The pack is built from /resourcepack in the repo and embedded in the plugin jar,
+# so updating the jar updates the pack. /resourcepack reload re-reads this file and the pack without a restart.
+
+# Players must accept the pack. Declining kicks them with messages.declined.
+required: true
+# Also kick when the download fails (bad URL, port not reachable). Turn off while testing your port setup.
+kick-on-failed-download: true
+
+http:
+  # Built-in pack web server. Open this TCP port to players (and map it in Docker, e.g. -p 25580:25580; the Unraid test container already maps 25580).
+  enabled: true
+  bind: 0.0.0.0
+  port: 25580
+  # Port players reach from outside, if it differs from http.port (e.g. NAT or Docker port mapping). 0 = same.
+  public-port: 0
+
+# Leave empty to use http://<the address the player joined with>:<port>/<sha1>.zip, which works for LAN IPs and
+# domains alike. Set it if the pack is behind a proxy or CDN, e.g. https://pack.example.com (the file name is
+# appended), or a full URL ending in .zip.
+public-url: ""
+
+# Optional: serve this zip instead of the built-in pack (path relative to the plugin folder, or absolute).
+pack-file: ""
+
+# Ticks to wait after join before sending the pack.
+send-delay-ticks: 2
+
+# Log every pack send with its URL.
+debug: false
+
+messages:
+  prompt: "<#c8743a>STATION NOTICE</#c8743a><gray>: this facility runs on custom textures. Accept to enter.</gray>"
+  declined: "<#c8743a>ACCESS DENIED</#c8743a>\n\n<gray>The station texture pack is required to play.\nIn your server list, select this server, click <white>Edit</white>, and set <white>Server Resource Packs</white> to <white>Enabled</white>.</gray>"
+  failed: "<#c8743a>TRANSMISSION FAILED</#c8743a>\n\n<gray>The station texture pack could not be downloaded.\nPlease try again in a moment. If it keeps happening, tell staff.</gray>"

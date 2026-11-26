@@ -1,0 +1,22 @@
+{
+  "pack": {
+    "description": [
+      {
+        "text": "SPACEPUNK",
+        "color": "#c8743a",
+        "bold": true
+      },
+      {
+        "text": " // station issue textures",
+        "color": "gray"
+      }
+    ],
+    "pack_format": 46,
+    "supported_formats": {
+      "min_inclusive": 46,
+      "max_inclusive": 999
+    },
+    "min_format": 46,
+    "max_format": 999
+  }
+}
