@@ -133,7 +133,12 @@ final class GangCommands {
                 }
                 if (sub.equals("admin") && s.hasPermission("spacepunk.admin") && args.length == 3) {
                     String a = args[1].toLowerCase(Locale.ROOT);
-                    if (a.equals("territory")) return filter(new ArrayList<>(gangs.cfg().territories.keySet()), args[2]);
+                    if (a.equals("territory")) {
+                        List<String> ids = new ArrayList<>(gangs.cfg().territories.keySet());
+                        Services.find(dev.spacepunk.prison.api.UndercroftService.class)
+                                .ifPresent(u -> u.labs().forEach(l -> ids.add(l.id())));
+                        return filter(ids, args[2]);
+                    }
                     if (List.of("disband", "setbank", "addpoints").contains(a)) return filter(gangs.all().stream().map(g -> g.name).toList(), args[2]);
                 }
                 if (sub.equals("admin") && args.length == 4 && args[1].equalsIgnoreCase("territory")) {
@@ -196,8 +201,8 @@ final class GangCommands {
         p.sendMessage(Text.mm("  <gray>Crew (" + g.members.size() + "/" + c.maxMembers(g) + "): " + roster));
         if (gangs.gangFor(p.getUniqueId()) == g) p.sendMessage(Text.mm("  <gray>Bank " + eco.format(Currency.CREDITS, g.bank)));
         List<String> turf = new ArrayList<>();
-        for (var e : gangs.territories().entrySet()) if (e.getValue().equals(g.id)) turf.add(c.territoryName(e.getKey()));
-        if (!turf.isEmpty()) p.sendMessage(Text.mm("  <gray>Turf <#c8743a>" + String.join(", ", turf)));
+        for (var e : gangs.territories().entrySet()) if (e.getValue().equals(g.id)) turf.add(gangs.territoryName(e.getKey()));
+        if (!turf.isEmpty()) p.sendMessage(Text.mm("  <gray>Turf " + String.join("<gray>, ", turf)));
     }
 
     private void top(Player p, boolean level) {

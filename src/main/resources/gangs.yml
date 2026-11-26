@@ -187,9 +187,20 @@ weekly:
   # Bank Credits paid to the top weekly gangs at reset (1st, 2nd, 3rd...).
   rewards: [2000000, 1000000, 500000]
 
-# Undercroft turf (drug labs, control points). The undercroft module sets owners through GangService;
-# this is the display name of each territory id it uses.
-territories:
-  lab_rust: "Rust Lab"
-  lab_overdrive: "Overdrive Lab"
-  lab_coldsleep: "Coldsleep Lab"
+# Undercroft turf. Drug labs (undercroft.yml labs.sites) are seized by standing within capture-radius of the
+# lab with no other gang nearby for capture-seconds (another gang nearby = contested, progress holds).
+# The holder gets hourly income and a cut of every batch someone else cooks there (cut doses -> bank Credits);
+# their own members keep the full batch.
+turf:
+  capture-radius: 6
+  capture-seconds: 60
+  capture-points: 500
+  # Bank Credits every payout-minutes per held lab, by ring (1, 2, 3).
+  payout-minutes: 60
+  lab-income: [40000, 90000, 180000]
+  credits-per-dose: 12000
+  # Gang points per Undercroft kill (that drops a bounty tag), times the ring number.
+  kill-points: 15
+
+# Names for territories that aren't Undercroft labs (labs use their own names).
+territories: {}

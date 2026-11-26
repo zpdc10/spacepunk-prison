@@ -49,8 +49,17 @@ Services.find(GangService.class).ifPresent(g -> g.registerContractObjective("fis
 Services.find(GangService.class).ifPresent(g -> g.addContractProgress(player.getUniqueId(), "fish_caught", 1));
 ```
 
-Undercroft: `setTerritoryOwner("lab_rust", gangId)` (announced server-wide), `depositFromServer(gangId, credits,
-"lab share")`. Territory ids and names are listed under `territories` in gangs.yml.
+## Undercroft turf
+
+- Seize a drug lab (`bilge_still`, `rustworks`, `sump_kitchen`) by holding the area within 6 blocks of it with no
+  other gang there for 60s. Another gang nearby makes it contested (progress holds); leaving lets it decay.
+  The current holder is warned when someone starts taking it. Capturing gives 500 gang points.
+- The holder's bank gets lab income every hour (40K / 90K / 180K by ring) and 12K Credits per dose of the
+  25% cut from every batch someone else cooks there. The holder's own members keep their full batch.
+- Undercroft kills that drop a bounty tag give 15 gang points x ring; bounty turn-ins add their points.
+- Gangmates can't shoot each other (GunHitEvent) or hit each other.
+- Ownership is mirrored into `UndercroftService#setLabController`, so `/undercroft admin lab` changes are adopted too.
+  Numbers live under `turf:` in gangs.yml.
 
 Admin: `/gang admin reload | disband <gang> | setbank <gang> <amount> | addpoints <gang> <n> | weeklyreset |
 territory <id> <gang|none>`.

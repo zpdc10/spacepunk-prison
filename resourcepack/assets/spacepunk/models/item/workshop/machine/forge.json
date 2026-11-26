@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "spacepunk:block/workshop/forge_side",
+    "north": "spacepunk:block/workshop/forge_front",
+    "south": "spacepunk:block/workshop/forge_side",
+    "east": "spacepunk:block/workshop/forge_side",
+    "west": "spacepunk:block/workshop/forge_side",
+    "up": "spacepunk:block/workshop/forge_top",
+    "down": "spacepunk:block/workshop/forge_bottom"
+  }
+}

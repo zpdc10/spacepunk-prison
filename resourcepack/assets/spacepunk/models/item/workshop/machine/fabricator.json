@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "spacepunk:block/workshop/fabricator_side",
+    "north": "spacepunk:block/workshop/fabricator_front",
+    "south": "spacepunk:block/workshop/fabricator_side",
+    "east": "spacepunk:block/workshop/fabricator_side",
+    "west": "spacepunk:block/workshop/fabricator_side",
+    "up": "spacepunk:block/workshop/fabricator_top",
+    "down": "spacepunk:block/workshop/fabricator_bottom"
+  }
+}
