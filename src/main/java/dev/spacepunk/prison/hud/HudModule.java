@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Player HUD: sidebar, action bar (shared through {@link HudService}), tab list and cargo boss bar.
+ * Player HUD: sidebar, action bar (shared through {@link HudService}), and tab list.
  * Loaded last so every service it reads is registered. Config: hud.yml.
  */
 public final class HudModule implements FeatureModule {
