@@ -3,6 +3,7 @@ package dev.spacepunk.prison.workshop;
 import dev.spacepunk.prison.SpacepunkPrison;
 import dev.spacepunk.prison.api.GangService;
 import dev.spacepunk.prison.api.ProfileService;
+import dev.spacepunk.prison.api.ProtectionService;
 import dev.spacepunk.prison.api.ProgressionService;
 import dev.spacepunk.prison.api.Services;
 import dev.spacepunk.prison.api.WarpService;
@@ -69,6 +70,7 @@ public final class WorkshopModule implements FeatureModule {
                 WarpService.PRIVATE, Material.LODESTONE,
                 List.of("<gray>Your private workshop: machines that", "<gray>turn ore into goods worth far more."),
                 manager::bayLocation, p -> null)));
+        registerProtection();
         Services.find(GangService.class).ifPresent(g -> g.registerContractObjective(WorkshopManager.GANG_OBJECTIVE, "Goods processed in workshops"));
 
         task = Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 20L, 20L);
@@ -76,6 +78,27 @@ public final class WorkshopModule implements FeatureModule {
         // /reload safety: players already online had their ProfileLoadedEvent before we registered.
         ProfileService profiles = Services.get(ProfileService.class);
         for (Player p : Bukkit.getOnlinePlayers()) profiles.get(p.getUniqueId()).ifPresent(manager::load);
+    }
+
+    /** Core protection is default-deny everywhere: let owners and crew build inside their own bay interior. */
+    private void registerProtection() {
+        Services.find(ProtectionService.class).ifPresent(ps -> {
+            ps.allowBreak("workshop", (p, b) -> canBuildAt(p, b) && b.getType() != Material.BARRIER);
+            ps.allowPlace("workshop", this::canBuildAt);
+            ps.allowUse("workshop", (p, b) -> {
+                PlotRegistry.Plot plot = manager.plotAt(b.getLocation());
+                return plot != null && (manager.canBuild(p, plot) || b.equals(manager.world.terminal(plot)));
+            });
+            ps.allowEnvironment("workshop", b -> {
+                PlotRegistry.Plot plot = manager.plotAt(b.getLocation());
+                return plot != null && manager.world.inInterior(plot, b.getX(), b.getY(), b.getZ());
+            });
+        });
+    }
+
+    private boolean canBuildAt(Player p, org.bukkit.block.Block b) {
+        PlotRegistry.Plot plot = manager.plotAt(b.getLocation());
+        return plot != null && manager.canBuild(p, plot) && manager.world.inInterior(plot, b.getX(), b.getY(), b.getZ());
     }
 
     private void tick() {
