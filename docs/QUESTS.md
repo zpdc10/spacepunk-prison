@@ -7,6 +7,9 @@
   finale asks for your first prestige. Progress is kept forever, also through prestige.
 - **Tutorials**: one per system, started automatically when unlocked. Tutorials for systems that aren't installed
   (fishing, workshop, auction, rare drops, Undercroft) appear as soon as that module registers its objective type.
+  The quests module itself feeds fishing (`FishCaughtEvent`), Undercroft (`UndercroftKillEvent`, smuggling), gangs
+  (joins), the auction house (`auction:sale` / `auction:buy` currency changes); the workshop
+  (`WorkshopManager#crafted`) and rare drops (`RareDropsManager#award`) call `Objectives.report` directly.
 - **Contracts**: 3 dailies (reset at midnight) and 3 weeklies (reset Monday) rolled from pools that scale with grade;
   finishing all dailies pays a bonus. Contracts give points for the monthly **Contract Track** (30 tiers, resets on
   the 1st, claimed in `/quests track`).
@@ -15,6 +18,9 @@
 - Deliver objectives take ore from the cargo hold when the player clicks the quest in the log.
 - `/quests [story|tutorials|contracts|track]`, `/contracts`. The tracked quest shows on the sidebar (click a quest
   in the log to track it).
+- The story characters stand on the station's Crew Deck automatically (`npcs` in `quests.yml`): on startup, once
+  the hub world exists, each listed character gets exactly one villager at its spot (spawned, moved, or
+  de-duplicated), so restarts never double them.
 - Admin: `/questadmin npc <character|board|remove>` places villager NPCs (right-click opens the log),
   `reset`, `complete`, `points`, `reroll`, `info`, `types`, `reload`.
 

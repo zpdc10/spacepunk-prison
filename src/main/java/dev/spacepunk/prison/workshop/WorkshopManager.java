@@ -6,6 +6,8 @@ import dev.spacepunk.prison.api.Currency;
 import dev.spacepunk.prison.api.EconomyService;
 import dev.spacepunk.prison.api.GangService;
 import dev.spacepunk.prison.api.HudService;
+import dev.spacepunk.prison.api.ObjectiveTypes;
+import dev.spacepunk.prison.api.Objectives;
 import dev.spacepunk.prison.api.ProfileService;
 import dev.spacepunk.prison.api.ProgressionService;
 import dev.spacepunk.prison.api.Services;
@@ -232,6 +234,8 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
 
     @Override public void crafted(Bay bay, String key, long n) {
         Services.find(GangService.class).ifPresent(g -> g.addContractProgress(bay.owner, GANG_OBJECTIVE, n));
+        Player owner = Bukkit.getPlayer(bay.owner);
+        if (owner != null) Objectives.report(owner, ObjectiveTypes.PROCESS_ITEM, n, key);
     }
 
     static final String GANG_OBJECTIVE = "goods_processed";

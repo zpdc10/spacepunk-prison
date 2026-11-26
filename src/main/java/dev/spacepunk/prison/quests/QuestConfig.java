@@ -52,6 +52,21 @@ final class QuestConfig {
     final Map<String, QuestDef> daily = new LinkedHashMap<>();
     final Map<String, QuestDef> weekly = new LinkedHashMap<>();
     final String trackName;
+    /** Quest NPCs placed automatically in the station hub: world name, and character id to spot. */
+    final boolean npcAutoPlace;
+    final String npcWorld;
+    final Map<String, NpcSpot> npcSpots = new LinkedHashMap<>();
+
+    /** Where an auto-placed quest NPC stands. */
+    record NpcSpot(String character, double x, double y, double z, float yaw) {}
+
+    /** Crew Deck spots used when quests.yml has no npcs section (files written before it existed). */
+    private static final List<NpcSpot> DEFAULT_SPOTS = List.of(
+            new NpcSpot("warden", -51.5, 64, -1.5, -90f),
+            new NpcSpot("rusk", -49.5, 64, -9.5, -90f),
+            new NpcSpot("vell", -49.5, 64, 5.5, -90f),
+            new NpcSpot("nhem", -38.5, 64, -9.5, 90f),
+            new NpcSpot("kade", -40.5, 64, 12.5, 180f));
     final List<TrackTier> tiers = new ArrayList<>();
 
     private QuestConfig(YamlConfiguration y, Logger log) {
@@ -77,6 +92,24 @@ final class QuestConfig {
             if (c == null) continue;
             characters.put(id, new Character(id, c.getString("name", id), c.getString("color", "<white>"),
                     c.getString("title", ""), c.getString("profession", "NONE")));
+        }
+
+        ConfigurationSection npcs = y.getConfigurationSection("npcs");
+        npcAutoPlace = npcs == null || npcs.getBoolean("auto-place", true);
+        npcWorld = npcs == null ? "station" : npcs.getString("world", "station");
+        ConfigurationSection spots = npcs == null ? null : npcs.getConfigurationSection("spots");
+        if (spots == null) {
+            for (NpcSpot spot : DEFAULT_SPOTS) npcSpots.put(spot.character(), spot);
+        } else {
+            for (String id : spots.getKeys(false)) {
+                ConfigurationSection sp = spots.getConfigurationSection(id);
+                String c = id.toLowerCase(Locale.ROOT);
+                if (sp == null || (!characters.containsKey(c) && !c.equals("board"))) {
+                    log.warning("[quests] npcs.spots." + id + " is not a character (or 'board'), skipped");
+                    continue;
+                }
+                npcSpots.put(c, new NpcSpot(c, sp.getDouble("x"), sp.getDouble("y", 64), sp.getDouble("z"), (float) sp.getDouble("yaw", 0)));
+            }
         }
 
         ConfigurationSection items = section(y, "mine-items");
