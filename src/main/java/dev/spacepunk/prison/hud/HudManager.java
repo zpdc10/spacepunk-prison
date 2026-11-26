@@ -85,6 +85,8 @@ final class HudManager implements HudService, Listener {
         long gainCredits;
         long gainTokens;
         boolean gainSold;
+        /** Tokens found or earned since login (not admin grants), shown under the wallet. */
+        long sessionTokens;
 
         long lastMined;
         long usedBefore;
@@ -282,7 +284,10 @@ final class HudManager implements HudService, Listener {
         long now = System.currentTimeMillis();
         if (now > s.gainUntil) resetGain(s);
         if (e.currency() == Currency.CREDITS) s.gainCredits += delta;
-        else s.gainTokens += delta;
+        else {
+            s.gainTokens += delta;
+            if (e.reason() == null || !e.reason().startsWith("admin")) s.sessionTokens += delta;
+        }
         s.gainUntil = now + cfg().gainMillis();
         renderActionBar(p, s, false);
     }
@@ -515,6 +520,9 @@ final class HudManager implements HudService, Listener {
             out.add(HEAD + "WALLET");
             out.add(" <gold>¢</gold> <white>" + Numbers.shortFormat(credits) + "</white> <gray>Credits");
             out.add(" <aqua>✦</aqua> <white>" + Numbers.shortFormat(eco.balance(id, Currency.TOKENS)) + "</white> <gray>Tokens");
+            if (s.sessionTokens > 0) {
+                out.add("   <dark_gray>+" + Numbers.shortFormat(s.sessionTokens) + " earned this session");
+            }
             out.add(" <light_purple>◆</light_purple> <white>" + Numbers.shortFormat(eco.balance(id, Currency.SHARDS)) + "</white> <gray>Shards");
             out.add("  ");
         }

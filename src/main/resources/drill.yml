@@ -8,12 +8,19 @@ item:
   use-item-models: true
 
 tokens:
-  # Mining is a slow Token trickle (prestige is the main bulk source of Tokens). Over a first 50-100 hour run
-  # this should afford only the first several levels of each enchant.
-  # Base Token find from blocks you break by hand: chance per block and amount range.
-  hand-chance: 0.015
-  min: 1
-  max: 2
+  # Tokens drop while you work: uncommon, but not rare. Prestige pays no Tokens (it pays Shards).
+  # Target: a few hours in the mine buys a couple of drill enchant upgrades at whatever stage you're at.
+  # At about one hand-broken block a second that is a find every ~3 minutes, worth about:
+  #   grade 1 ~100/h, grade 10 ~240/h, grade 15 ~380/h, grade 20 ~620/h, grade 25 ~980/h (prestige 0)
+  # which is about 40K Tokens over a ~71 hour first run. Pace model: docs/progression-balance.md
+  # Base Token find from blocks you break by hand: chance per block and amount range (at mine grade 1).
+  hand-chance: 0.006
+  min: 4
+  max: 7
+  # Every Token drop from mining (base find, Token Siphon, Salvage Sense caches) is multiplied by
+  # grade-growth^(mine grade - 1) x prestige-growth^prestige. Grade 25 = x9.85, prestige 5 = x2.0, prestige 10 = x4.0.
+  grade-growth: 1.10
+  prestige-growth: 1.15
   # Blocks broken by enchants (Shaped Charge, Jackhammer, Cutting Laser) roll Tokens at this fraction of the hand chance.
   enchant-block-rate: 0.05
 
@@ -118,11 +125,12 @@ enchants:
     base: 25
     growth: 1.1
     max-level: [10, 25, 50, 80, 120]
-    # Capped on purpose: Siphon roughly doubles to triples the mining trickle, it never replaces prestige.
-    chance-per-level: 0.0005
-    max-chance: 0.03
-    amount-min: 1
-    amount-max: 2
+    # Extra find chance on top of tokens.hand-chance (0.6%), same amounts and scaling as the base find.
+    # Level 10 = +25% Tokens, level 25 = +62%, capped at +250% (1.5%).
+    chance-per-level: 0.00015
+    max-chance: 0.015
+    amount-min: 4
+    amount-max: 7
     # Bonus amount grows by this share per level.
     amount-per-level: 0.01
   shaped_charge:
@@ -193,7 +201,7 @@ enchants:
     max-level: [0, 10, 25, 40, 60]
     # Rare drop and module odds +4% per level.
     rare-per-level: 0.04
-    # Chance per hand-broken block of a Token cache.
+    # Chance per hand-broken block of a Token cache. Cache size also scales with mine grade and prestige (tokens.grade-growth).
     cache-chance-per-level: 0.000005
     cache-min: 15
     cache-max: 50

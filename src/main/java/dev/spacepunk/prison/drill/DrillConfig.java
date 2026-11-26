@@ -24,6 +24,10 @@ public final class DrillConfig {
     public final int tokenMin;
     public final int tokenMax;
     public final double tokenEnchantRate;
+    /** Token drop amounts (base find, Siphon, Salvage Sense caches) x this per mine grade above 1. */
+    public final double tokenGradeGrowth;
+    /** Token drop amounts x this per prestige level. */
+    public final double tokenPrestigeGrowth;
 
     public final double moduleChance;
     public final boolean moduleBroadcast;
@@ -39,10 +43,13 @@ public final class DrillConfig {
         itemMaterial = material(y.getString("item.material"), Material.NETHERITE_PICKAXE, log);
         useItemModels = y.getBoolean("item.use-item-models", true);
 
-        tokenHandChance = y.getDouble("tokens.hand-chance", 0.01);
-        tokenMin = y.getInt("tokens.min", 1);
-        tokenMax = Math.max(tokenMin, y.getInt("tokens.max", 2));
+        tokenHandChance = y.getDouble("tokens.hand-chance", 0.006);
+        tokenMin = y.getInt("tokens.min", 4);
+        tokenMax = Math.max(tokenMin, y.getInt("tokens.max", 7));
         tokenEnchantRate = y.getDouble("tokens.enchant-block-rate", 0.05);
+        tokenGradeGrowth = Math.max(1.0, y.getDouble("tokens.grade-growth", 1.10));
+        tokenPrestigeGrowth = Math.max(1.0, y.getDouble("tokens.prestige-growth", 1.15));
+        dev.spacepunk.prison.api.TokenDrops.configure(tokenGradeGrowth, tokenPrestigeGrowth);
 
         moduleChance = y.getDouble("salvage.module-chance", 0.00002);
         moduleBroadcast = y.getBoolean("salvage.broadcast", true);
@@ -232,5 +239,10 @@ public final class DrillConfig {
             int deck = Math.max(0, (requiredGrade - 1) / 5);
             return deckMultiplier.get(Math.min(deck, deckMultiplier.size() - 1));
         }
+    }
+
+    /** Multiplier on every mining Token drop for this mine grade and prestige level. */
+    public double tokenScale(int mineGrade, int prestige) {
+        return dev.spacepunk.prison.api.TokenDrops.scale(mineGrade, prestige);
     }
 }

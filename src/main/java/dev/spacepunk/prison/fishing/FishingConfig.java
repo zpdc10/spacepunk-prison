@@ -30,6 +30,11 @@ final class FishingConfig {
     final Map<String, Double> rarityWeights = new LinkedHashMap<>();
     // value
     final double valueGrowth, levelBonus;
+    /** Chance per landed catch of a Token find (amount x TokenDrops scale for the angler's grade and prestige). */
+    final double tokenFindChance;
+    final long tokenFindMin, tokenFindMax;
+    /** Token Pouch treasure amounts also scale with grade and prestige. */
+    final boolean tokenTreasureScaled;
     // levels
     final int maxLevel;
     final double xpBase, xpGrowth;
@@ -121,6 +126,10 @@ final class FishingConfig {
         if (rw != null) for (String k : rw.getKeys(false)) rarityWeights.put(k, rw.getDouble(k));
 
         valueGrowth = y.getDouble("value.value-growth", 1.2584);
+        tokenFindChance = Math.max(0, y.getDouble("tokens.find-chance", 0.03));
+        tokenFindMin = Math.max(0, y.getLong("tokens.min", 4));
+        tokenFindMax = Math.max(tokenFindMin, y.getLong("tokens.max", 7));
+        tokenTreasureScaled = y.getBoolean("tokens.scale-treasure", true);
         levelBonus = y.getDouble("value.level-bonus", 0.01);
 
         maxLevel = Math.max(1, y.getInt("levels.max", 50));

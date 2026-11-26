@@ -29,7 +29,7 @@ it. Everything is tunable in `undercroft.yml` and `guns.yml`.
 At the checkpoint the scanner checks each contraband stack: 40% chance it's confiscated. A **Smuggler's Lining**
 (fence, supply drops) hides 3 stacks. Or **bribe the guard** (Credits, scales with grade and what you carry).
 The fence only deals **outside** the Undercroft, so goods must be smuggled out. Fence payouts are server income
-(`income:undercroft`), so they count toward the prestige Token payout.
+(`income:undercroft`).
 
 ## Labs and stims
 

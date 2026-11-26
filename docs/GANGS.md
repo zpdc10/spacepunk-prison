@@ -28,7 +28,7 @@ Prestige wipes Credits, so the bank must not be a hiding place:
    gang money; prestiging in that time still wipes them.
 
 Bank moves use EconomyService reasons `gang:deposit` / `gang:withdraw`, which never count toward a run's
-earnings for the prestige Token payout.
+server income ("earned this run").
 
 ## Upgrades (bank Credits)
 

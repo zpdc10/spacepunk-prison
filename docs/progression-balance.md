@@ -60,26 +60,66 @@ Auto-Seller also cost Credits, which adds a few hours.
 | How much slower late grades feel than early ones | `grades.growth` |
 | One specific grade | `grades.cost-overrides` |
 | Later prestige runs | `prestige.cost-per-prestige`, `selling.bonus-per-prestige` |
-| Prestige payday | `prestige.rewards` (Tokens grow ×1.35 per prestige, plus Shards and optional console commands) |
+| Prestige payday | `prestige.rewards` (Shards and optional console commands; no Tokens) |
+| Token drop rates | `drill.yml` `tokens:` (chance, amounts, grade-growth, prestige-growth), `fishing.yml` / `workshop.yml` `tokens:` |
 | How often players must `/sell` | `cargo.base-capacity`, `cargo.capacity-growth` |
 
 ## Prestige
 
-Prestige is the main bulk source of Tokens (rare drops while mining are a trickle). Grade, Credits and
-cargo contents reset. The drill, Tokens, Shards and cargo upgrades are kept. Each prestige to level P pays:
+Grade, Credits and cargo contents reset. The drill, Tokens, Shards and cargo upgrades are kept. Prestige
+**pays no Tokens** (changed 2026-11-26; it used to pay a Token cache scaled by the run's earnings). Each
+prestige to level P pays:
 
-- **Tokens** = `cache × earnings multiplier`
-  - cache = `25,000 × 1.35^(P-1)` (P1 25K, P5 76K, P10 375K, P20 7.6M)
-  - earnings multiplier = `min(4, earned ÷ run cost)^0.5`
-  - earned = all Credits **the server paid you** since the last prestige: selling ore now, and later
-    workshop goods, fishing, contracts and so on. Money from other players (pay, trades, auction sales,
-    gang bank withdrawals) never counts, so parking money with an alt, in items or in a bank before
-    prestiging can't raise the payout. The wallet is wiped either way.
-  - run cost = Credits for all 24 rank-ups of the run just finished (66M on the first run).
-  - A normal run earns about its own run cost, so the multiplier is about 1.0. Grinding at grade 25
-    until you've earned 2× gives 1.41×, and 4× (the cap) gives 2×. The square root means each extra hour
-    pays less than the last.
 - **Shards** = `10 + 2P`, and **+10% sell bonus** forever.
+- **+15% on every Token drop** forever (`drill.yml` `tokens.prestige-growth`, compounding: P5 x2.0, P10 x4.0).
+
+## Tokens
+
+Tokens are found while doing things: uncommon, but not rare. The target is that **a few hours in the mine
+buys a couple of drill enchant upgrades**, at every stage of the game. Enchant costs grow about 10% per level
+and the drill gets more expensive the deeper you are, so drops grow with the mine's grade.
+
+**Mining** (`drill.yml` `tokens:`): each hand-broken block has a 0.6% chance to drop 4-7 Tokens (a find
+about every 3 minutes at one block a second). Every mining drop (base find, Token Siphon, Salvage Sense
+caches) is multiplied by `1.10^(mine grade - 1) x 1.15^prestige`. Blocks broken by area enchants roll at 5%
+of the hand chance. Token Siphon adds 0.015% find chance per level (level 10 = +25% Tokens, cap +250%).
+
+Assumes about 3,000 hand-broken blocks an hour (prestige 0):
+
+| Mine grade | Tokens/hour | Per 3 hours | What 3 hours buys (typical next upgrades) |
+| --- | --- | --- | --- |
+| 1 | ~100 | ~300 | Several early levels (15-120 each on Rusted) |
+| 5 | ~145 | ~435 | Shaped Charge 5 (91) + Overclock 5 (121) + Bore Speed levels |
+| 10 | ~235 | ~700 | Bore Speed 30 (238) + Yield 25 (197), or toward Cutting Laser 1 (1.2K) |
+| 15 | ~375 | ~1.1K | Cutting Laser 1, or a few mid levels |
+| 20 | ~605 | ~1.8K | Cutting Laser 5 (1.9K) |
+| 25 | ~975 | ~2.9K | Cutting Laser 10 (3.3K) / Salvage Sense levels |
+
+Over the ~71 hour first run that is about **40K Tokens from mining** (1.6K by grade 10, 16K by grade 20):
+enough to max the Rusted frame (~2K) early and get most of the way through Salvaged (~60K). Later runs are
+longer and every drop is 15% bigger per prestige:
+
+| Prestige run | Run length | Tokens from mining |
+| --- | --- | --- |
+| 0 -> 1 | ~71h | ~40K |
+| 1 -> 2 | ~97h | ~62K |
+| 5 -> 6 | ~166h | ~185K |
+| 10 -> 11 | ~214h | ~480K |
+| 15 -> 16 | ~242h | ~1.1M |
+| 20 -> 21 | ~261h | ~2.4M |
+
+That lines up with the frame gates: Industrial (P1, ~540K to max) by about P5, Military (P5, ~4M) by about
+P15, and Prototype (P15, ~72M) as the long endgame.
+
+**Other activities** add to mining (all scale with your grade and prestige unless noted):
+
+- Fishing (`fishing.yml` `tokens:`): 3% per landed catch for 4-7 Tokens (~25/h at grade 1), plus Token Pouch
+  treasure (20-50).
+- Workshop (`workshop.yml` `tokens:`): while you're online and your bay is processing, a 6% roll each minute for
+  4-7 Tokens (~20/h at grade 1).
+- Parkour: one reward roll per course per day, 4-800 Tokens by deck (`parkour.yml`, not scaled).
+- Quests and contracts: fixed or per-grade Token rewards (`quests.yml`).
+- Rare drops: salvage caches and relic collections (`raredrops.yml`).
 
 ### Rule for other modules
 

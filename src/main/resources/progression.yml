@@ -23,23 +23,13 @@ prestige:
   max: 100
   # Every rank-up costs this much more per prestige level (0.5 = +50% per prestige).
   cost-per-prestige: 0.5
-  # What a prestige pays out when reaching prestige level P. Prestige is the main bulk source of Tokens,
-  # so this should dwarf what mining drops during a run.
+  # What a prestige pays out when reaching prestige level P. Prestige pays NO Tokens: Tokens drop during
+  # activities (mining, fishing, workshop, parkour, quests), and every activity drop grows x1.15 per prestige
+  # (drill.yml tokens.prestige-growth). Shards are the prestige currency.
   rewards:
-    # Tokens = cache x earnings multiplier.
-    #   cache = tokens-base * tokens-growth^(P-1)   (P1: 25K, P5: 76K, P10: 375K, P20: 7.6M)
-    #   earnings multiplier = min(earnings-cap, earned / run cost)^earnings-exponent
-    #   earned   = Credits the server paid you since the last prestige: every Credits gain whose reason
-    #              starts with one of income-reasons below. Money from other players (pay, trades, auction
-    #              sales, gang bank) never counts, so stashing money with alts before prestige gains nothing.
-    #   run cost = Credits for all 24 rank-ups of the run just finished (66M on the first run)
-    # A normal run earns about its run cost (x1.0). Earning 2x gives x1.41, 4x (the cap) gives x2.
-    tokens-base: 25000
-    tokens-growth: 1.35
-    earnings-exponent: 0.5
-    earnings-cap: 4.0
-    # EconomyService reasons that count as server income. Selling uses "sell:<how>". New systems that pay
-    # Credits from the server (workshop, fishing, contracts, quests) should use "income:<source>".
+    # EconomyService reasons that count as server income (tracked per run as "earned this run", a stat for
+    # /progression admin info). Selling uses "sell:<how>". New systems that pay Credits from the server
+    # (workshop, fishing, contracts, quests) should use "income:<source>".
     income-reasons:
       - "sell:"
       - "income:"

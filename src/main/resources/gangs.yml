@@ -1,6 +1,6 @@
 # Gangs (crews). Reload with /gang admin reload.
-# Credits in the gang bank are player money: moving them never counts as "earned this run" for the
-# prestige Token payout (bank moves use reasons gang:deposit / gang:withdraw).
+# Credits in the gang bank are player money: moving them never counts as server income ("earned this run")
+# (bank moves use reasons gang:deposit / gang:withdraw).
 
 # Prestige needed to found a gang, and to join one. Design: gangs unlock at Prestige 1.
 create-prestige: 1
