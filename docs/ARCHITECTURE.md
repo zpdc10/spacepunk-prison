@@ -30,6 +30,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `progression/` + `progression.yml` | progression | `ProgressionService`, grades 1-25, prestige, cargo hold, selling, `/rankup` `/prestige` `/sell` |
 | `drill/` + `drill.yml` | drill | The drill item, frames, enchants, modules, heat, drill menu |
 | `hud/` + `hud.yml` | hud | `HudService` (shared action bar), sidebar, tab list, cargo boss bar, per-break feedback, `/hud` |
+| `gangs/` + `gangs.yml` | gangs | `GangService`, crews and ranks, gang bank (prestige lock), crew chat, upgrades, weekly contracts and leaderboard, turf ownership, `/gang` `/gc` |
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
 | `raredrops/` + `raredrops.yml` | rare drops | Tiered finds while mining, relic collections (sell bonus via `OreSellEvent`), salvage caches, blueprint fragments → drill modules, `/salvage` |
 | `auction/` + `auction.yml` | auction house | The Black Market: buy-it-now + escrowed auctions, fees/tax sink, `auctions.json`, `/ah`; blocks prestige while the player leads a bid (`PrestigeAttemptEvent`) |
@@ -40,7 +41,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, progression, drill, hud, raredrops, auction. Missing classes are skipped, so each module can
+Load order: resourcepack, mines, progression, drill, gangs, hud, raredrops, auction. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -70,6 +71,15 @@ Prestige wipes Credits and pays Tokens for server income earned this run (Econom
 `auction:bid`, `auction:sale`, `auction:refund` and `auction:fee`. Anything that holds a player's Credits outside
 their balance (escrow, banks) must stop that money surviving a prestige: listen to `PrestigeAttemptEvent` and
 `deny(...)` it while the player has money held (the auction house does this for leading bids).
+
+## Gangs hooks
+
+`GangService` (see docs/GANGS.md): `gangOf`/`sameGang` for PvP and bounties (gangmates already can't hurt each
+other), `registerContractObjective` + `addContractProgress` to feed weekly gang contracts from any module
+(`fish_caught`, `goods_processed`, `pvp_kills`, `contraband_smuggled`, `parkour_runs`, `quests_done`),
+`addPoints` for the weekly leaderboard, `setTerritoryOwner` + `depositFromServer` for Undercroft labs. Gang bank
+moves use reasons `gang:deposit` / `gang:withdraw`, so they never count as server income for prestige.
+`GangMembershipEvent` fires on join/leave/rank/disband/recolor so tags can refresh.
 
 ## Currencies
 

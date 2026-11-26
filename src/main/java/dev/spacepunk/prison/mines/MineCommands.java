@@ -84,11 +84,12 @@ final class MineCommands {
                 deck = m.deckName();
                 sb.append("\n").append(m.color()).append("<bold>").append(deck).append("</bold>");
             }
-            boolean open = !(to instanceof Player p) || mgr().canAccess(p, m);
+            boolean open = !(to instanceof Player p) || mgr().hasGrade(p, m);
+            boolean canTravel = !(to instanceof Player p2) || mgr().canAccess(p2, m);
             String status = !m.placed() ? "<dark_gray>not built" : open ? "<green>open" : "<red>locked";
             String line = "<gray>G" + m.requiredGrade() + " <white>" + m.displayName() + " <dark_gray>- " + status
                     + (m.placed() ? " <dark_gray>- <gray>" + Math.round(m.fillRatio() * 100) + "% ore" : "");
-            if (open && m.placed()) line = "<click:run_command:'/mine " + m.id() + "'><hover:show_text:'<gray>/mine " + m.id() + "'>" + line + "</hover></click>";
+            if (canTravel && m.placed()) line = "<click:run_command:'/mine " + m.id() + "'><hover:show_text:'<gray>/mine " + m.id() + "'>" + line + "</hover></click>";
             sb.append("\n  ").append(line);
         }
         Text.send(to, sb.toString());

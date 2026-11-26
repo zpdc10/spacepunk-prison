@@ -6,6 +6,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -109,8 +110,13 @@ final class ProgressionConfig {
         }
 
         names = new HashMap<>();
-        ConfigurationSection ns = y.getConfigurationSection("selling.names");
-        if (ns != null) {
+        // Jar defaults first, then the server's file on top. getConfigurationSection() does not fall back to
+        // defaults (it returns an empty section), so an older progression.yml without names would hide them all.
+        List<ConfigurationSection> nameSources = new ArrayList<>();
+        if (y.getDefaults() != null) nameSources.add(y.getDefaults().getConfigurationSection("selling.names"));
+        if (y.isConfigurationSection("selling.names")) nameSources.add(y.getConfigurationSection("selling.names"));
+        for (ConfigurationSection ns : nameSources) {
+            if (ns == null) continue;
             for (String k : ns.getKeys(false)) {
                 String id = k.contains(":") ? k.toLowerCase(Locale.ROOT) : null;
                 if (id == null) {
