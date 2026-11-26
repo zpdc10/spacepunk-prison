@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "spacepunk:block/workshop/chute_side",
+    "north": "spacepunk:block/workshop/chute_front",
+    "south": "spacepunk:block/workshop/chute_side",
+    "east": "spacepunk:block/workshop/chute_side",
+    "west": "spacepunk:block/workshop/chute_side",
+    "up": "spacepunk:block/workshop/chute_top",
+    "down": "spacepunk:block/workshop/chute_bottom"
+  }
+}

@@ -1094,6 +1094,9 @@ def main():
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import raredrops_art
     raredrops_art.raredrops(sys.modules[__name__])
+    # Workshop machines, conveyor, goods and menu icons (workshop module); art lives in workshop_art.py.
+    import workshop_art
+    workshop_art.workshop(sys.modules[__name__])
     pack_meta()
     print(f"wrote {len(written)} files under {ROOT}")
 

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "spacepunk:block/workshop/washer_side",
+    "north": "spacepunk:block/workshop/washer_front",
+    "south": "spacepunk:block/workshop/washer_side",
+    "east": "spacepunk:block/workshop/washer_side",
+    "west": "spacepunk:block/workshop/washer_side",
+    "up": "spacepunk:block/workshop/washer_top",
+    "down": "spacepunk:block/workshop/washer_bottom"
+  }
+}

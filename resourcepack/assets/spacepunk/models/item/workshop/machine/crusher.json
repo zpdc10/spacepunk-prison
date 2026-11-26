@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "spacepunk:block/workshop/crusher_side",
+    "north": "spacepunk:block/workshop/crusher_front",
+    "south": "spacepunk:block/workshop/crusher_side",
+    "east": "spacepunk:block/workshop/crusher_side",
+    "west": "spacepunk:block/workshop/crusher_side",
+    "up": "spacepunk:block/workshop/crusher_top",
+    "down": "spacepunk:block/workshop/crusher_bottom"
+  }
+}
