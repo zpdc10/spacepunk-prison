@@ -59,6 +59,8 @@ public final class ObjectiveTypes {
     public static final String AUCTION_BUY = "auction_buy";
     /** Rare drops found. Targets: drop id, "rarity:&lt;tier&gt;". */
     public static final String RARE_DROP = "rare_drop";
+    /** Scrap parts found. Targets: part id, "state:&lt;fried|working|pristine&gt;", "source:&lt;activity&gt;", "rarity:&lt;tier&gt;". */
+    public static final String SCRAP_FIND = "scrap_find";
     /** Crates opened. Targets: "crate:&lt;id&gt;". */
     public static final String CRATE_OPEN = "crate_open";
     /** Undercroft: fights won / players downed. */

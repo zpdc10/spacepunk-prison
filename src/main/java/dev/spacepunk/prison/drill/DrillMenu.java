@@ -34,11 +34,10 @@ public final class DrillMenu implements Listener {
     private static final int SIZE = 54;
     private static final int SLOT_DRILL = 4;
     private static final int SLOT_HEAT = 22;
-    private static final int SLOT_MODULES_INFO = 40;
     private static final int SLOT_BALANCE = 45;
     private static final int SLOT_FRAME = 49;
     private static final int SLOT_CLOSE = 53;
-    private static final int[] SOCKET_SLOTS = {38, 39, 41, 42};
+    private static final int SLOT_RIG = 40;
     private static final Enchant[] ENCHANT_ORDER = {
             Enchant.BORE_SPEED, Enchant.YIELD, Enchant.TOKEN_SIPHON, Enchant.SHAPED_CHARGE,
             Enchant.JACKHAMMER, Enchant.CUTTING_LASER, Enchant.OVERCLOCK, Enchant.SALVAGE_SENSE, Enchant.COOLANT};
@@ -46,11 +45,14 @@ public final class DrillMenu implements Listener {
 
     private final DrillManager drills;
     private final HeatManager heat;
+    private RigMenu rig;
 
     public DrillMenu(DrillManager drills, HeatManager heat) {
         this.drills = drills;
         this.heat = heat;
     }
+
+    public void rigMenu(RigMenu rig) { this.rig = rig; }
 
     /** Inventory holder that marks our menu and remembers whose it is. */
     public static final class Holder implements InventoryHolder {
@@ -126,20 +128,8 @@ public final class DrillMenu implements Listener {
         gauge.setItemMeta(gaugeMeta);
         inv.setItem(SLOT_HEAT, gauge);
 
-        // Modules
-        List<String> modInfo = new ArrayList<>();
-        modInfo.add("<gray>Modules change how the drill plays.");
-        modInfo.add("<gray>Most come with a trade-off.");
-        modInfo.add("");
-        modInfo.add("<gray>Find them while mining (Salvage Sense helps).");
-        modInfo.add("<gray>Click a module in your inventory to install it,");
-        modInfo.add("<gray>click an installed module to take it out.");
-        modInfo.add("");
-        modInfo.add("<dark_gray>Modules found " + Numbers.shortFormat(d.modulesFound));
-        inv.setItem(SLOT_MODULES_INFO, items.icon(Material.HOPPER, "ui/info", "<#c8743a>Module Sockets", modInfo));
-        for (int i = 0; i < SOCKET_SLOTS.length; i++) {
-            inv.setItem(SOCKET_SLOTS[i], socketIcon(cfg, d, frame, i));
-        }
+        // Module rig
+        inv.setItem(SLOT_RIG, rigIcon(d, eff));
 
         // Balance
         List<String> bal = new ArrayList<>();
@@ -206,28 +196,30 @@ public final class DrillMenu implements Listener {
         return null;
     }
 
-    private ItemStack socketIcon(DrillConfig cfg, DrillData d, FrameDef frame, int i) {
+    private ItemStack rigIcon(DrillData d, DrillMath.Effective eff) {
         DrillItems items = drills.items();
-        if (i >= frame.sockets()) {
-            FrameDef unlock = null;
-            for (FrameDef f : cfg.frames) if (f.sockets() > i) { unlock = f; break; }
-            List<String> lore = new ArrayList<>();
-            lore.add(unlock == null ? "<dark_gray>No frame has this socket." : "<gray>Opens with the " + unlock.coloredName() + "<gray> frame.");
-            return items.icon(Material.IRON_BARS, "ui/locked", "<dark_gray>Locked socket", lore);
-        }
-        ModuleDef m = cfg.module(d.socket(i));
-        if (m == null) {
-            return items.icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "ui/socket_empty", "<gray>Empty socket",
-                    List.of("<gray>Click a module in your inventory", "<gray>to install it here."));
-        }
-        List<String> lore = new ArrayList<>(items.moduleLore(m, false));
+        ModuleRig r = eff.rig;
+        List<String> lore = new ArrayList<>();
+        lore.add("<gray>Modules change how the drill plays. Each one");
+        lore.add("<gray>has a shape: fit them together on the rig.");
         lore.add("");
-        lore.add("<#c8743a>Click</#c8743a> <gray>to take it out");
-        ItemStack icon = items.module(m);
-        var meta = icon.getItemMeta();
-        meta.lore(Text.lore(lore));
-        icon.setItemMeta(meta);
-        return icon;
+        if (r.cellCount() == 0) {
+            FrameDef unlock = null;
+            for (FrameDef f : drills.cfg().frames) if (f.hasRig()) { unlock = f; break; }
+            lore.add("<red>Your frame has no module rig.");
+            if (unlock != null) lore.add("<gray>The " + unlock.coloredName() + "<gray> frame adds one.");
+            return items.icon(Material.IRON_BARS, "ui/locked", "<dark_gray>Module Rig <red>(locked)", lore);
+        }
+        lore.add("<gray>Rig <white>" + r.width + "x" + r.height + "</white> · cells used <white>" + r.usedCells() + "/" + r.cellCount());
+        int online = 0;
+        for (ModuleRig.Entry e : r.entries) if (e.online) online++;
+        lore.add("<gray>Modules <white>" + online + "</white> online" + (online < r.entries.size() ? " <red>(" + (r.entries.size() - online) + " offline)" : ""));
+        for (DrillConfig.ComboDef c : r.activeCombos) lore.add("<gold>✦ " + c.name());
+        lore.add("");
+        lore.add("<dark_gray>Modules found " + Numbers.shortFormat(d.modulesFound) + " · fused " + Numbers.shortFormat(d.modulesFused));
+        lore.add("");
+        lore.add("<#c8743a>Click</#c8743a> <gray>to open the module rig");
+        return items.icon(Material.HOPPER, "ui/info", "<#c8743a>Module Rig", lore);
     }
 
     private ItemStack frameIcon(Player p, DrillConfig cfg, FrameDef frame) {
@@ -245,7 +237,8 @@ public final class DrillMenu implements Listener {
         List<String> lore = new ArrayList<>();
         if (!next.lore().isEmpty()) lore.add("<#8a8070><i>" + next.lore());
         lore.add("");
-        lore.add("<gray>Module sockets <white>" + frame.sockets() + " → " + next.sockets());
+        lore.add("<gray>Module rig <white>" + (frame.hasRig() ? frame.rigWidth() + "x" + frame.rigHeight() : "none") + " → "
+                + next.rigWidth() + "x" + next.rigHeight() + (next.coreCells().isEmpty() ? "" : " <gold>+" + next.coreCells().size() + " core"));
         lore.add("<gray>Base speed <white>x" + DrillMath.fmt(frame.baseSpeed()) + " → x" + DrillMath.fmt(next.baseSpeed()));
         lore.add("<gray>Heat limit <white>+" + Math.round(next.heatCapacity() - frame.heatCapacity()));
         lore.add("<gray>Raises the level cap of every enchant:");
@@ -279,29 +272,10 @@ public final class DrillMenu implements Listener {
         if (e.getClickedInventory() == null) return;
 
         if (!e.getClickedInventory().equals(top)) {
-            // Player inventory: install a module.
+            // Player inventory: pick a module up to fit it on the rig.
             ItemStack it = e.getCurrentItem();
-            String id = drills.items().moduleId(it);
-            if (id == null) return;
-            ModuleDef m = drills.cfg().module(id);
-            if (m == null) {
-                Text.send(p, "<red>That module no longer exists.");
-                return;
-            }
-            int slot = drills.socket(p, m);
-            if (slot == -2) {
-                deny(p, "That module is already installed.");
-            } else if (slot < 0) {
-                deny(p, drills.effective(p.getUniqueId()).frame.sockets() == 0
-                        ? "Your frame has no module sockets yet." : "No free socket. Take a module out first.");
-            } else {
-                it.setAmount(it.getAmount() - 1);
-                e.setCurrentItem(it.getAmount() <= 0 ? null : it);
-                p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 0.8f, 1.4f);
-                p.playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 0.5f, 1.6f);
-                Text.send(p, "<gray>Installed " + m.coloredName() + "<gray>.");
-                render(p, top);
-            }
+            if (drills.items().moduleId(it) == null || rig == null) return;
+            rig.open(p, e.getSlot());
             return;
         }
 
@@ -315,20 +289,8 @@ public final class DrillMenu implements Listener {
             render(p, top);
             return;
         }
-        for (int i = 0; i < SOCKET_SLOTS.length; i++) {
-            if (slot != SOCKET_SLOTS[i]) continue;
-            DrillData d = drills.data(p.getUniqueId());
-            if (d == null || drills.cfg().module(d.socket(i)) == null) return;
-            if (p.getInventory().firstEmpty() < 0) {
-                deny(p, "Make room in your inventory first.");
-                return;
-            }
-            ItemStack mod = drills.unsocket(p, i);
-            if (mod != null) {
-                drills.give(p, mod);
-                p.playSound(p.getLocation(), Sound.BLOCK_IRON_DOOR_OPEN, 0.8f, 1.2f);
-            }
-            render(p, top);
+        if (slot == SLOT_RIG) {
+            if (rig != null) rig.open(p, -1);
             return;
         }
         for (int i = 0; i < ENCHANT_SLOTS.length; i++) {

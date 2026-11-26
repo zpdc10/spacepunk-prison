@@ -28,6 +28,12 @@ final class BayData {
     long lifetimeSales = 0;
     /** Lifetime goods produced (units). */
     long lifetimeCrafted = 0;
+    /** Refurbisher mark (0 = Mk I). */
+    int refurbLevel = 0;
+    /** Lifetime scrap parts repaired. */
+    long refurbished = 0;
+    /** Lifetime drill modules built at the Assembly Bench. */
+    long modulesBuilt = 0;
 
     static final class MachineData {
         int id;

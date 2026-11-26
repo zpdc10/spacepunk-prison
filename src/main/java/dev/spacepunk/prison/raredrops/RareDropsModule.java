@@ -13,7 +13,8 @@ import java.util.List;
 
 /**
  * Rare drops while mining: tiered finds (Common to Mythic) with announcements, collectible relics with
- * per-deck collections, salvage caches, and blueprint fragments that assemble into drill modules.
+ * per-deck collections, salvage caches, blueprint fragments that decode into module schematics, and scrap parts
+ * (salvaged electronics) that drop from every activity.
  */
 public final class RareDropsModule implements FeatureModule {
     private SpacepunkPrison plugin;
@@ -28,8 +29,11 @@ public final class RareDropsModule implements FeatureModule {
         RareConfig cfg = loadConfig();
         manager = new RareDropsManager(plugin.getLogger(), new RareItems(plugin, cfg), cfg);
         menu = new SalvageMenu(manager);
+        ScrapManager scrap = new ScrapManager(manager);
+        Services.register(dev.spacepunk.prison.api.ScrapService.class, scrap);
+        dev.spacepunk.prison.api.Objectives.register(dev.spacepunk.prison.api.ObjectiveTypes.SCRAP_FIND, "Salvage scrap parts");
         var pm = plugin.getServer().getPluginManager();
-        pm.registerEvents(new RareListener(manager), plugin);
+        pm.registerEvents(new RareListener(manager, scrap), plugin);
         pm.registerEvents(menu, plugin);
         plugin.addCommand("salvage", "Rare drops: collections, blueprint assembly, stash",
                 List.of("relics", "collections", "raredrops"), new SalvageCommand(this));

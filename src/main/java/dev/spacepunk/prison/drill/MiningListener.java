@@ -160,11 +160,11 @@ public final class MiningListener implements Listener {
         if (cfg.moduleChance > 0 && !cfg.modules.isEmpty() && rng.nextDouble() < cfg.moduleChance * eff.rareMultiplier) {
             ModuleDef m = randomModule(cfg, rng);
             if (m != null) {
-                drills.give(p, drills.items().module(m));
+                drills.give(p, drills.items().module(m, 1));
                 d.modulesFound++;
                 p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
                 p.showTitle(net.kyori.adventure.title.Title.title(Text.mm(m.coloredName()),
-                        Text.mm("<gray>Drill module salvaged!")));
+                        Text.mm("<gray>Drill module salvaged! Fit it on your module rig.")));
                 if (cfg.moduleBroadcast) {
                     Bukkit.broadcast(Text.mm(Text.PREFIX + "<white>" + p.getName() + "</white> <gray>salvaged a "
                             + m.rarity().color + m.rarity().label + "</" + m.rarity().color.substring(1)
@@ -197,7 +197,7 @@ public final class MiningListener implements Listener {
 
         if (eff.overclockChance > 0 && rng.nextDouble() < eff.overclockChance) {
             heat.overclock(p, eff.overclockSeconds);
-            heat.add(p, cfg.enchant(Enchant.OVERCLOCK).p("heat", 4) * deckMul);
+            heat.add(p, cfg.enchant(Enchant.OVERCLOCK).p("heat", 4) * eff.procHeatMultiplier * deckMul);
         }
         if (mines == null || origin == null || !mine.contains(origin)) return;
 
@@ -210,7 +210,7 @@ public final class MiningListener implements Listener {
                 p.getWorld().playSound(at, Sound.BLOCK_ANVIL_LAND, 1f, 0.5f);
                 p.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 0.7f);
                 p.getWorld().spawnParticle(Particle.EXPLOSION, at, 3, 2, 0.2, 2, 0);
-                heat.add(p, cfg.enchant(Enchant.JACKHAMMER).p("heat", 22) * deckMul);
+                heat.add(p, cfg.enchant(Enchant.JACKHAMMER).p("heat", 22) * eff.procHeatMultiplier * deckMul);
                 heat.flash(p, "<#ff4060><bold>JACKHAMMER</bold></#ff4060> <gray>" + n + " blocks");
                 return; // the layer is gone; skip smaller procs this break
             }
@@ -247,7 +247,7 @@ public final class MiningListener implements Listener {
                     p.getWorld().spawnParticle(Particle.DUST, start.clone().add(dir.getDirection().multiply(i)), 2, 0.05, 0.05, 0.05, 0, dust);
                 }
                 p.getWorld().playSound(start, Sound.BLOCK_BEACON_DEACTIVATE, 0.8f, 2f);
-                heat.add(p, cfg.enchant(Enchant.CUTTING_LASER).p("heat", 5) * deckMul);
+                heat.add(p, cfg.enchant(Enchant.CUTTING_LASER).p("heat", 5) * eff.procHeatMultiplier * deckMul);
                 heat.flash(p, "<#ff3030><bold>CUTTING LASER</bold></#ff3030> <gray>" + n + " blocks");
             }
         }

@@ -365,3 +365,118 @@ drops:
     set: anomalies
     material: TRIAL_KEY
     lore: "Opens every door on the station. Every single one."
+
+# ---------------------------------------------------------------------------------------------------------------
+# Scrap parts: salvaged electronics and machine parts from every activity. Uncommon, like Token finds: a few
+# per hour of any activity, pristine ones every few hours, the Quantum Core very rarely.
+# Each part comes in three states (separate items): Fried (repair it at the workshop Refurbisher), Working, and
+# Pristine (counts as working, and is what fuses drill modules to Mk IV and Mk V).
+# Parts build drill modules at the workshop Assembly Bench (workshop.yml assembly:). Item models:
+# spacepunk:raredrop/part/<id>, part/<id>_fried, part/<id>_pristine (art in tools/resourcepack/scrap_art.py).
+# ---------------------------------------------------------------------------------------------------------------
+scrap:
+  # How a find's state is picked (weights).
+  states: { fried: 80, working: 14, pristine: 6 }
+  # Mining: blocks broken by enchants roll at this share of the hand chance.
+  enchant-rate: 0.02
+  # chance = per trial: per hand-broken block, per fish, per kill, per run... max-per-event caps one roll.
+  # Scavenger Rig, Quantum Sorter and the Salvage family bonus raise every source.
+  sources:
+    mining: { chance: 0.001 }             # ~3-4 an hour at a block a second
+    fishing: { chance: 0.05 }             # per catch
+    sea_creature: { chance: 0.3 }         # per sea creature killed
+    parkour: { chance: 1.0, max-per-event: 2 }   # daily parkour reward: 2 rolls, always finds
+    workshop: { chance: 0.05 }            # once a minute while your bay is processing and you're online
+    undercroft_kill: { chance: 0.25 }     # per player downed in the Undercroft
+    smuggle: { chance: 0.6 }              # per smuggling run that gets contraband out
+    contract: { chance: 0.6 }             # per daily or weekly contract
+    story: { chance: 1.0 }                # per story quest
+
+# sources: which activities drop it (all = every one). weight = share of that activity's finds.
+parts:
+  # ---- shared pool ----
+  copper_wiring:
+    name: Copper Wiring
+    tier: common
+    weight: 30
+    material: STRING
+    sources: [all]
+    lore: "A tangle of insulated copper. Somebody needed it once."
+  circuit_board:
+    name: Circuit Board
+    tier: common
+    weight: 30
+    material: PAPER
+    sources: [all]
+    lore: "Green, cracked and covered in solder."
+  capacitor:
+    name: Capacitor
+    tier: uncommon
+    weight: 18
+    material: COPPER_INGOT
+    sources: [all]
+    lore: "Still holds a charge. Don't lick it."
+  servo_motor:
+    name: Servo Motor
+    tier: uncommon
+    weight: 16
+    material: IRON_NUGGET
+    sources: [all]
+    lore: "Pulled from a loader arm. Whines when it turns."
+  power_cell:
+    name: Power Cell
+    tier: uncommon
+    weight: 14
+    material: GLOW_INK_SAC
+    sources: [all]
+    lore: "A cylinder of something that glows a little too much."
+  quantum_core:
+    name: Quantum Core
+    tier: legendary
+    weight: 0.5
+    material: HEART_OF_THE_SEA
+    sources: [all]
+    lore: "It's in two places at once. One of them is your pocket."
+  # ---- signature parts: one or two per activity ----
+  seismic_sensor:
+    name: Seismic Sensor
+    tier: rare
+    weight: 10
+    material: SCULK_SENSOR
+    sources: [mining]
+    lore: "Listens to the rock. The rock talks back."
+  sonar_array:
+    name: Sonar Array
+    tier: rare
+    weight: 10
+    material: NAUTILUS_SHELL
+    sources: [fishing, sea_creature]
+    lore: "Waterlogged, but it still pings."
+  gyro_stabilizer:
+    name: Gyro Stabilizer
+    tier: rare
+    weight: 20
+    material: CLOCK
+    sources: [parkour]
+    lore: "Keeps spinning no matter how you hold it."
+  logic_chip:
+    name: Logic Chip
+    tier: rare
+    weight: 10
+    material: REDSTONE_TORCH
+    sources: [workshop]
+    lore: "Shaken loose from a machine controller."
+  military_relay:
+    name: Military Relay
+    tier: epic
+    weight: 8
+    material: TRIPWIRE_HOOK
+    sources: [undercroft_kill, smuggle]
+    lore: "Security-grade switching gear. Definitely stolen."
+  data_core:
+    name: Encrypted Data Core
+    tier: epic
+    weight: 10
+    material: AMETHYST_SHARD
+    sources: [contract, story]
+    lore: "The station's records. Somebody will pay to get these back."

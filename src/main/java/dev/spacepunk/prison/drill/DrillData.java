@@ -2,27 +2,63 @@ package dev.spacepunk.prison.drill;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Persistent per-player drill state, stored as JSON in PlayerProfile.moduleData("drill"). */
 public final class DrillData {
-    public int version = 1;
+    public int version = 2;
     public String frame;
     public Map<String, Integer> levels = new HashMap<>();
-    /** Socketed module ids by socket index; null = empty. */
+    /** Old (version 1) socketed module ids. Emptied on join: those modules go back to the player as items. */
     public List<String> sockets = new ArrayList<>();
+    /** Modules fitted on the module rig. */
+    public List<Placed> rig = new ArrayList<>();
+    /** Module recipes the player has learned (Assembly Bench). */
+    public Set<String> schematics = new LinkedHashSet<>();
+    /** Hidden module combos the player has discovered. */
+    public Set<String> combos = new LinkedHashSet<>();
+    /** Rig expansions bought with Shards. */
+    public int expansion;
     public long blocksMined;
     public long tokensFound;
     public long modulesFound;
+    public long modulesFused;
     public long overheats;
     public long perfectVents;
+
+    /** One module on the rig: pivot cell (x, y), quarter turns clockwise, mark. */
+    public static final class Placed {
+        public String id;
+        public int mk = 1;
+        public int x;
+        public int y;
+        public int rot;
+
+        public Placed() {}
+
+        public Placed(String id, int mk, int x, int y, int rot) {
+            this.id = id;
+            this.mk = mk;
+            this.x = x;
+            this.y = y;
+            this.rot = rot;
+        }
+    }
 
     /** Fills in anything missing after Gson. */
     public DrillData normalize(String defaultFrame) {
         if (frame == null) frame = defaultFrame;
         if (levels == null) levels = new HashMap<>();
         if (sockets == null) sockets = new ArrayList<>();
+        if (rig == null) rig = new ArrayList<>();
+        rig.removeIf(p -> p == null || p.id == null);
+        for (Placed p : rig) if (p.mk < 1) p.mk = 1;
+        if (schematics == null) schematics = new LinkedHashSet<>();
+        if (combos == null) combos = new LinkedHashSet<>();
+        if (expansion < 0) expansion = 0;
         return this;
     }
 
@@ -32,12 +68,8 @@ public final class DrillData {
         if (lvl <= 0) levels.remove(e.id()); else levels.put(e.id(), lvl);
     }
 
-    public String socket(int i) { return i < sockets.size() ? sockets.get(i) : null; }
-
-    public void socket(int i, String moduleId) {
-        while (sockets.size() <= i) sockets.add(null);
-        sockets.set(i, moduleId);
+    public boolean hasModule(String moduleId) {
+        for (Placed p : rig) if (p.id.equals(moduleId)) return true;
+        return false;
     }
-
-    public boolean hasModule(String moduleId) { return sockets.contains(moduleId); }
 }
