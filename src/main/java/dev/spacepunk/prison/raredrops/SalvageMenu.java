@@ -85,7 +85,7 @@ final class SalvageMenu implements Listener {
                         "<gray>Finish a deck's set for a", "<gray>permanent sell bonus.", "", "<#c8743a>Click to open")));
                 List<String> asm = new ArrayList<>();
                 asm.add("<gray>Decode blueprint fragments into");
-                asm.add("<gray>drill module schematics.");
+                asm.add("<gray>module schematics (drill, rod, weapon).");
                 asm.add("");
                 for (String r : RARITIES) {
                     Drop f = cfg.fragmentFor(r);

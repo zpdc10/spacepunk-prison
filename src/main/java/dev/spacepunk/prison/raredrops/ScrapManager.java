@@ -38,7 +38,13 @@ final class ScrapManager implements ScrapService {
         RareData d = rare.data(p.getUniqueId());
         Source src = cfg().sources.get(source);
         if (d == null || src == null || src.chance() <= 0) return 0;
-        double drill = Services.find(DrillService.class).map(s -> s.scrapMultiplier(p.getUniqueId())).orElse(1.0);
+        DrillService ds = Services.find(DrillService.class).orElse(null);
+        double drill = 1.0;
+        if (ds != null) {
+            // Mining-side finds use the drill rig; fishing finds use the Rod Rig.
+            boolean fishing = FISHING.equals(source) || SEA_CREATURE.equals(source);
+            drill = fishing ? ds.gearMultipliers(p.getUniqueId(), "rod").getOrDefault("scrap", 1.0) : ds.scrapMultiplier(p.getUniqueId());
+        }
         double chance = Math.min(1.0, src.chance() * chanceMultiplier * drill);
         int hits = RareDropsManager.successes(trials, chance, src.maxPerEvent());
         int found = 0;

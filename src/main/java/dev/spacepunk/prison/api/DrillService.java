@@ -72,4 +72,15 @@ public interface DrillService {
 
     /** Multiplier on scrap part find odds from drill modules (1.0 = none). */
     double scrapMultiplier(UUID player);
+
+    /**
+     * Stat multipliers from the modules on one of the player's other rigs: rigKey "rod" (Rod Rig) or
+     * "gun:<gun id>" (that gun's Weapon Rig). Stat -> multiplier (1.0 or missing = no change). Empty if nothing is
+     * fitted. Rod stats are fishing effect names (bite-speed, rare-luck, ...): add (multiplier - 1) to the effect.
+     * Gun stats: damage, fire-rate, spread, recoil, magazine, reload-time, range, headshot.
+     */
+    java.util.Map<String, Double> gearMultipliers(UUID player, String rigKey);
+
+    /** Opens a module rig menu: "drill", "rod" or "gun:<gun id>". */
+    void openRig(org.bukkit.entity.Player player, String rigKey);
 }

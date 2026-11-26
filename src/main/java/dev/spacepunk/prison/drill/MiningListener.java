@@ -179,10 +179,11 @@ public final class MiningListener implements Listener {
 
     private static ModuleDef randomModule(DrillConfig cfg, ThreadLocalRandom rng) {
         double total = 0;
-        for (ModuleDef m : cfg.modules.values()) total += m.weight();
+        for (ModuleDef m : cfg.modules.values()) if (m.kind().equals(DrillConfig.KIND_DRILL)) total += m.weight();
         if (total <= 0) return null;
         double r = rng.nextDouble() * total;
         for (ModuleDef m : cfg.modules.values()) {
+            if (!m.kind().equals(DrillConfig.KIND_DRILL)) continue;
             r -= m.weight();
             if (r < 0) return m;
         }

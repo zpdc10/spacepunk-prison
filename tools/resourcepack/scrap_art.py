@@ -364,7 +364,115 @@ def ui(g):
     g.generated_model("workshop/ui/refurbisher")
 
 
+def gear_modules(g):
+    """Rod Rig and Weapon Rig modules on the same chip housing (rod = teal pin, weapon = red pin)."""
+    out = g.SP / "textures" / "item" / "module"
+
+    # ---- rod modules ----
+    c = g.module_base(230, g.CYAN)  # reel servo: spool with wound line
+    c.rect(6, 6, 9, 10, g.GUN_L); c.rect(7, 6, 8, 10, g.STEEL_L)
+    for y in range(6, 11, 2):
+        c.set(6, y, g.FROST_L); c.set(9, y, g.FROST_L)
+    c.line(10, 8, 11, 8, g.STEEL, wrap=False)
+    c.save(out / "reel_servo.png")
+
+    c = g.module_base(231, g.CYAN)  # sonar pinger: dish with ping rings
+    c.rect(5, 9, 7, 11, g.STEEL_L); c.set(6, 8, g.STEEL)
+    for x, y in ((8, 8), (9, 7), (9, 9), (10, 6), (11, 7), (11, 9), (10, 10)):
+        c.set(x, y, g.CYAN_L if x < 10 else g.CYAN)
+    c.save(out / "sonar_pinger.png")
+
+    c = g.module_base(232, g.CYAN)  # kevlar spool: yellow wound fibre
+    c.rect(5, 6, 10, 10, g.HAZ_D)
+    for y in range(6, 11):
+        c.set(5 + (y % 3), y, g.HAZ); c.set(8 + (y % 2), y, g.BRASS_L)
+    c.save(out / "kevlar_spool.png")
+
+    c = g.module_base(233, g.CYAN)  # salvage magnet: horseshoe with a bolt
+    for y in range(5, 10):
+        c.set(5, y, g.RED); c.set(10, y, g.STEEL_L)
+    c.line(5, 10, 10, 10, g.GUN_D, wrap=False)
+    c.set(7, 7, g.RUST_L); c.set(8, 8, g.RUST)
+    c.save(out / "salvage_magnet.png")
+
+    c = g.module_base(234, g.CYAN)  # chum injector: tank with red slurry
+    c.rect(6, 5, 9, 10, g.GUN_L); c.rect(7, 7, 8, 10, g.RED_D); c.set(7, 7, g.RED)
+    c.line(10, 9, 11, 10, g.STEEL, wrap=False)
+    c.save(out / "chum_injector.png")
+
+    c = g.module_base(235, g.CYAN)  # fillet laser: emitter and orange beam
+    c.rect(5, 7, 7, 9, g.STEEL); c.set(6, 8, g.MAGMA_L)
+    c.line(8, 8, 11, 8, g.MAGMA, wrap=False); c.set(11, 8, g.MAGMA_L)
+    c.save(out / "fillet_laser.png")
+
+    c = g.module_base(236, g.CYAN)  # twin reel: two small spools
+    for x0 in (5, 9):
+        c.rect(x0, 6, x0 + 1, 9, g.STEEL_L); c.set(x0, 7, g.FROST); c.set(x0 + 1, 8, g.FROST)
+    c.line(6, 10, 10, 10, g.GUN_L, wrap=False)
+    c.save(out / "twin_reel.png")
+
+    c = g.module_base(237, g.CYAN)  # leviathan sonar: big array with a violet eye
+    c.rect(5, 5, 10, 10, g.VOID)
+    for x, y in ((5, 5), (10, 5), (5, 10), (10, 10)):
+        c.set(x, y, g.CYAN)
+    c.rect(7, 7, 8, 8, g.VIOLET_L)
+    c.save(out / "leviathan_sonar.png")
+
+    # ---- weapon modules ----
+    c = g.module_base(240, g.RED)  # extended mag: tall magazine with rounds
+    c.rect(6, 4, 9, 11, g.GUN_L); c.rect(7, 5, 8, 10, g.GUN_D)
+    for y in (5, 7, 9):
+        c.set(7, y, g.BRASS_L); c.set(8, y, g.BRASS)
+    c.save(out / "extended_mag.png")
+
+    c = g.module_base(241, g.RED)  # recoil damper: piston and spring
+    c.rect(5, 7, 7, 9, g.STEEL_L)
+    for x in range(8, 12):
+        c.set(x, 7 + (x % 2) * 2, g.STEEL)
+    c.line(8, 8, 11, 8, g.GUN_L, wrap=False)
+    c.save(out / "recoil_damper.png")
+
+    c = g.module_base(242, g.RED)  # laser sight: box with a red dot
+    c.rect(5, 7, 8, 9, g.GUN_D); c.set(9, 8, g.RED); c.set(10, 8, g.RED_L); c.set(12, 8, g.RED)
+    c.save(out / "laser_sight.png")
+
+    c = g.module_base(243, g.RED)  # hair trigger: curved trigger in brass
+    for x, y in ((7, 5), (7, 6), (8, 7), (8, 8), (7, 9), (6, 9)):
+        c.set(x, y, g.BRASS_L)
+    c.line(5, 5, 10, 5, g.GUN_L, wrap=False)
+    c.save(out / "hair_trigger.png")
+
+    c = g.module_base(244, g.RED)  # speed loader: cylinder of rounds
+    for x, y in ((7, 5), (9, 6), (10, 8), (9, 10), (7, 11), (5, 10), (4, 8), (5, 6)):
+        c.set(x, y, g.BRASS)
+    c.rect(6, 7, 8, 9, g.STEEL)
+    c.save(out / "speed_loader.png")
+
+    c = g.module_base(245, g.RED)  # long barrel: diagonal rifled pipe
+    for i in range(7):
+        c.set(4 + i, 10 - i, g.STEEL_L); c.set(5 + i, 10 - i, g.GUN_L)
+    c.set(11, 4, g.WHITE)
+    c.save(out / "long_barrel.png")
+
+    c = g.module_base(246, g.RED)  # hollow-point press: press head over a round
+    c.rect(5, 5, 10, 6, g.STEEL); c.line(7, 7, 8, 7, g.GUN_L, wrap=False)
+    c.rect(7, 9, 8, 11, g.COPPER_L); c.set(7, 9, g.RUST)
+    c.save(out / "hollow_point_press.png")
+
+    c = g.module_base(247, g.RED)  # smart targeter: crosshair screen
+    c.rect(5, 5, 10, 10, g.VOID_D)
+    c.line(7, 5, 7, 10, g.GREEN, wrap=False); c.line(5, 7, 10, 7, g.GREEN, wrap=False)
+    c.set(7, 7, g.RED_L); c.set(9, 9, g.GREEN_D)
+    c.save(out / "smart_targeter.png")
+
+    for name in ("reel_servo", "sonar_pinger", "kevlar_spool", "salvage_magnet", "chum_injector", "fillet_laser",
+                 "twin_reel", "leviathan_sonar", "extended_mag", "recoil_damper", "laser_sight", "hair_trigger",
+                 "speed_loader", "long_barrel", "hollow_point_press", "smart_targeter"):
+        g.generated_model(f"module/{name}")
+
+
 def scrap(g):
     modules(g)
+    gear_modules(g)
     parts(g)
     ui(g)

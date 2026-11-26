@@ -36,6 +36,10 @@ public final class DrillManager implements DrillService {
     private DrillConfig cfg;
     private final Map<UUID, DrillData> data = new HashMap<>();
     private final Map<UUID, DrillMath.Effective> effective = new HashMap<>();
+    /** Rod / Weapon Rig totals, by player then rig key; dropped on any change. */
+    private final Map<UUID, Map<String, GearTotals>> gearTotals = new HashMap<>();
+
+    private record GearTotals(int width, int height, ModuleRig.Totals totals) {}
     /** Players whose stats changed since the last flush to their profile. */
     private final Set<UUID> statsDirty = ConcurrentHashMap.newKeySet();
 
@@ -53,6 +57,7 @@ public final class DrillManager implements DrillService {
         this.cfg = cfg;
         items.config(cfg);
         effective.clear();
+        gearTotals.clear();
     }
 
     // ---- state ----
@@ -90,6 +95,7 @@ public final class DrillManager implements DrillService {
         flush(id);
         data.remove(id);
         effective.remove(id);
+        gearTotals.remove(id);
         statsDirty.remove(id);
     }
 
@@ -118,6 +124,7 @@ public final class DrillManager implements DrillService {
     /** Call after any change that affects effects or the item. */
     public void changed(Player p) {
         effective.remove(p.getUniqueId());
+        gearTotals.remove(p.getUniqueId());
         save(p.getUniqueId());
         refreshItem(p);
     }
@@ -299,31 +306,172 @@ public final class DrillManager implements DrillService {
         return n;
     }
 
+    // ---- rig keys: "drill", "rod", "gun:<gun id>" ----
+
+    public static final String RIG_DRILL = "drill";
+    public static final String RIG_ROD = "rod";
+
+    public static String gunRigKey(String gunId) { return "gun:" + gunId; }
+
+    /** Module kind a rig key takes. */
+    public static String kindOf(String rigKey) {
+        if (RIG_ROD.equals(rigKey)) return DrillConfig.KIND_ROD;
+        if (rigKey != null && rigKey.startsWith("gun:")) return DrillConfig.KIND_GUN;
+        return DrillConfig.KIND_DRILL;
+    }
+
+    /** True for "drill", "rod" and "gun:<id>" of a gun with a Weapon Rig. */
+    public boolean validRig(String rigKey) {
+        if (RIG_DRILL.equals(rigKey) || RIG_ROD.equals(rigKey)) return true;
+        return rigKey != null && rigKey.startsWith("gun:") && cfg.rigGuns().contains(rigKey.substring(4));
+    }
+
+    /** Menu title of a rig. */
+    public String rigTitle(String rigKey) {
+        return switch (kindOf(rigKey)) {
+            case DrillConfig.KIND_ROD -> "ROD RIG";
+            case DrillConfig.KIND_GUN -> "WEAPON RIG · " + gunName(rigKey.substring(4)).toUpperCase(java.util.Locale.ROOT);
+            default -> "MODULE RIG";
+        };
+    }
+
+    /** "bolt_rifle" -> "Bolt Rifle". */
+    public static String gunName(String gunId) {
+        StringBuilder sb = new StringBuilder();
+        for (String w : gunId.split("_")) {
+            if (w.isEmpty()) continue;
+            if (!sb.isEmpty()) sb.append(' ');
+            sb.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1));
+        }
+        return sb.toString();
+    }
+
+    /** The placements list a rig key stores into (created if missing). */
+    List<DrillData.Placed> placements(DrillData d, String rigKey) {
+        if (RIG_DRILL.equals(rigKey)) return d.rig;
+        return d.gear.computeIfAbsent(rigKey, k -> new ArrayList<>());
+    }
+
+    public int rodTier(UUID id) {
+        return Services.find(dev.spacepunk.prison.api.FishingService.class).map(f -> f.rodTier(id)).orElse(0);
+    }
+
+    /** The grid size of a non-drill rig for this player right now. */
+    public DrillConfig.RigSize gearSize(UUID id, String rigKey) {
+        return RIG_ROD.equals(rigKey) ? cfg.rodRig(rodTier(id)) : cfg.gunRig(rigKey.substring(4));
+    }
+
+    /** Builds a rig for this player (null if their data isn't loaded). */
+    public ModuleRig rig(UUID id, String rigKey) {
+        DrillData d = data.get(id);
+        if (d == null) return null;
+        if (RIG_DRILL.equals(rigKey)) {
+            DrillMath.Effective e = effective(id);
+            return e == null ? null : e.rig;
+        }
+        DrillConfig.RigSize size = gearSize(id, rigKey);
+        return ModuleRig.build(cfg, kindOf(rigKey), size.width(), size.height(), size.core(), placements(d, rigKey));
+    }
+
+    /** Stat multipliers of a Rod or Weapon Rig (empty if none or not loaded). Cached until the rig changes. */
+    public ModuleRig.Totals gearTotals(UUID id, String rigKey) {
+        DrillData d = data.get(id);
+        if (d == null || RIG_DRILL.equals(rigKey) || !validRig(rigKey)) return new ModuleRig.Totals(Map.of(), Set.of());
+        List<DrillData.Placed> list = d.gear.get(rigKey);
+        if (list == null || list.isEmpty()) return new ModuleRig.Totals(Map.of(), Set.of());
+        DrillConfig.RigSize size = gearSize(id, rigKey);
+        Map<String, GearTotals> mine = gearTotals.computeIfAbsent(id, k -> new HashMap<>());
+        GearTotals cached = mine.get(rigKey);
+        if (cached != null && cached.width() == size.width() && cached.height() == size.height()) return cached.totals();
+        ModuleRig.Totals t = rig(id, rigKey).totals(cfg);
+        mine.put(rigKey, new GearTotals(size.width(), size.height(), t));
+        return t;
+    }
+
+    /** Fits a module on the drill rig. */
+    public String place(Player p, ModuleDef m, int mk, int x, int y, int rot) { return place(p, RIG_DRILL, m, mk, x, y, rot); }
+
     /** Fits a module with its pivot on (x, y). Returns null on success, else why not. Does not touch the item. */
-    public String place(Player p, ModuleDef m, int mk, int x, int y, int rot) {
+    public String place(Player p, String rigKey, ModuleDef m, int mk, int x, int y, int rot) {
         DrillData d = data.get(p.getUniqueId());
         if (d == null) return "Your drill is still loading.";
-        ModuleRig rig = ModuleRig.build(cfg, d);
+        ModuleRig rig = rig(p.getUniqueId(), rigKey);
+        if (rig == null) return "Your drill is still loading.";
         String why = rig.canPlace(cfg, m, x, y, rot, -1);
         if (why != null) return why;
         Set<String> combosBefore = activeComboIds(rig);
-        d.rig.add(new DrillData.Placed(m.id(), Math.max(1, Math.min(cfg.maxMark, mk)), x, y, Math.floorMod(rot, 4)));
+        placements(d, rigKey).add(new DrillData.Placed(m.id(), Math.max(1, Math.min(cfg.maxMark, mk)), x, y, Math.floorMod(rot, 4)));
         changed(p);
-        announceCombos(p, d, combosBefore);
+        announceCombos(p, d, rigKey, combosBefore);
         return null;
     }
 
-    /** Takes a fitted module off the rig and returns it as an item (or null if the index is wrong). */
-    public ItemStack takeOut(Player p, int entryIndex) {
+    /** Takes a module off the drill rig. */
+    public ItemStack takeOut(Player p, int entryIndex) { return takeOut(p, RIG_DRILL, entryIndex); }
+
+    /** Takes a fitted module off a rig and returns it as an item (or null if the index is wrong). */
+    public ItemStack takeOut(Player p, String rigKey, int entryIndex) {
         DrillData d = data.get(p.getUniqueId());
         if (d == null) return null;
-        ModuleRig rig = ModuleRig.build(cfg, d);
-        if (entryIndex < 0 || entryIndex >= rig.entries.size()) return null;
+        ModuleRig rig = rig(p.getUniqueId(), rigKey);
+        if (rig == null || entryIndex < 0 || entryIndex >= rig.entries.size()) return null;
         ModuleRig.Entry e = rig.entries.get(entryIndex);
-        d.rig.remove(e.placed);
+        placements(d, rigKey).remove(e.placed);
         changed(p);
         return items.module(e.def, e.placed.mk);
     }
+
+    /** Number of modules placed on a rig (including ones that are offline or don't fit). */
+    public int placedCount(UUID id, String rigKey) {
+        DrillData d = data.get(id);
+        if (d == null) return 0;
+        if (RIG_DRILL.equals(rigKey)) return d.rig.size();
+        List<DrillData.Placed> l = d.gear.get(rigKey);
+        return l == null ? 0 : l.size();
+    }
+
+    // ---- module finds outside mining ----
+
+    /** A random module of a kind, weighted, or null if none. */
+    public ModuleDef randomModule(String kind) {
+        double total = 0;
+        for (ModuleDef m : cfg.modules.values()) if (m.kind().equals(kind)) total += m.weight();
+        if (total <= 0) return null;
+        double r = java.util.concurrent.ThreadLocalRandom.current().nextDouble() * total;
+        for (ModuleDef m : cfg.modules.values()) {
+            if (!m.kind().equals(kind)) continue;
+            r -= m.weight();
+            if (r < 0) return m;
+        }
+        return null;
+    }
+
+    /** Rolls a module find of a kind (chance from drill.yml module-drops "kind.source"). Returns the module found, or null. */
+    public ModuleDef rollFind(Player p, String kind, String source) {
+        double chance = cfg.moduleDrops.getOrDefault(kind + "." + source, 0.0);
+        if (chance <= 0 || java.util.concurrent.ThreadLocalRandom.current().nextDouble() >= chance) return null;
+        ModuleDef m = randomModule(kind);
+        if (m == null) return null;
+        give(p, items.module(m, 1));
+        DrillData d = data.get(p.getUniqueId());
+        if (d != null) {
+            d.modulesFound++;
+            markStatsDirty(p.getUniqueId());
+        }
+        p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
+        String where = DrillConfig.KIND_ROD.equals(kind) ? "/rig rod" : "/rig gun";
+        p.showTitle(net.kyori.adventure.title.Title.title(Text.mm(m.coloredName()),
+                Text.mm("<gray>" + capital(DrillConfig.kindLabel(kind)) + " found! Fit it with <white>" + where)));
+        if (cfg.moduleBroadcast && m.rarity().ordinal() >= DrillConfig.Rarity.RARE.ordinal()) {
+            org.bukkit.Bukkit.broadcast(Text.mm(Text.PREFIX + "<white>" + p.getName() + "</white> <gray>found a "
+                    + m.rarity().color + m.rarity().label + "</" + m.rarity().color.substring(1) + " <gray>" + DrillConfig.kindLabel(kind) + ": " + m.coloredName()));
+        } else {
+            Text.send(p, "<gray>You found a " + DrillConfig.kindLabel(kind) + ": " + m.coloredName());
+        }
+        return m;
+    }
+
+    private static String capital(String s) { return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1); }
 
     private static Set<String> activeComboIds(ModuleRig rig) {
         Set<String> out = new java.util.HashSet<>();
@@ -331,8 +479,9 @@ public final class DrillManager implements DrillService {
         return out;
     }
 
-    private void announceCombos(Player p, DrillData d, Set<String> before) {
-        ModuleRig rig = effective(p.getUniqueId()).rig;
+    private void announceCombos(Player p, DrillData d, String rigKey, Set<String> before) {
+        ModuleRig rig = rig(p.getUniqueId(), rigKey);
+        if (rig == null) return;
         for (DrillConfig.ComboDef c : rig.activeCombos) {
             if (before.contains(c.id())) continue;
             boolean first = d.combos.add(c.id());
@@ -519,6 +668,18 @@ public final class DrillManager implements DrillService {
     @Override public double scrapMultiplier(UUID player) {
         DrillMath.Effective e = effective(player);
         return e == null ? 1.0 : e.scrapMultiplier;
+    }
+
+    @Override public java.util.Map<String, Double> gearMultipliers(UUID player, String rigKey) {
+        return gearTotals(player, rigKey).mul();
+    }
+
+    private RigMenu rigMenu;
+
+    void rigMenu(RigMenu menu) { this.rigMenu = menu; }
+
+    @Override public void openRig(Player player, String rigKey) {
+        if (rigMenu != null) rigMenu.open(player, validRig(rigKey) ? rigKey : RIG_DRILL, -1);
     }
 
     @Override public String moduleId(ItemStack item) { return items.moduleId(item); }

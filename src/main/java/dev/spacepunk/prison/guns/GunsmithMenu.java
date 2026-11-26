@@ -36,6 +36,7 @@ final class GunsmithMenu implements Listener {
     private static final int[] GUN_SLOTS = {11, 12, 13, 14, 15, 20, 21, 22, 23, 24};
     private static final int[] AMMO_SLOTS = {29, 30, 31, 32, 33, 38, 39, 40, 41, 42};
     private static final int SLOT_INFO = 4;
+    private static final int SLOT_RIG = 8;
     private final GunManager guns;
 
     GunsmithMenu(GunManager guns) { this.guns = guns; }
@@ -77,6 +78,12 @@ final class GunsmithMenu implements Listener {
         ItemStack filler = icon(Material.GRAY_STAINED_GLASS_PANE, "ui/panel", " ", List.of(), true);
         for (int i = 0; i < SIZE; i++) inv.setItem(i, filler);
         int parts = countParts(p);
+        inv.setItem(SLOT_RIG, icon(Material.CRAFTER, "ui/fuse", "<#ff8a5c>Weapon Rigs", List.of(
+                "<gray>Fit shaped <white>weapon modules</white> on each gun",
+                "<gray>model's own rig: more damage, faster fire,",
+                "<gray>bigger mags... each with a downside.",
+                "<gray>Find them in the Undercroft.", "",
+                "<#c8743a>Click</#c8743a> <gray>to open <dark_gray>(/rig gun)"), false));
         inv.setItem(SLOT_INFO, icon(Material.PAPER, "ui/info", "<#c8743a>GUNSMITH", List.of(
                 "<gray>Guns only fire in PvP zones,", "<gray>and drop when you die there.", "",
                 "<gray>Your gun parts: <white>" + parts,
@@ -131,6 +138,14 @@ final class GunsmithMenu implements Listener {
         int slot = e.getRawSlot();
         EconomyService eco = Services.find(EconomyService.class).orElse(null);
         if (eco == null) return;
+        if (slot == SLOT_RIG) {
+            Services.find(dev.spacepunk.prison.api.DrillService.class).ifPresent(d -> {
+                String held = guns.items().gunId(p.getInventory().getItemInMainHand());
+                String first = guns.cfg().guns.keySet().stream().findFirst().orElse("rivet_pistol");
+                d.openRig(p, "gun:" + (held != null ? held : first));
+            });
+            return;
+        }
         String gunId = h.gunAt.get(slot);
         if (gunId != null) {
             GunDef g = guns.cfg().guns.get(gunId);

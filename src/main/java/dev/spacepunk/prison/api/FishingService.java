@@ -21,4 +21,7 @@ public interface FishingService {
 
     /** Adds Scales, for example as a quest reward. */
     void giveScales(UUID player, long amount, String reason);
+
+    /** Rod tier index (0 = first tier in fishing.yml rod.tiers). */
+    int rodTier(UUID player);
 }

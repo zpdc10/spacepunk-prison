@@ -16,6 +16,8 @@ public final class DrillData {
     public List<String> sockets = new ArrayList<>();
     /** Modules fitted on the module rig. */
     public List<Placed> rig = new ArrayList<>();
+    /** Modules on the other rigs, by rig key: "rod" (Rod Rig), "gun:<gun id>" (that gun's Weapon Rig). */
+    public Map<String, List<Placed>> gear = new HashMap<>();
     /** Module recipes the player has learned (Assembly Bench). */
     public Set<String> schematics = new LinkedHashSet<>();
     /** Hidden module combos the player has discovered. */
@@ -56,6 +58,12 @@ public final class DrillData {
         if (rig == null) rig = new ArrayList<>();
         rig.removeIf(p -> p == null || p.id == null);
         for (Placed p : rig) if (p.mk < 1) p.mk = 1;
+        if (gear == null) gear = new HashMap<>();
+        gear.values().removeIf(l -> l == null);
+        for (List<Placed> l : gear.values()) {
+            l.removeIf(p -> p == null || p.id == null);
+            for (Placed p : l) if (p.mk < 1) p.mk = 1;
+        }
         if (schematics == null) schematics = new LinkedHashSet<>();
         if (combos == null) combos = new LinkedHashSet<>();
         if (expansion < 0) expansion = 0;

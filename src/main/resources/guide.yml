@@ -330,6 +330,14 @@ chapters:
 
         Modules are kept through prestige and can be traded.
       - |
+        <h>ROD AND WEAPON RIGS</h>
+
+        The same system for your other gear. [[/rig]] has a tab per rig.
+
+        <em>Rod Rig</em> [[/rig rod]] grows with your rod tier. Rod modules come from fishing.
+
+        <em>Weapon Rigs</em> [[/rig gun]] one per gun model. Weapon modules come from the Undercroft.
+      - |
         <h>HEAT</h>
 
         Every block adds heat. At 100% the drill stalls for 3 s.
@@ -601,6 +609,14 @@ chapters:
         Five pools, one per deck, each with its own fish.
         <em>Sea creatures</em> (3.5% of bites) fight; bosses drop the best loot.
         Treasure, bait, lures, collections and a weekly biggest-catch board.
+      - |
+        <h>ROD RIG</h>
+
+        Rod modules are shaped pieces you fit on a grid: [[/rig rod]] or the rod bay.
+
+        Bigger bonuses than lures, each with a downside. A better rod tier gives a bigger rig.
+
+        Found while fishing, or built at the workshop Assembly Bench.
 
   quests:
     name: "Quests and Contracts"
@@ -938,6 +954,14 @@ chapters:
         Plasma Lance: P1
 
         Bigger ones need <em>gun parts</em> from supply drops and tech crates.
+      - |
+        <h>WEAPON RIGS</h>
+
+        Each gun model has a module grid: [[/rig gun]] or the gunsmith.
+
+        Damage, fire rate, mags, spread... every module has a downside.
+
+        Found on Undercroft kills and smuggling runs, or built at the Assembly Bench.
 
 # Info boards. Text floats above a clickable ⓘ (right-click or hit it for the chapter's book). Boards are not saved
 # into the world: they appear whenever their chunk is loaded, so editing this list moves them.

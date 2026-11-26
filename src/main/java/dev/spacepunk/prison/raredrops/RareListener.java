@@ -110,7 +110,7 @@ final class RareListener implements Listener {
                 }
             }
             case FRAGMENT -> Text.send(p, "<gray>Decode fragments into a module schematic in <white>/salvage</white>.");
-            case PART -> Text.send(p, "<gray>Scrap parts build drill modules at your workshop's <white>Assembly Bench</white>"
+            case PART -> Text.send(p, "<gray>Scrap parts build modules at your workshop's <white>Assembly Bench</white>"
                     + ("FRIED".equals(drop.state()) ? ". Fried ones need fixing at its <white>Refurbisher</white> first." : " and fuse modules to high marks."));
         }
     }

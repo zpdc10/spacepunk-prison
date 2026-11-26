@@ -143,6 +143,24 @@ public final class DrillMath {
         STATS.put("burst", "Overclock and vent bursts");
         STATS.put("stall", "overheat stall time");
         STATS.put("cache-chance", "Token cache chance");
+        // Rod Rig (fishing effects: the multiplier minus 1 is added to the effect)
+        STATS.put("bite-speed", "bite speed");
+        STATS.put("double-catch", "double catch chance");
+        STATS.put("rare-luck", "rare fish odds");
+        STATS.put("treasure", "treasure odds");
+        STATS.put("creature", "sea creature odds");
+        STATS.put("zone", "catch zone");
+        STATS.put("strength", "line strength");
+        STATS.put("value", "fish value");
+        // Weapon Rig
+        STATS.put("damage", "damage");
+        STATS.put("fire-rate", "fire rate");
+        STATS.put("spread", "bullet spread");
+        STATS.put("recoil", "recoil");
+        STATS.put("magazine", "magazine size");
+        STATS.put("reload-time", "reload time");
+        STATS.put("range", "range");
+        STATS.put("headshot", "headshot damage");
         FLAGS.put("auto-sell", "Auto-sells everything you mine");
     }
 
@@ -196,26 +214,9 @@ public final class DrillMath {
         public Effective(DrillConfig c, DrillData d) {
             frame = c.frame(d.frame);
             rig = ModuleRig.build(c, d);
-            mul = new HashMap<>();
-            Set<String> flags = new HashSet<>();
-            for (ModuleRig.Entry e : rig.entries) {
-                if (!e.online) continue;
-                int mk = Math.max(1, Math.min(c.maxMark, e.placed.mk));
-                for (Map.Entry<String, Double> x : e.def.pros().entrySet()) apply(x.getKey(), Math.pow(x.getValue(), c.proPower(mk)));
-                for (Map.Entry<String, Double> x : e.def.cons().entrySet()) apply(x.getKey(), Math.pow(x.getValue(), c.conPower(mk) * e.drain));
-                flags.addAll(e.def.flags());
-            }
-            for (Map.Entry<String, Integer> fc : rig.familyCounts.entrySet()) {
-                DrillConfig.FamilyDef fam = c.family(fc.getKey());
-                if (fam == null) continue;
-                for (Map.Entry<Integer, Map<String, Double>> b : fam.bonuses().entrySet()) {
-                    if (fc.getValue() >= b.getKey()) b.getValue().forEach(this::apply);
-                }
-            }
-            for (DrillConfig.ComboDef combo : rig.activeCombos) {
-                combo.effects().forEach(this::apply);
-                flags.removeAll(combo.clears());
-            }
+            ModuleRig.Totals t = rig.totals(c);
+            mul = new HashMap<>(t.mul());
+            Set<String> flags = t.flags();
 
             breakSpeed = DrillMath.breakSpeed(c, frame, d.level(Enchant.BORE_SPEED)) * m("break-speed");
             yield = yieldMultiplier(c, d.level(Enchant.YIELD)) * m("yield");
@@ -242,8 +243,6 @@ public final class DrillMath {
             sellMultiplier = m("sell");
             autoSell = flags.contains("auto-sell");
         }
-
-        private void apply(String stat, double v) { mul.merge(stat, v, (a, b) -> a * b); }
 
         /** Combined multiplier on a stat from modules, family bonuses and combos (1.0 = none). */
         public double m(String stat) { return mul.getOrDefault(stat, 1.0); }

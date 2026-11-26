@@ -435,6 +435,88 @@ assembly:
     credits: 300000000
     components: { reactor_core: 2, cryo_coil: 4 }
     parts: { quantum_core: 1, military_relay: 2, seismic_sensor: 3 }
+  # ---- Rod modules (Rod Rig) ----
+  reel_servo:
+    grade: 1
+    credits: 8000
+    components: { crushed_steel: 48 }
+    parts: { servo_motor: 2 }
+  sonar_pinger:
+    grade: 3
+    credits: 25000
+    components: { crushed_copper: 64 }
+    parts: { sonar_array: 1, copper_wiring: 2 }
+  kevlar_spool:
+    grade: 7
+    credits: 200000
+    components: { steel_ingot: 24 }
+    parts: { copper_wiring: 4, servo_motor: 1 }
+  salvage_magnet:
+    grade: 8
+    credits: 250000
+    components: { copper_ingot: 32 }
+    parts: { capacitor: 3, copper_wiring: 2 }
+  chum_injector:
+    grade: 9
+    credits: 400000
+    components: { graphite: 16, copper_ingot: 16 }
+    parts: { power_cell: 2, sonar_array: 1 }
+  fillet_laser:
+    grade: 15
+    credits: 8000000
+    components: { circuit_alloy: 8, hardened_steel: 12 }
+    parts: { logic_chip: 2, power_cell: 2 }
+  twin_reel:
+    grade: 16
+    credits: 12000000
+    components: { wiring_harness: 6, armor_plate: 4 }
+    parts: { servo_motor: 4, gyro_stabilizer: 1 }
+  leviathan_sonar:
+    grade: 23
+    credits: 200000000
+    components: { reactor_core: 1, focusing_array: 2 }
+    parts: { quantum_core: 1, sonar_array: 3, data_core: 1 }
+  # ---- Weapon modules (Weapon Rigs) ----
+  extended_mag:
+    grade: 1
+    credits: 8000
+    components: { crushed_steel: 48 }
+    parts: { copper_wiring: 2 }
+  recoil_damper:
+    grade: 3
+    credits: 25000
+    components: { steel_concentrate: 32 }
+    parts: { servo_motor: 2 }
+  laser_sight:
+    grade: 7
+    credits: 200000
+    components: { copper_ingot: 24 }
+    parts: { circuit_board: 3, capacitor: 1 }
+  hair_trigger:
+    grade: 8
+    credits: 250000
+    components: { steel_ingot: 24 }
+    parts: { capacitor: 3, military_relay: 1 }
+  speed_loader:
+    grade: 9
+    credits: 400000
+    components: { steel_ingot: 24, graphite: 8 }
+    parts: { servo_motor: 3, copper_wiring: 2 }
+  long_barrel:
+    grade: 15
+    credits: 8000000
+    components: { hardened_steel: 16 }
+    parts: { military_relay: 2, gyro_stabilizer: 1 }
+  hollow_point_press:
+    grade: 16
+    credits: 12000000
+    components: { armor_plate: 6, conductive_alloy: 8 }
+    parts: { military_relay: 2, servo_motor: 3 }
+  smart_targeter:
+    grade: 23
+    credits: 200000000
+    components: { reactor_core: 1, induction_coil: 6 }
+    parts: { quantum_core: 1, data_core: 2, logic_chip: 2 }
 
 # Refurbisher (workshop menu): repairs fried scrap parts into working ones. pristine = chance a repair comes
 # out Pristine instead. Upgrade it for better odds (credits + Bay Locker components, minimum grade).

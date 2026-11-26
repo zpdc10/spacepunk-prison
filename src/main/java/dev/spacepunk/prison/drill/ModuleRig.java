@@ -24,6 +24,9 @@ import java.util.Set;
  * block fitting: a module that breaks one stays on the rig but goes offline until it's fixed.
  */
 public final class ModuleRig {
+    /** Which modules fit this rig (DrillConfig.KIND_*). */
+    public final String kind;
+    public static final String DOESNT_FIT = "Doesn't fit this rig";
     public final int width;
     public final int height;
     private final Set<Integer> core = new HashSet<>();
@@ -54,7 +57,8 @@ public final class ModuleRig {
         }
     }
 
-    private ModuleRig(int width, int height, List<int[]> coreCells) {
+    private ModuleRig(String kind, int width, int height, List<int[]> coreCells) {
+        this.kind = kind;
         this.width = Math.max(0, width);
         this.height = Math.max(0, height);
         for (int[] c : coreCells) if (inside(c[0], c[1])) core.add(c[1] * this.width + c[0]);
@@ -77,19 +81,24 @@ public final class ModuleRig {
 
     public static ModuleRig build(DrillConfig c, DrillData d) {
         FrameDef f = c.frame(d.frame);
-        ModuleRig rig = new ModuleRig(f.rigWidth() + expansionColumns(c, f, d.expansion), f.rigHeight(), f.coreCells());
-        for (Placed p : d.rig) {
+        return build(c, DrillConfig.KIND_DRILL, f.rigWidth() + expansionColumns(c, f, d.expansion), f.rigHeight(), f.coreCells(), d.rig);
+    }
+
+    /** A rig of any kind: its grid and the modules placed on it. */
+    public static ModuleRig build(DrillConfig c, String kind, int width, int height, List<int[]> coreCells, List<Placed> placed) {
+        ModuleRig rig = new ModuleRig(kind, width, height, coreCells);
+        for (Placed p : placed) {
             ModuleDef def = c.module(p.id);
             if (def == null) continue;
             Entry e = new Entry(rig.entries.size(), p, def, def.shape().cellsAt(p.x, p.y, p.rot));
-            boolean fits = true;
+            boolean fits = def.kind().equals(kind);
             for (int[] cell : e.cells) {
                 if (!rig.inside(cell[0], cell[1]) || rig.owner[rig.idx(cell[0], cell[1])] >= 0) { fits = false; break; }
             }
             rig.entries.add(e);
             if (!fits) {
                 e.online = false;
-                e.problem = "Doesn't fit this rig";
+                e.problem = DOESNT_FIT;
                 continue;
             }
             for (int[] cell : e.cells) rig.owner[rig.idx(cell[0], cell[1])] = e.index;
@@ -101,7 +110,7 @@ public final class ModuleRig {
     private void evaluate(DrillConfig c) {
         // Neighbours: modules sharing an edge.
         for (Entry e : entries) {
-            if ("Doesn't fit this rig".equals(e.problem)) continue;
+            if (DOESNT_FIT.equals(e.problem)) continue;
             for (int[] cell : e.cells) {
                 int[][] around = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
                 for (int[] dlt : around) {
@@ -147,6 +156,45 @@ public final class ModuleRig {
         }
     }
 
+    /** Player-facing name of the rig a kind of module fits. */
+    public static String rigName(String kind) {
+        return switch (kind) {
+            case DrillConfig.KIND_ROD -> "Rod Rig";
+            case DrillConfig.KIND_GUN -> "Weapon Rig";
+            default -> "drill's Module Rig";
+        };
+    }
+
+    /** Stat multipliers (modules at their marks, family bonuses, combos) and on/off flags of the online modules. */
+    public record Totals(Map<String, Double> mul, Set<String> flags) {
+        public double m(String stat) { return mul.getOrDefault(stat, 1.0); }
+    }
+
+    public Totals totals(DrillConfig c) {
+        Map<String, Double> mul = new java.util.HashMap<>();
+        Set<String> flags = new HashSet<>();
+        java.util.function.BiConsumer<String, Double> apply = (stat, v) -> mul.merge(stat, v, (a, b) -> a * b);
+        for (Entry e : entries) {
+            if (!e.online) continue;
+            int mk = Math.max(1, Math.min(c.maxMark, e.placed.mk));
+            for (Map.Entry<String, Double> x : e.def.pros().entrySet()) apply.accept(x.getKey(), Math.pow(x.getValue(), c.proPower(mk)));
+            for (Map.Entry<String, Double> x : e.def.cons().entrySet()) apply.accept(x.getKey(), Math.pow(x.getValue(), c.conPower(mk) * e.drain));
+            flags.addAll(e.def.flags());
+        }
+        for (Map.Entry<String, Integer> fc : familyCounts.entrySet()) {
+            FamilyDef fam = c.family(fc.getKey());
+            if (fam == null) continue;
+            for (Map.Entry<Integer, Map<String, Double>> b : fam.bonuses().entrySet()) {
+                if (fc.getValue() >= b.getKey()) b.getValue().forEach(apply);
+            }
+        }
+        for (ComboDef combo : activeCombos) {
+            combo.effects().forEach(apply);
+            flags.removeAll(combo.clears());
+        }
+        return new Totals(java.util.Collections.unmodifiableMap(mul), java.util.Collections.unmodifiableSet(flags));
+    }
+
     // ---- geometry ----
 
     public boolean inside(int x, int y) { return x >= 0 && y >= 0 && x < width && y < height; }
@@ -188,6 +236,9 @@ public final class ModuleRig {
      * ignore = an entry index to leave out (the module being moved), or -1.
      */
     public String canPlace(DrillConfig c, ModuleDef def, int px, int py, int rot, int ignore) {
+        if (!def.kind().equals(kind)) {
+            return "That's a " + DrillConfig.kindLabel(def.kind()) + ": it fits the " + rigName(def.kind()) + ", not this one.";
+        }
         if (width == 0 || height == 0) return "Your frame has no module rig yet.";
         boolean coversCore = false;
         for (int[] cell : def.shape().cellsAt(px, py, rot)) {
