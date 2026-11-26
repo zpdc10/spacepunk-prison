@@ -80,7 +80,7 @@ final class FishingCommands {
                 <gray>/fish</gray> <dark_gray>market, bait shop, collection, leaderboards
                 <gray>/fish sell</gray> <dark_gray>/</dark_gray> <gray>/fish gut</gray> <dark_gray>sell fish for Credits or gut them for Scales
                 <gray>/rod</gray> <dark_gray>enchants, lures, bait and rod tiers (or shift + left-click your rod)
-                <dark_gray>Right-click when it bites. If it fights, hold SNEAK to keep the fish in the green zone.""");
+                <dark_gray>Right-click when it bites. If it fights, your XP bar is the line: hold SNEAK to raise it, keep it in the middle.""");
     }
 
     BasicCommand rod() {

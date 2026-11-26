@@ -125,7 +125,7 @@ final class FishingItems {
                 : "<gray>Bait: <white>" + b.name() + " <dark_gray>x" + d.baitCount(b.id()));
         lore.add("<gray>Fishing level <white>" + d.level + "</white> · catches <white>" + Numbers.shortFormat(d.catches));
         lore.add("");
-        lore.add("<#5fb4c8>Hold sneak</#5fb4c8> <gray>to reel in when a fish fights");
+        lore.add("<#5fb4c8>Hold sneak</#5fb4c8> <gray>to keep your XP bar centred when a fish fights");
         lore.add("<#5fb4c8>Shift + left-click</#5fb4c8> <gray>to open the rod bay");
         lore.add("<dark_gray>Soulbound");
         meta.lore(Text.lore(lore));

@@ -28,9 +28,12 @@ Board. `/waters [pool]` also works. `/fishadmin build` rebuilds the layout.
 2. On a bite the action bar flashes. Right-click to hook it.
 3. The bite is rolled: maybe a **sea creature**, otherwise junk, treasure or a fish (rarity first, then a species
    of that rarity from this pool). Commons and junk land at once.
-4. Uncommon and better fish fight: the **reel-in minigame** runs on the action bar (a track with a green catch
-   zone and the fish) and a boss bar (catch progress). Hold **sneak** to raise the zone, let go to drop it. Keep the
-   fish inside to fill the bar; it drains while the fish is outside. Rarer fish dart harder, with a smaller zone.
+4. Uncommon and better fish fight: the **reel-in minigame** runs on the **XP bar**, which becomes line tension.
+   Hold **sneak** to pull the bar up, let go and it drops, and the fish yanks it around. Keep it in the middle
+   (30% to 70%) to reel; the XP level number is the catch percent (it lands at 100, escapes at 0). The boss bar
+   repeats the progress and says REELING, TOO TIGHT or TOO SLACK. Rarer fish dart harder and the bar is more
+   sensitive. The XP bar is a display-only packet: real XP and levels are never changed and come back when the
+   fight ends (it is hidden in creative mode, so test in survival or adventure).
 5. Fish go to your inventory (overflow goes to the **cooler**). Legendary catches are unique trophies with their
    weight, announced server-wide.
 
