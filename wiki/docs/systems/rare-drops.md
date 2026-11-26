@@ -45,7 +45,7 @@ gains nothing. Cache Credits count as server income.
 ## Module schematics
 
 Blueprint fragments drop on every deck. Collect enough of one rarity and **decode** them in `/salvage` to learn a
-random [drill module](drill.md#3-modules-and-the-module-rig) **schematic** of that rarity you don't know yet. A
+random [module](drill.md#3-modules-and-the-module-rig) **schematic** (drill, rod or weapon) of that rarity you don't know yet. A
 schematic is a permanent recipe: build the module as often as you like at your workshop's
 [Assembly Bench](workshop.md#the-assembly-bench).
 
@@ -58,7 +58,8 @@ Once you know every schematic of a rarity, its fragments assemble a random modul
 | Epic Module Blueprint | Epic | 5 |
 | Legendary Module Blueprint | Legendary | 4 |
 
-Everyone starts knowing the Servo Actuator and Ore Sifter schematics.
+Everyone starts knowing the Servo Actuator, Ore Sifter, Reel Servo and Extended Mag schematics. Fragments can decode
+into drill, [rod](fishing.md#the-rod-rig) or [weapon](guns.md#weapon-rigs) module schematics.
 
 ## Scrap parts
 
