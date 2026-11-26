@@ -22,6 +22,8 @@ public final class DrillData {
     public Set<String> schematics = new LinkedHashSet<>();
     /** Hidden module combos the player has discovered. */
     public Set<String> combos = new LinkedHashSet<>();
+    /** Exo-Rig tiers bought (0 = none yet). */
+    public int exoTier;
     /** Rig expansions bought with Shards. */
     public int expansion;
     public long blocksMined;

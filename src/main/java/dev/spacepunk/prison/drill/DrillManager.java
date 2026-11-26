@@ -127,6 +127,7 @@ public final class DrillManager implements DrillService {
         gearTotals.remove(p.getUniqueId());
         save(p.getUniqueId());
         refreshItem(p);
+        applyExo(p);
     }
 
     // ---- the item ----
@@ -310,12 +311,14 @@ public final class DrillManager implements DrillService {
 
     public static final String RIG_DRILL = "drill";
     public static final String RIG_ROD = "rod";
+    public static final String RIG_EXO = "exo";
 
     public static String gunRigKey(String gunId) { return "gun:" + gunId; }
 
     /** Module kind a rig key takes. */
     public static String kindOf(String rigKey) {
         if (RIG_ROD.equals(rigKey)) return DrillConfig.KIND_ROD;
+        if (RIG_EXO.equals(rigKey)) return DrillConfig.KIND_EXO;
         if (rigKey != null && rigKey.startsWith("gun:")) return DrillConfig.KIND_GUN;
         return DrillConfig.KIND_DRILL;
     }
@@ -323,6 +326,7 @@ public final class DrillManager implements DrillService {
     /** True for "drill", "rod" and "gun:<id>" of a gun with a Weapon Rig. */
     public boolean validRig(String rigKey) {
         if (RIG_DRILL.equals(rigKey) || RIG_ROD.equals(rigKey)) return true;
+        if (RIG_EXO.equals(rigKey)) return !cfg.exoTiers.isEmpty();
         return rigKey != null && rigKey.startsWith("gun:") && cfg.rigGuns().contains(rigKey.substring(4));
     }
 
@@ -330,6 +334,7 @@ public final class DrillManager implements DrillService {
     public String rigTitle(String rigKey) {
         return switch (kindOf(rigKey)) {
             case DrillConfig.KIND_ROD -> "ROD RIG";
+            case DrillConfig.KIND_EXO -> "EXO-RIG";
             case DrillConfig.KIND_GUN -> "WEAPON RIG · " + gunName(rigKey.substring(4)).toUpperCase(java.util.Locale.ROOT);
             default -> "MODULE RIG";
         };
@@ -358,7 +363,91 @@ public final class DrillManager implements DrillService {
 
     /** The grid size of a non-drill rig for this player right now. */
     public DrillConfig.RigSize gearSize(UUID id, String rigKey) {
+        if (RIG_EXO.equals(rigKey)) {
+            DrillConfig.ExoTier t = exoTier(id);
+            return t == null ? new DrillConfig.RigSize(0, 0, List.of()) : t.size();
+        }
         return RIG_ROD.equals(rigKey) ? cfg.rodRig(rodTier(id)) : cfg.gunRig(rigKey.substring(4));
+    }
+
+    // ---- Exo-Rig ----
+
+    /** The player's current Exo-Rig tier, or null if they have none yet. */
+    public DrillConfig.ExoTier exoTier(UUID id) {
+        DrillData d = data.get(id);
+        if (d == null || d.exoTier <= 0 || cfg.exoTiers.isEmpty()) return null;
+        return cfg.exoTiers.get(Math.min(d.exoTier, cfg.exoTiers.size()) - 1);
+    }
+
+    /** The next Exo-Rig tier to buy, or null at the top. */
+    public DrillConfig.ExoTier nextExoTier(UUID id) {
+        DrillData d = data.get(id);
+        if (d == null) return null;
+        return d.exoTier < cfg.exoTiers.size() ? cfg.exoTiers.get(d.exoTier) : null;
+    }
+
+    public enum ExoResult { OK, MAX, LOCKED, POOR }
+
+    public ExoResult upgradeExo(Player p) {
+        DrillData d = data.get(p.getUniqueId());
+        DrillConfig.ExoTier next = nextExoTier(p.getUniqueId());
+        if (d == null || next == null) return ExoResult.MAX;
+        if (!next.unlockedFor(grade(p), prestige(p))) return ExoResult.LOCKED;
+        if (next.cost() > 0 && !Services.get(EconomyService.class).take(p.getUniqueId(), next.currency(), next.cost(), "drill:exo:" + d.exoTier)) {
+            return ExoResult.POOR;
+        }
+        d.exoTier++;
+        changed(p);
+        return ExoResult.OK;
+    }
+
+    private static final String EXO_NS = "spacepunk";
+
+    /** Exo stat -> (attribute, how the multiplier becomes a modifier amount). */
+    private record ExoAttr(String stat, org.bukkit.attribute.Attribute attribute, org.bukkit.attribute.AttributeModifier.Operation op, double scale) {}
+
+    private static final List<ExoAttr> EXO_ATTRS = List.of(
+            new ExoAttr("speed", org.bukkit.attribute.Attribute.MOVEMENT_SPEED, org.bukkit.attribute.AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1),
+            new ExoAttr("health", org.bukkit.attribute.Attribute.MAX_HEALTH, org.bukkit.attribute.AttributeModifier.Operation.ADD_NUMBER, 20),
+            new ExoAttr("armor", org.bukkit.attribute.Attribute.ARMOR, org.bukkit.attribute.AttributeModifier.Operation.ADD_NUMBER, 20),
+            new ExoAttr("toughness", org.bukkit.attribute.Attribute.KNOCKBACK_RESISTANCE, org.bukkit.attribute.AttributeModifier.Operation.ADD_NUMBER, 1),
+            new ExoAttr("jump", org.bukkit.attribute.Attribute.JUMP_STRENGTH, org.bukkit.attribute.AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1),
+            new ExoAttr("fall", org.bukkit.attribute.Attribute.FALL_DAMAGE_MULTIPLIER, org.bukkit.attribute.AttributeModifier.Operation.MULTIPLY_SCALAR_1, 1));
+
+    /** Puts the Exo-Rig's stats on the player as attribute modifiers (removing the old ones first). */
+    public void applyExo(Player p) {
+        Map<String, Double> m = gearTotals(p.getUniqueId(), RIG_EXO).mul();
+        for (ExoAttr a : EXO_ATTRS) {
+            org.bukkit.attribute.AttributeInstance inst = p.getAttribute(a.attribute());
+            if (inst == null) continue;
+            org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(EXO_NS, "exo_" + a.stat());
+            for (org.bukkit.attribute.AttributeModifier old : List.copyOf(inst.getModifiers())) {
+                if (key.equals(old.getKey())) inst.removeModifier(old);
+            }
+            double v = m.getOrDefault(a.stat(), 1.0);
+            if (Math.abs(v - 1.0) < 1e-6) continue;
+            inst.addModifier(new org.bukkit.attribute.AttributeModifier(key, (v - 1.0) * a.scale(), a.op(), org.bukkit.inventory.EquipmentSlotGroup.ANY));
+        }
+        org.bukkit.attribute.AttributeInstance hp = p.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        if (hp != null && p.getHealth() > hp.getValue()) p.setHealth(hp.getValue());
+    }
+
+    /** Removes every Exo-Rig attribute modifier (plugin disable). */
+    public static void clearExo(Player p) {
+        for (ExoAttr a : EXO_ATTRS) {
+            org.bukkit.attribute.AttributeInstance inst = p.getAttribute(a.attribute());
+            if (inst == null) continue;
+            org.bukkit.NamespacedKey key = new org.bukkit.NamespacedKey(EXO_NS, "exo_" + a.stat());
+            for (org.bukkit.attribute.AttributeModifier old : List.copyOf(inst.getModifiers())) {
+                if (key.equals(old.getKey())) inst.removeModifier(old);
+            }
+        }
+    }
+
+    /** The gadget the Exo-Rig runs (its "gadget-*" flag), or null. */
+    public String gadget(UUID id) {
+        for (String f : gearTotals(id, RIG_EXO).flags()) if (f.startsWith("gadget-")) return f;
+        return null;
     }
 
     /** Builds a rig for this player (null if their data isn't loaded). */
@@ -459,7 +548,12 @@ public final class DrillManager implements DrillService {
             markStatsDirty(p.getUniqueId());
         }
         p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
-        String where = DrillConfig.KIND_ROD.equals(kind) ? "/rig rod" : "/rig gun";
+        String where = switch (kind) {
+            case DrillConfig.KIND_ROD -> "/rig rod";
+            case DrillConfig.KIND_GUN -> "/rig gun";
+            case DrillConfig.KIND_EXO -> "/rig exo";
+            default -> "/rig";
+        };
         p.showTitle(net.kyori.adventure.title.Title.title(Text.mm(m.coloredName()),
                 Text.mm("<gray>" + capital(DrillConfig.kindLabel(kind)) + " found! Fit it with <white>" + where)));
         if (cfg.moduleBroadcast && m.rarity().ordinal() >= DrillConfig.Rarity.RARE.ordinal()) {
@@ -594,7 +688,7 @@ public final class DrillManager implements DrillService {
 
     @Override public double sellMultiplier(UUID player) {
         DrillMath.Effective e = effective(player);
-        return e == null ? 1.0 : e.sellMultiplier;
+        return (e == null ? 1.0 : e.sellMultiplier) * gearTotals(player, RIG_EXO).m("sell");
     }
 
     @Override public double rareDropMultiplier(UUID player) {
@@ -677,6 +771,8 @@ public final class DrillManager implements DrillService {
     private RigMenu rigMenu;
 
     void rigMenu(RigMenu menu) { this.rigMenu = menu; }
+
+    @Override public void rollModuleFind(Player player, String kind, String source) { rollFind(player, kind, source); }
 
     @Override public void openRig(Player player, String rigKey) {
         if (rigMenu != null) rigMenu.open(player, validRig(rigKey) ? rigKey : RIG_DRILL, -1);

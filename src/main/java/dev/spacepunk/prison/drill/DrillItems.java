@@ -175,6 +175,10 @@ public final class DrillItems {
                     lore.add("<gray>Fit it on your Rod Rig: <white>/rig rod");
                     lore.add("<gray>Boosts your fishing rod.");
                 }
+                case DrillConfig.KIND_EXO -> {
+                    lore.add("<gray>Fit it on your Exo-Rig: <white>/rig exo");
+                    lore.add("<gray>Boosts you, whatever you're doing.");
+                }
                 case DrillConfig.KIND_GUN -> {
                     lore.add("<gray>Fit it on a Weapon Rig: <white>/rig gun");
                     lore.add("<gray>Each gun model has its own rig.");

@@ -81,6 +81,12 @@ public interface DrillService {
      */
     java.util.Map<String, Double> gearMultipliers(UUID player, String rigKey);
 
-    /** Opens a module rig menu: "drill", "rod" or "gun:<gun id>". */
+    /**
+     * Rolls a module find for an activity: kind "drill" / "rod" / "gun" / "exo", source a drill.yml module-drops key
+     * (e.g. "parkour", "contract"). Gives and announces the module on a hit.
+     */
+    void rollModuleFind(org.bukkit.entity.Player player, String kind, String source);
+
+    /** Opens a module rig menu: "drill", "rod", "exo" or "gun:<gun id>". */
     void openRig(org.bukkit.entity.Player player, String rigKey);
 }

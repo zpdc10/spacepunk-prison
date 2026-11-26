@@ -517,6 +517,57 @@ assembly:
     credits: 200000000
     components: { reactor_core: 1, induction_coil: 6 }
     parts: { quantum_core: 1, data_core: 2, logic_chip: 2 }
+  # ---- Exo modules (Exo-Rig) ----
+  servo_greaves:
+    grade: 5
+    credits: 40000
+    components: { crushed_steel: 64 }
+    parts: { servo_motor: 2 }
+  ceramic_plate:
+    grade: 5
+    credits: 40000
+    components: { steel_concentrate: 48 }
+    parts: { copper_wiring: 2 }
+  shock_absorbers:
+    grade: 8
+    credits: 250000
+    components: { steel_ingot: 24 }
+    parts: { gyro_stabilizer: 1, servo_motor: 2 }
+  bio_monitor:
+    grade: 9
+    credits: 400000
+    components: { copper_ingot: 24, graphite: 8 }
+    parts: { data_core: 1, circuit_board: 2 }
+  trader_uplink:
+    grade: 10
+    credits: 600000
+    components: { conduit_filament: 16 }
+    parts: { logic_chip: 1, circuit_board: 3 }
+  reactive_mesh:
+    grade: 16
+    credits: 12000000
+    components: { armor_plate: 8, wiring_harness: 4 }
+    parts: { military_relay: 2, capacitor: 4 }
+  grapple_launcher:
+    grade: 9
+    credits: 400000
+    components: { steel_ingot: 32 }
+    parts: { servo_motor: 3, power_cell: 1 }
+  scanner_pulse:
+    grade: 12
+    credits: 1500000
+    components: { conductive_alloy: 12 }
+    parts: { sonar_array: 2, circuit_board: 2 }
+  stim_injector:
+    grade: 17
+    credits: 16000000
+    components: { induction_coil: 4, circuit_alloy: 8 }
+    parts: { power_cell: 4, data_core: 1 }
+  phase_cloak:
+    grade: 24
+    credits: 300000000
+    components: { reactor_core: 2, void_capacitor: 4 }
+    parts: { quantum_core: 1, military_relay: 3, logic_chip: 3 }
 
 # Refurbisher (workshop menu): repairs fried scrap parts into working ones. pristine = chance a repair comes
 # out Pristine instead. Upgrade it for better odds (credits + Bay Locker components, minimum grade).
