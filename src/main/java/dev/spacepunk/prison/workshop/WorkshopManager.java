@@ -3,6 +3,7 @@ package dev.spacepunk.prison.workshop;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import dev.spacepunk.prison.api.Currency;
+import dev.spacepunk.prison.api.DrillService;
 import dev.spacepunk.prison.api.EconomyService;
 import dev.spacepunk.prison.api.GangService;
 import dev.spacepunk.prison.api.HudService;
@@ -10,6 +11,7 @@ import dev.spacepunk.prison.api.ObjectiveTypes;
 import dev.spacepunk.prison.api.Objectives;
 import dev.spacepunk.prison.api.ProfileService;
 import dev.spacepunk.prison.api.ProgressionService;
+import dev.spacepunk.prison.api.ScrapService;
 import dev.spacepunk.prison.api.Services;
 import dev.spacepunk.prison.api.TokenDrops;
 import dev.spacepunk.prison.api.WorkshopService;
@@ -248,6 +250,8 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
         long now = System.currentTimeMillis();
         if (c.tokenChance <= 0 || now - bay.lastTokenRoll < c.tokenRollSeconds * 1000L) return;
         bay.lastTokenRoll = now;
+        // Scrap parts shaken loose from the machines: rolled on the same once-a-minute clock.
+        dev.spacepunk.prison.api.ScrapDrops.roll(owner, dev.spacepunk.prison.api.ScrapService.WORKSHOP, 1);
         if (java.util.concurrent.ThreadLocalRandom.current().nextDouble() >= c.tokenChance) return;
         long amount = TokenDrops.roll(owner.getUniqueId(), c.tokenMin, c.tokenMax);
         economy().give(owner.getUniqueId(), Currency.TOKENS, amount, "workshop:token-find");
@@ -723,9 +727,22 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
     void assemble(Player p, Assembly a) {
         BayData d = loaded.get(p.getUniqueId());
         if (d == null) return;
+        DrillService drill = Services.find(DrillService.class).orElse(null);
+        ScrapService scrap = Services.find(ScrapService.class).orElse(null);
+        if (drill == null || drill.createModuleItem(a.id()) == null) {
+            Gui.deny(p);
+            Text.send(p, "<red>The assembly line for this is offline right now. Nothing was spent.");
+            return;
+        }
+        String name = drill.moduleName(a.id());
+        if (!drill.knowsSchematic(p.getUniqueId(), a.id())) {
+            Gui.deny(p);
+            Text.send(p, "<red>You don't know the " + name + " <red>schematic. Decode blueprint fragments in <white>/salvage</white><red>.");
+            return;
+        }
         if (grade(p.getUniqueId()) < a.grade()) {
             Gui.deny(p);
-            Text.send(p, "<red>" + a.name() + " needs Grade " + a.grade() + ".");
+            Text.send(p, "<red>" + name + " <red>needs Grade " + a.grade() + ".");
             return;
         }
         for (Map.Entry<String, Long> e : a.components().entrySet()) {
@@ -735,27 +752,140 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
                 return;
             }
         }
+        if (!a.parts().isEmpty() && scrap == null) {
+            Gui.deny(p);
+            Text.send(p, "<red>Scrap parts are offline right now. Nothing was spent.");
+            return;
+        }
+        for (Map.Entry<String, Integer> e : a.parts().entrySet()) {
+            if (scrap.count(p, e.getKey(), ScrapService.State.WORKING) < e.getValue()) {
+                Gui.deny(p);
+                Text.send(p, "<red>Needs " + e.getValue() + "x " + scrap.partName(e.getKey(), ScrapService.State.WORKING)
+                        + " <red>(working or pristine) in your inventory.");
+                return;
+            }
+        }
         if (economy().balance(p.getUniqueId(), Currency.CREDITS) < a.credits()) {
             Gui.deny(p);
             Text.send(p, "<red>You need " + economy().format(Currency.CREDITS, a.credits()) + ".");
             return;
         }
-        boolean ok;
-        try {
-            ok = !a.command().isBlank() && Bukkit.dispatchCommand(Bukkit.getConsoleSender(), a.command().replace("{player}", p.getName()));
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Assembly command failed: " + a.command(), e);
-            ok = false;
+        if (a.credits() > 0 && !economy().take(p.getUniqueId(), Currency.CREDITS, a.credits(), "workshop:assembly")) return;
+        for (Map.Entry<String, Long> e : a.components().entrySet()) lockerTakeBase(d, e.getKey(), e.getValue());
+        for (Map.Entry<String, Integer> e : a.parts().entrySet()) scrap.take(p, e.getKey(), ScrapService.State.WORKING, e.getValue());
+        ItemStack module = drill.createModuleItem(a.id());
+        if (scrap != null) scrap.give(p, module);
+        else for (ItemStack left : p.getInventory().addItem(module).values()) p.getWorld().dropItemNaturally(p.getLocation(), left);
+        d.modulesBuilt++;
+        p.playSound(p.getLocation(), Sound.BLOCK_SMITHING_TABLE_USE, 1f, 0.8f);
+        p.playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 0.6f, 1.6f);
+        Text.send(p, "<green>Assembled " + name + "<green>. Fit it on your drill's module rig.");
+        save(p.getUniqueId());
+    }
+
+    // ---- refurbisher ----
+
+    WorkshopConfig.RefurbLevel refurbLevel(BayData d) {
+        List<WorkshopConfig.RefurbLevel> lv = cfg().refurbLevels;
+        return lv.get(Math.max(0, Math.min(lv.size() - 1, d.refurbLevel)));
+    }
+
+    /** Repairs fried parts of one kind from the inventory (one, or all of them). Returns how many were repaired. */
+    int refurbish(Player p, String partId, boolean all) {
+        BayData d = loaded.get(p.getUniqueId());
+        ScrapService scrap = Services.find(ScrapService.class).orElse(null);
+        if (d == null || scrap == null) return 0;
+        WorkshopConfig c = cfg();
+        if (grade(p.getUniqueId()) < c.refurbGrade) {
+            Gui.deny(p);
+            Text.send(p, "<red>The Refurbisher needs Grade " + c.refurbGrade + ".");
+            return 0;
         }
-        if (!ok) {
-            Text.send(p, "<red>The assembly line for this is offline right now. Nothing was spent.");
+        int have = scrap.count(p, partId, ScrapService.State.FRIED) - scrap.count(p, partId, ScrapService.State.WORKING);
+        if (have <= 0) return 0;
+        ItemStack sample = scrap.create(partId, ScrapService.State.FRIED, 1);
+        String tier = sample == null ? "common" : scrap.part(sample).map(ScrapService.Part::tier).orElse("common");
+        WorkshopConfig.RefurbCost cost = c.refurbCosts.getOrDefault(tier, new WorkshopConfig.RefurbCost(0, Map.of()));
+        int want = all ? have : 1;
+        int n = 0, pristine = 0;
+        double chance = refurbLevel(d).pristine();
+        java.util.concurrent.ThreadLocalRandom rng = java.util.concurrent.ThreadLocalRandom.current();
+        String why = null;
+        while (n < want) {
+            for (Map.Entry<String, Long> e : cost.components().entrySet()) {
+                if (BayData.countBase(d.locker, e.getKey()) < e.getValue()) { why = "Needs " + e.getValue() + "x " + items.name(e.getKey()) + " in your Bay Locker."; break; }
+            }
+            if (why != null) break;
+            if (economy().balance(p.getUniqueId(), Currency.CREDITS) < cost.credits()) { why = "You need " + economy().format(Currency.CREDITS, cost.credits()) + "."; break; }
+            if (!takeFried(p, scrap, partId)) break;
+            if (cost.credits() > 0) economy().take(p.getUniqueId(), Currency.CREDITS, cost.credits(), "workshop:refurbish");
+            for (Map.Entry<String, Long> e : cost.components().entrySet()) lockerTakeBase(d, e.getKey(), e.getValue());
+            boolean pr = rng.nextDouble() < chance;
+            if (pr) pristine++;
+            scrap.give(p, scrap.create(partId, pr ? ScrapService.State.PRISTINE : ScrapService.State.WORKING, 1));
+            n++;
+        }
+        if (n == 0) {
+            Gui.deny(p);
+            if (why != null) Text.send(p, "<red>" + why);
+            return 0;
+        }
+        d.refurbished += n;
+        save(p.getUniqueId());
+        p.playSound(p.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 0.8f, 1.2f);
+        if (pristine > 0) p.playSound(p.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1f, 1.5f);
+        Text.send(p, "<gray>Repaired <white>" + n + "x</white> " + scrap.partName(partId, ScrapService.State.WORKING)
+                + (pristine > 0 ? "<gray>, <gold>" + pristine + " came out pristine!" : "<gray>.")
+                + (why != null && n < want ? " <red>Stopped: " + why : ""));
+        return n;
+    }
+
+    /** Takes exactly one fried part (never a working one). */
+    private static boolean takeFried(Player p, ScrapService scrap, String partId) {
+        ItemStack[] contents = p.getInventory().getStorageContents();
+        for (int i = 0; i < contents.length; i++) {
+            var part = scrap.part(contents[i]);
+            if (part.isEmpty() || !part.get().partId().equals(partId) || part.get().state() != ScrapService.State.FRIED) continue;
+            contents[i].setAmount(contents[i].getAmount() - 1);
+            if (contents[i].getAmount() <= 0) contents[i] = null;
+            p.getInventory().setStorageContents(contents);
+            return true;
+        }
+        return false;
+    }
+
+    void upgradeRefurbisher(Player p) {
+        BayData d = loaded.get(p.getUniqueId());
+        if (d == null) return;
+        List<WorkshopConfig.RefurbLevel> lv = cfg().refurbLevels;
+        if (d.refurbLevel + 1 >= lv.size()) {
+            Gui.deny(p);
+            Text.send(p, "<gray>Your Refurbisher is already the top mark.");
             return;
         }
-        economy().take(p.getUniqueId(), Currency.CREDITS, a.credits(), "workshop:assembly");
-        for (Map.Entry<String, Long> e : a.components().entrySet()) lockerTakeBase(d, e.getKey(), e.getValue());
-        p.playSound(p.getLocation(), Sound.BLOCK_SMITHING_TABLE_USE, 1f, 0.8f);
-        Text.send(p, "<green>Assembled a " + a.name() + ".");
+        WorkshopConfig.RefurbLevel next = lv.get(d.refurbLevel + 1);
+        if (grade(p.getUniqueId()) < next.grade()) {
+            Gui.deny(p);
+            Text.send(p, "<red>" + next.name() + " needs Grade " + next.grade() + ".");
+            return;
+        }
+        for (Map.Entry<String, Long> e : next.components().entrySet()) {
+            if (BayData.countBase(d.locker, e.getKey()) < e.getValue()) {
+                Gui.deny(p);
+                Text.send(p, "<red>Needs " + e.getValue() + "x " + items.name(e.getKey()) + " in your Bay Locker.");
+                return;
+            }
+        }
+        if (next.credits() > 0 && !economy().take(p.getUniqueId(), Currency.CREDITS, next.credits(), "workshop:refurbisher")) {
+            Gui.deny(p);
+            Text.send(p, "<red>You need " + economy().format(Currency.CREDITS, next.credits()) + ".");
+            return;
+        }
+        for (Map.Entry<String, Long> e : next.components().entrySet()) lockerTakeBase(d, e.getKey(), e.getValue());
+        d.refurbLevel++;
         save(p.getUniqueId());
+        p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_USE, 0.8f, 1.1f);
+        Text.send(p, "<green>Refurbisher upgraded to " + next.name() + ".");
     }
 
     // ---- HUD ----

@@ -1,7 +1,9 @@
 package dev.spacepunk.prison.workshop;
 
 import dev.spacepunk.prison.api.Currency;
+import dev.spacepunk.prison.api.DrillService;
 import dev.spacepunk.prison.api.EconomyService;
+import dev.spacepunk.prison.api.ScrapService;
 import dev.spacepunk.prison.api.Services;
 import dev.spacepunk.prison.util.Numbers;
 import dev.spacepunk.prison.util.Text;
@@ -87,9 +89,13 @@ final class WorkshopMenus {
         g.set(23, Gui.icon(Material.SMITHING_TABLE, "workshop/ui/shop", "<#c8743a>Machine Shop", List.of(
                 "<gray>Buy machines, conveyors and decor.", "", "<yellow>Click to open")), e -> { Gui.click(p); shop(p); });
         g.set(25, Gui.icon(Material.CRAFTER, "workshop/ui/assembly", "<#6fd6a8>Assembly Bench", List.of(
-                "<gray>Turn components into drill modules.", "", "<yellow>Click to open")), e -> { Gui.click(p); assembly(p); });
+                "<gray>Build drill modules from schematics,", "<gray>scrap parts and workshop components.", "", "<yellow>Click to open")),
+                e -> { Gui.click(p); assembly(p, 0); });
+        g.set(30, Gui.icon(Material.GRINDSTONE, "workshop/ui/refurbisher", "<#c8a070>Refurbisher", List.of(
+                "<gray>Repair fried scrap parts. Some come", "<gray>out pristine.", "", "<yellow>Click to open")),
+                e -> { Gui.click(p); refurbisher(p); });
 
-        g.set(29, Gui.icon(Material.COMPARATOR, "workshop/ui/machines", "<white>Machine Overview", List.of(
+        g.set(28, Gui.icon(Material.COMPARATOR, "workshop/ui/machines", "<white>Machine Overview", List.of(
                 "<gray>Every machine, its status and heat.", "<gray>Open any of them from here.", "", "<yellow>Click to open")),
                 e -> { Gui.click(p); machineList(p, 0); });
 
@@ -106,7 +112,7 @@ final class WorkshopMenus {
             ex.add("");
             ex.add("<yellow>Shift-click to expand");
         }
-        g.set(31, Gui.icon(Material.PISTON, "workshop/ui/expand", "<aqua>Expand Bay", ex), e -> {
+        g.set(32, Gui.icon(Material.PISTON, "workshop/ui/expand", "<aqua>Expand Bay", ex), e -> {
             if (!e.getClick().isShiftClick()) { Gui.deny(p); return; }
             ws.expand(p);
         });
@@ -123,7 +129,7 @@ final class WorkshopMenus {
         ac.add("");
         ac.add("<dark_gray>/ws crew add|remove <player>");
         ac.add("<yellow>Click to " + (plot.open ? "seal" : "open") + " the bay");
-        g.set(33, Gui.icon(plot.open ? Material.IRON_DOOR : Material.IRON_BLOCK, "workshop/ui/access", "<white>Airlock Access", ac), e -> {
+        g.set(34, Gui.icon(plot.open ? Material.IRON_DOOR : Material.IRON_BLOCK, "workshop/ui/access", "<white>Airlock Access", ac), e -> {
             Gui.click(p);
             ws.setOpen(p, !plot.open);
             g.render();
@@ -611,39 +617,152 @@ final class WorkshopMenus {
     // Assembly Bench
     // =============================================================================================
 
-    void assembly(Player p) {
+    void assembly(Player p, int page) {
         Bay bay = ws.bay(p.getUniqueId());
         if (bay == null) return;
-        Gui g = new Gui(4, "<dark_gray>Assembly Bench");
+        DrillService drill = Services.find(DrillService.class).orElse(null);
+        ScrapService scrap = Services.find(ScrapService.class).orElse(null);
+        List<Assembly> all = new ArrayList<>(cfg().assembly.values());
+        int perPage = 28;
+        int pages = Math.max(1, (all.size() + perPage - 1) / perPage);
+        int pg = Math.max(0, Math.min(pages - 1, page));
+        Gui g = new Gui(6, "<dark_gray>Assembly Bench");
         g.renderer(gui -> {
-            int slot = 10;
             int grade = ws.grade(p.getUniqueId());
-            for (Assembly a : cfg().assembly.values()) {
-                if (slot == 17) slot = 19;
-                if (slot >= 26) break;
+            gui.set(4, Gui.icon(Material.CRAFTER, "workshop/ui/assembly", "<#6fd6a8>Assembly Bench", List.of(
+                    "<gray>Build drill modules you know the", "<gray>schematic for. Components come from",
+                    "<gray>your Bay Locker, scrap parts from your", "<gray>inventory (working or pristine).", "",
+                    "<gray>Learn schematics by decoding blueprint", "<gray>fragments in <white>/salvage</white><gray>.")));
+            int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
+            int i = 0;
+            for (Assembly a : all.subList(pg * perPage, Math.min(all.size(), (pg + 1) * perPage))) {
+                if (i >= slots.length) break;
+                ItemStack module = drill == null ? null : drill.createModuleItem(a.id());
+                if (module == null) continue;
+                boolean known = drill.knowsSchematic(p.getUniqueId(), a.id());
                 List<String> l = new ArrayList<>();
-                l.add("<gray>Drill module, assembled from components.");
+                if (!known) {
+                    String rarity = drill.moduleRarity(a.id());
+                    l.add("<red>Schematic not known.");
+                    l.add("<gray>Decode " + (rarity == null ? "" : rarity.charAt(0) + rarity.substring(1).toLowerCase(java.util.Locale.ROOT) + " ")
+                            + "blueprint fragments in <white>/salvage</white><gray>.");
+                    gui.set(slots[i++], Gui.icon(Material.MAP, "ui/locked", "<dark_gray>??? " + (rarity == null ? "" : rarity.toLowerCase(java.util.Locale.ROOT) + " ") + "schematic", l));
+                    continue;
+                }
+                var meta = module.getItemMeta();
+                List<net.kyori.adventure.text.Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
                 l.add("");
+                l.add("<#6fd6a8>Build cost:");
                 for (Map.Entry<String, Long> e : a.components().entrySet()) {
                     long have = BayData.countBase(bay.data.locker, e.getKey());
-                    l.add((have >= e.getValue() ? "<green>" : "<red>") + e.getValue() + "x " + ws.items.name(e.getKey()) + " <dark_gray>(" + have + ")");
+                    l.add((have >= e.getValue() ? "<green>✔ " : "<red>✘ ") + "<white>" + e.getValue() + "x</white> <gray>" + ws.items.name(e.getKey()) + " <dark_gray>(locker " + Numbers.shortFormat(have) + ")");
                 }
-                l.add("<gray>Credits: " + eco().format(Currency.CREDITS, a.credits()));
-                if (grade < a.grade()) l.add("<red>Needs Grade " + a.grade());
+                for (Map.Entry<String, Integer> e : a.parts().entrySet()) {
+                    int have = scrap == null ? 0 : scrap.count(p, e.getKey(), ScrapService.State.WORKING);
+                    String name = scrap == null ? e.getKey() : scrap.partName(e.getKey(), ScrapService.State.WORKING);
+                    l.add((have >= e.getValue() ? "<green>✔ " : "<red>✘ ") + "<white>" + e.getValue() + "x</white> " + name + " <dark_gray>(" + have + ")");
+                }
+                if (a.credits() > 0) {
+                    boolean ok = eco().balance(p.getUniqueId(), Currency.CREDITS) >= a.credits();
+                    l.add((ok ? "<green>✔ " : "<red>✘ ") + "<gray>" + eco().format(Currency.CREDITS, a.credits()));
+                }
+                l.add((grade >= a.grade() ? "<green>✔ " : "<red>✘ ") + "<gray>Grade " + a.grade());
                 l.add("");
                 l.add("<yellow>Click to assemble");
-                ItemStack icon = Gui.icon(Material.PRISMARINE_SHARD, "module/" + moduleModel(a.id()), "<light_purple>" + a.name(), l);
-                gui.set(slot++, icon, e -> { ws.assemble(p, a); gui.render(); });
+                for (String line : l) lore.add(Text.item(line));
+                meta.lore(lore);
+                module.setItemMeta(meta);
+                gui.set(slots[i++], module, e -> { ws.assemble(p, a); gui.render(); });
             }
-            gui.set(31, Gui.icon(Material.ARROW, "ui/back", "<gray>Terminal", List.of()), e -> { Gui.click(p); main(p); });
+            pager(p, gui, pg, pages, n -> assembly(p, n));
+            gui.set(49, Gui.icon(Material.ARROW, "ui/back", "<gray>Terminal", List.of()), e -> { Gui.click(p); main(p); });
         }).open(p);
     }
 
-    private static String moduleModel(String id) {
-        return switch (id) {
-            case "magnet_coil", "plasma_cutter", "scavenger_rig", "coolant_loop", "overcharger" -> id;
-            default -> "unknown";
-        };
+    // =============================================================================================
+    // Refurbisher
+    // =============================================================================================
+
+    void refurbisher(Player p) {
+        Bay bay = ws.bay(p.getUniqueId());
+        if (bay == null) return;
+        ScrapService scrap = Services.find(ScrapService.class).orElse(null);
+        Gui g = new Gui(6, "<dark_gray>Refurbisher");
+        g.renderer(gui -> {
+            WorkshopConfig c = cfg();
+            WorkshopConfig.RefurbLevel lv = ws.refurbLevel(bay.data);
+            List<String> info = new ArrayList<>();
+            info.add("<gray>Repairs fried scrap parts into working");
+            info.add("<gray>ones, for Credits and goods from your");
+            info.add("<gray>Bay Locker. Some come out <gold>pristine</gold><gray>.");
+            info.add("");
+            info.add("<gray>Mark <white>" + lv.name() + "</white> · pristine chance <gold>" + Math.round(lv.pristine() * 100) + "%");
+            info.add("<gray>Parts repaired: <white>" + Numbers.shortFormat(bay.data.refurbished));
+            if (ws.grade(p.getUniqueId()) < c.refurbGrade) info.add("<red>Needs Grade " + c.refurbGrade);
+            gui.set(4, Gui.icon(Material.GRINDSTONE, "workshop/ui/refurbisher", "<#c8a070>Refurbisher", info));
+
+            // Upgrade
+            List<String> up = new ArrayList<>();
+            if (bay.data.refurbLevel + 1 >= c.refurbLevels.size()) {
+                up.add("<gold>Top mark.");
+            } else {
+                WorkshopConfig.RefurbLevel next = c.refurbLevels.get(bay.data.refurbLevel + 1);
+                up.add("<gray>Next: <white>" + next.name() + "</white> · pristine <gold>" + Math.round(next.pristine() * 100) + "%");
+                up.add("");
+                for (Map.Entry<String, Long> e : next.components().entrySet()) {
+                    long have = BayData.countBase(bay.data.locker, e.getKey());
+                    up.add((have >= e.getValue() ? "<green>✔ " : "<red>✘ ") + "<white>" + e.getValue() + "x</white> <gray>" + ws.items.name(e.getKey()));
+                }
+                if (next.credits() > 0) up.add("<gray>" + eco().format(Currency.CREDITS, next.credits()));
+                up.add("<gray>Grade " + next.grade());
+                up.add("");
+                up.add("<yellow>Click to upgrade");
+            }
+            gui.set(8, Gui.icon(Material.ANVIL, "ui/upgrade", "<aqua>Upgrade Refurbisher", up), e -> { ws.upgradeRefurbisher(p); gui.render(); });
+
+            if (scrap == null) {
+                gui.set(22, Gui.icon(Material.BARRIER, null, "<red>Scrap parts are offline", List.of()));
+            } else {
+                Map<String, Integer> fried = new LinkedHashMap<>();
+                for (ItemStack it : p.getInventory().getStorageContents()) {
+                    scrap.part(it).ifPresent(part -> {
+                        if (part.state() == ScrapService.State.FRIED) fried.merge(part.partId(), it.getAmount(), Integer::sum);
+                    });
+                }
+                int[] slots = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
+                int i = 0;
+                for (Map.Entry<String, Integer> e : fried.entrySet()) {
+                    if (i >= slots.length) break;
+                    String partId = e.getKey();
+                    ItemStack icon = scrap.create(partId, ScrapService.State.FRIED, Math.min(64, e.getValue()));
+                    if (icon == null) continue;
+                    String tier = scrap.part(icon).map(ScrapService.Part::tier).orElse("common");
+                    WorkshopConfig.RefurbCost cost = c.refurbCosts.getOrDefault(tier, new WorkshopConfig.RefurbCost(0, Map.of()));
+                    List<String> l = new ArrayList<>();
+                    l.add("<gray>In your inventory: <white>" + e.getValue());
+                    l.add("");
+                    l.add("<gray>Repair cost, each:");
+                    for (Map.Entry<String, Long> x : cost.components().entrySet()) {
+                        long have = BayData.countBase(bay.data.locker, x.getKey());
+                        l.add((have >= x.getValue() ? "<green>✔ " : "<red>✘ ") + "<white>" + x.getValue() + "x</white> <gray>" + ws.items.name(x.getKey()) + " <dark_gray>(locker " + Numbers.shortFormat(have) + ")");
+                    }
+                    if (cost.credits() > 0) l.add("<gray>" + eco().format(Currency.CREDITS, cost.credits()));
+                    l.add("");
+                    l.add("<yellow>Click</yellow> <gray>to repair one");
+                    l.add("<yellow>Shift-click</yellow> <gray>to repair them all");
+                    var meta = icon.getItemMeta();
+                    meta.lore(Text.lore(l));
+                    icon.setItemMeta(meta);
+                    gui.set(slots[i++], icon, ev -> { ws.refurbish(p, partId, ev.getClick().isShiftClick()); gui.render(); });
+                }
+                if (fried.isEmpty()) {
+                    gui.set(31, Gui.icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "ui/socket_empty", "<gray>No fried parts in your inventory", List.of(
+                            "<gray>Scrap parts drop from mining, fishing,", "<gray>parkour, your workshop, the Undercroft",
+                            "<gray>and contracts. Most come out fried.")));
+                }
+            }
+            gui.set(49, Gui.icon(Material.ARROW, "ui/back", "<gray>Terminal", List.of()), e -> { Gui.click(p); main(p); });
+        }).open(p);
     }
 
     // =============================================================================================

@@ -12,11 +12,14 @@ import dev.spacepunk.prison.data.PlayerProfile;
 import dev.spacepunk.prison.drill.DrillConfig.EnchantDef;
 import dev.spacepunk.prison.drill.DrillConfig.FrameDef;
 import dev.spacepunk.prison.drill.DrillConfig.ModuleDef;
+import dev.spacepunk.prison.util.Text;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -242,46 +245,189 @@ public final class DrillManager implements DrillService {
         return FrameResult.OK;
     }
 
-    /** Admin: set a frame directly. Modules in sockets the new frame lacks go back to the player. */
+    /** Admin: set a frame directly. Modules that no longer fit the rig go back to the player. */
     public void setFrame(Player p, FrameDef f) {
         DrillData d = data.get(p.getUniqueId());
         if (d == null) return;
         d.frame = f.id();
-        for (int i = f.sockets(); i < d.sockets.size(); i++) {
-            ModuleDef m = cfg.module(d.socket(i));
-            if (m != null) give(p, items.module(m));
-            d.sockets.set(i, null);
-        }
+        effective.remove(p.getUniqueId());
+        ejectMisfits(p);
         changed(p);
     }
 
-    /** Puts a module into the first free socket. Returns the socket index or -1 (no free socket / duplicate). */
-    public int socket(Player p, ModuleDef m) {
+    // ---- module rig ----
+
+    /** Gives back modules from the old socket system (version 1 data) as items. Returns how many. */
+    public int migrateSockets(Player p) {
         DrillData d = data.get(p.getUniqueId());
-        if (d == null) return -1;
-        FrameDef f = cfg.frame(d.frame);
-        for (int i = 0; i < f.sockets(); i++) {
-            if (m.id().equals(d.socket(i))) return -2;
+        if (d == null || d.sockets.isEmpty()) return 0;
+        int n = 0;
+        for (String id : d.sockets) {
+            ModuleDef m = cfg.module(id);
+            if (m == null) continue;
+            give(p, items.module(m, 1));
+            n++;
         }
-        for (int i = 0; i < f.sockets(); i++) {
-            if (cfg.module(d.socket(i)) == null) {
-                d.socket(i, m.id());
-                changed(p);
-                return i;
+        d.sockets.clear();
+        d.version = 2;
+        changed(p);
+        return n;
+    }
+
+    /** Modules that no longer fit the rig (frame or config change) go back to the player as items. */
+    public int ejectMisfits(Player p) {
+        DrillData d = data.get(p.getUniqueId());
+        if (d == null) return 0;
+        ModuleRig rig = ModuleRig.build(cfg, d);
+        List<DrillData.Placed> keep = new ArrayList<>();
+        int n = 0;
+        for (DrillData.Placed pl : d.rig) {
+            ModuleRig.Entry e = null;
+            for (ModuleRig.Entry x : rig.entries) if (x.placed == pl) e = x;
+            if (e == null) continue; // module removed from config: nothing to give back
+            if ("Doesn't fit this rig".equals(e.problem)) {
+                give(p, items.module(e.def, pl.mk));
+                n++;
+            } else {
+                keep.add(pl);
             }
         }
-        return -1;
+        if (n > 0 || keep.size() != d.rig.size()) {
+            d.rig = keep;
+            changed(p);
+        }
+        return n;
     }
 
-    /** Takes the module out of a socket and returns its item, or null if empty. */
-    public ItemStack unsocket(Player p, int i) {
+    /** Fits a module with its pivot on (x, y). Returns null on success, else why not. Does not touch the item. */
+    public String place(Player p, ModuleDef m, int mk, int x, int y, int rot) {
+        DrillData d = data.get(p.getUniqueId());
+        if (d == null) return "Your drill is still loading.";
+        ModuleRig rig = ModuleRig.build(cfg, d);
+        String why = rig.canPlace(cfg, m, x, y, rot, -1);
+        if (why != null) return why;
+        Set<String> combosBefore = activeComboIds(rig);
+        d.rig.add(new DrillData.Placed(m.id(), Math.max(1, Math.min(cfg.maxMark, mk)), x, y, Math.floorMod(rot, 4)));
+        changed(p);
+        announceCombos(p, d, combosBefore);
+        return null;
+    }
+
+    /** Takes a fitted module off the rig and returns it as an item (or null if the index is wrong). */
+    public ItemStack takeOut(Player p, int entryIndex) {
         DrillData d = data.get(p.getUniqueId());
         if (d == null) return null;
-        ModuleDef m = cfg.module(d.socket(i));
-        if (m == null) return null;
-        d.socket(i, null);
+        ModuleRig rig = ModuleRig.build(cfg, d);
+        if (entryIndex < 0 || entryIndex >= rig.entries.size()) return null;
+        ModuleRig.Entry e = rig.entries.get(entryIndex);
+        d.rig.remove(e.placed);
         changed(p);
-        return items.module(m);
+        return items.module(e.def, e.placed.mk);
+    }
+
+    private static Set<String> activeComboIds(ModuleRig rig) {
+        Set<String> out = new java.util.HashSet<>();
+        for (DrillConfig.ComboDef c : rig.activeCombos) out.add(c.id());
+        return out;
+    }
+
+    private void announceCombos(Player p, DrillData d, Set<String> before) {
+        ModuleRig rig = effective(p.getUniqueId()).rig;
+        for (DrillConfig.ComboDef c : rig.activeCombos) {
+            if (before.contains(c.id())) continue;
+            boolean first = d.combos.add(c.id());
+            p.playSound(p.getLocation(), org.bukkit.Sound.BLOCK_BEACON_POWER_SELECT, 0.8f, 1.8f);
+            if (first) {
+                p.showTitle(net.kyori.adventure.title.Title.title(Text.mm("<gold>" + c.name()), Text.mm("<gray>Hidden module combo discovered!")));
+                p.playSound(p.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.4f);
+                org.bukkit.Bukkit.broadcast(Text.mm(Text.PREFIX + "<white>" + p.getName() + "</white> <gray>discovered the hidden module combo <gold>"
+                        + c.name() + "</gold><gray>."));
+                save(p.getUniqueId());
+            }
+            Text.send(p, "<gold>✦ " + c.name() + "</gold> <gray>online: " + c.lore());
+        }
+    }
+
+    // ---- fusing ----
+
+    public record FuseCost(String partId, String state, int amount) {}
+
+    /** Parts needed to fuse two modules of this mark into the next one (amount 0 = none). */
+    public FuseCost fuseCost(ModuleDef m, int mk) {
+        DrillConfig.PartCost pc = cfg.fuseParts.get(mk + 1);
+        if (pc == null || pc.amount() <= 0 || m.corePart() == null) return new FuseCost(m.corePart(), "WORKING", 0);
+        return new FuseCost(m.corePart(), pc.state(), pc.amount());
+    }
+
+    /** Fuses two modules of (id, mk) from the inventory into one of mk + 1. Returns null on success, else why not. */
+    public String fuse(Player p, ModuleDef m, int mk) {
+        if (mk >= cfg.maxMark) return m.name() + " is already at the top mark.";
+        PlayerInventory inv = p.getInventory();
+        List<Integer> slots = new ArrayList<>();
+        for (int i = 0; i < inv.getSize() && slots.size() < 2; i++) {
+            ItemStack it = inv.getItem(i);
+            if (m.id().equals(items.moduleId(it)) && items.moduleMark(it) == mk) slots.add(i);
+        }
+        if (slots.size() < 2) return "You need two " + m.name() + " " + DrillMath.roman(mk) + " in your inventory.";
+        FuseCost cost = fuseCost(m, mk);
+        dev.spacepunk.prison.api.ScrapService scrap = Services.find(dev.spacepunk.prison.api.ScrapService.class).orElse(null);
+        if (cost.amount() > 0) {
+            if (scrap == null) return "Fusing to " + DrillMath.roman(mk + 1) + " needs scrap parts, which aren't available right now.";
+            dev.spacepunk.prison.api.ScrapService.State st = dev.spacepunk.prison.api.ScrapService.State.parse(cost.state());
+            if (scrap.count(p, cost.partId(), st) < cost.amount()) {
+                return "Fusing to " + DrillMath.roman(mk + 1) + " needs " + cost.amount() + "x " + scrap.partName(cost.partId(), st) + "<red>.";
+            }
+            scrap.take(p, cost.partId(), st, cost.amount());
+        }
+        for (int slot : slots) inv.setItem(slot, null);
+        give(p, items.module(m, mk + 1));
+        DrillData d = data.get(p.getUniqueId());
+        if (d != null) {
+            d.modulesFused++;
+            markStatsDirty(p.getUniqueId());
+        }
+        return null;
+    }
+
+    // ---- schematics ----
+
+    public boolean knows(UUID id, String moduleId) {
+        DrillData d = data.get(id);
+        return d != null && (d.schematics.contains(moduleId) || cfg.startingSchematics.contains(moduleId));
+    }
+
+    /** Learns a schematic. Returns false if already known or unknown module. */
+    public boolean learn(UUID id, String moduleId) {
+        DrillData d = data.get(id);
+        if (d == null || cfg.module(moduleId) == null || knows(id, moduleId)) return false;
+        d.schematics.add(moduleId);
+        save(id);
+        return true;
+    }
+
+    // ---- rig expansion ----
+
+    public enum ExpandResult { OK, MAX, FRAME, POOR }
+
+    /** The next rig expansion, or null if all are bought. */
+    public DrillConfig.ExpansionDef nextExpansion(DrillData d) {
+        return d.expansion < cfg.expansions.size() ? cfg.expansions.get(d.expansion) : null;
+    }
+
+    public ExpandResult expand(Player p) {
+        DrillData d = data.get(p.getUniqueId());
+        if (d == null) return ExpandResult.MAX;
+        DrillConfig.ExpansionDef next = nextExpansion(d);
+        if (next == null) return ExpandResult.MAX;
+        FrameDef f = cfg.frame(d.frame);
+        FrameDef min = next.frame().isEmpty() ? null : cfg.frame(next.frame());
+        if (!f.hasRig() || (min != null && f.index() < min.index())) return ExpandResult.FRAME;
+        if (next.shards() > 0 && !Services.get(EconomyService.class).take(p.getUniqueId(), Currency.SHARDS, next.shards(), "drill:rig-expansion")) {
+            return ExpandResult.POOR;
+        }
+        d.expansion++;
+        changed(p);
+        return ExpandResult.OK;
     }
 
     public void give(Player p, ItemStack item) {
@@ -328,10 +474,56 @@ public final class DrillManager implements DrillService {
         return out;
     }
 
-    @Override public ItemStack createModuleItem(String moduleId) {
+    @Override public ItemStack createModuleItem(String moduleId) { return createModuleItem(moduleId, 1); }
+
+    @Override public ItemStack createModuleItem(String moduleId, int mark) {
         ModuleDef m = cfg.module(moduleId);
-        return m == null ? null : items.module(m);
+        return m == null ? null : items.module(m, mark);
     }
+
+    @Override public java.util.List<String> moduleIds() { return java.util.List.copyOf(cfg.modules.keySet()); }
+
+    @Override public String moduleName(String moduleId) {
+        ModuleDef m = cfg.module(moduleId);
+        return m == null ? moduleId : m.coloredName();
+    }
+
+    @Override public String moduleRarity(String moduleId) {
+        ModuleDef m = cfg.module(moduleId);
+        return m == null ? null : m.rarity().name();
+    }
+
+    @Override public boolean knowsSchematic(UUID player, String moduleId) { return knows(player, moduleId); }
+
+    @Override public boolean learnSchematic(UUID player, String moduleId) { return learn(player, moduleId); }
+
+    @Override public String learnRandomSchematic(UUID player, String rarity) {
+        java.util.List<String> pool = new java.util.ArrayList<>();
+        double total = 0;
+        for (ModuleDef m : cfg.modules.values()) {
+            if (m.rarity().name().equalsIgnoreCase(rarity) && m.weight() > 0 && !knows(player, m.id())) {
+                pool.add(m.id());
+                total += m.weight();
+            }
+        }
+        if (pool.isEmpty()) return null;
+        double r = java.util.concurrent.ThreadLocalRandom.current().nextDouble() * total;
+        String chosen = pool.getLast();
+        for (String id : pool) {
+            r -= cfg.module(id).weight();
+            if (r <= 0) { chosen = id; break; }
+        }
+        return learn(player, chosen) ? chosen : null;
+    }
+
+    @Override public double scrapMultiplier(UUID player) {
+        DrillMath.Effective e = effective(player);
+        return e == null ? 1.0 : e.scrapMultiplier;
+    }
+
+    @Override public String moduleId(ItemStack item) { return items.moduleId(item); }
+
+    @Override public int moduleMark(ItemStack item) { return items.moduleMark(item); }
 
     @Override public boolean isModule(ItemStack item) { return items.moduleId(item) != null; }
 }

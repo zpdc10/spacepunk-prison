@@ -41,6 +41,7 @@ frames:
     cost-currency: TOKENS
     cost: 0
     sockets: 0
+    # Module rig: a grid of cells that modules fit into by shape. No rig on this frame.
     # Block break speed multiplier before Bore Speed (1.0 = a plain netherite pickaxe).
     base-speed: 0.5
     # Extra heat capacity on top of heat.base-capacity.
@@ -55,9 +56,10 @@ frames:
     cost-currency: CREDITS
     cost: 175000
     sockets: 1
+    rig: { width: 2, height: 2 }
     base-speed: 0.65
     heat-capacity: 25
-    lore: "Stripped from a decommissioned loader. One module socket."
+    lore: "Stripped from a decommissioned loader. A small module rig."
   industrial:
     name: Industrial
     color: "#d0a040"
@@ -66,6 +68,7 @@ frames:
     cost-currency: SHARDS
     cost: 5
     sockets: 2
+    rig: { width: 3, height: 3 }
     base-speed: 0.85
     heat-capacity: 60
     lore: "Foundry-grade housing. Heavy, loud, reliable."
@@ -77,6 +80,8 @@ frames:
     cost-currency: SHARDS
     cost: 30
     sockets: 3
+    # core = cells that only take Legendary modules (every Legendary must cover one). [x, y] from the top left.
+    rig: { width: 4, height: 3, core: [[3, 1]] }
     base-speed: 1.1
     heat-capacity: 110
     lore: "Breaching drill from the station's security armory."
@@ -88,6 +93,7 @@ frames:
     cost-currency: SHARDS
     cost: 120
     sockets: 4
+    rig: { width: 5, height: 4, core: [[4, 1], [4, 2]] }
     base-speed: 1.5
     heat-capacity: 180
     lore: "Experimental core-tapping rig. Nobody knows who built it."
@@ -244,76 +250,277 @@ heat:
     perfect-max: 0.95
     perfect-multiplier: 2.0
 
-# Modules: found while mining (or given by admins), slotted into frame sockets. Each changes how the drill plays.
-# rarity: COMMON, RARE, EPIC, LEGENDARY. weight = share of salvage finds. model = spacepunk:module/<model> (default: the id).
+# ---------------------------------------------------------------------------------------------------------------
+# Modules: physical parts fitted on the frame's module rig (shift + right-click the drill, Module Rig).
+# Each has a shape (DOT 1x1, BAR2 1x2, BAR3 1x3, ELL 3-cell L, TEE, ZIG, SQUARE 2x2) that must fit the grid.
+#
+# pros / cons map a stat to its Mk I multiplier (1.5 = +50%, 0.85 = -15%). Every module keeps a downside.
+# Stats: break-speed, yield, tokens, rare, scrap, sell, heat-capacity, hand-heat, cooling, proc-heat,
+#   shaped-chance, shaped-radius, shaped-heat, jack-chance, laser-chance, laser-length, overclock-chance,
+#   burst, stall, cache-chance. Flags (true): auto-sell.
+# rarity: COMMON, RARE, EPIC, LEGENDARY. Legendary modules need a core cell. weight = share of finds.
+# family: set bonuses and limits (families: below). rules: edge (must touch the rig's border), needs: <family>
+#   (must touch one), avoid: <family> (must not touch one), drain: x (cons of every touching module are
+#   raised to this extra power). A module that breaks a rule goes offline until it's moved.
+# core-part: the scrap part (raredrops.yml parts:) it needs to fuse to high marks. model = spacepunk:module/<model>.
+# ---------------------------------------------------------------------------------------------------------------
+
+# Marks: fuse two identical modules of the same mark into the next mark (Module Rig, Fuse Modules).
+# pros become value^pro-power, cons become value^con-power, per mark Mk I..Mk V.
+module-marks:
+  max: 5
+  pro-power: [1.0, 1.2, 1.4, 1.6, 1.8]
+  con-power: [1.0, 0.85, 0.7, 0.55, 0.4]
+  # Scrap parts (the module's core-part) needed to fuse INTO this mark. state = minimum quality.
+  fuse-parts:
+    3: { state: WORKING, amount: 2 }
+    4: { state: PRISTINE, amount: 1 }
+    5: { state: PRISTINE, amount: 3 }
+
+# Rig expansions, bought in order with Shards in the Module Rig. Each adds columns to the right of the rig.
+# frame = the lowest frame that can take it. Kept forever (through prestige).
+rig-expansion:
+  - { shards: 15, columns: 1, frame: industrial }
+  - { shards: 75, columns: 1, frame: military }
+
+# Schematics every player knows from the start (the Assembly Bench in the workshop builds known schematics).
+starting-schematics: [servo_actuator, ore_sifter]
+
+# Families: running several online modules of a family gives the listed bonuses (each threshold adds on).
+# max = how many of the family one rig can run.
+families:
+  thermal:
+    name: Thermal
+    color: "#60b8ff"
+    lore: "Coolant, fins and heat recyclers."
+    bonuses:
+      2: { heat-capacity: 1.15 }
+      3: { cooling: 1.3, hand-heat: 0.85 }
+  kinetic:
+    name: Kinetic
+    color: "#e0a040"
+    lore: "Motors, hammers and lenses for the area enchants."
+    bonuses:
+      2: { shaped-chance: 1.1, jack-chance: 1.1, laser-chance: 1.1 }
+      3: { break-speed: 1.08, proc-heat: 0.85 }
+  salvage:
+    name: Salvage
+    color: "#9ccf6a"
+    lore: "Sorters and sifters that pull value out of the slag."
+    bonuses:
+      2: { rare: 1.15 }
+      3: { scrap: 1.25, tokens: 1.1 }
+  arc:
+    name: Arc
+    color: "#ff70d0"
+    max: 2
+    lore: "High-voltage parts. Unstable: a rig can only run two."
+    bonuses:
+      2: { burst: 1.25, overclock-chance: 1.15 }
+  void:
+    name: Void
+    color: "#a070ff"
+    max: 1
+    lore: "Core-tapping tech. One per rig, and it drains its neighbours."
+
 modules:
-  magnet_coil:
-    name: Magnet Coil
-    rarity: RARE
-    weight: 30
-    material: BREEZE_ROD
-    lore: "A coil that drags ore straight to the station's buyers."
-    pros: ["Auto-sells everything you mine"]
-    cons: ["No Token drops"]
-  plasma_cutter:
-    name: Plasma Cutter
-    rarity: EPIC
-    weight: 15
-    material: BLAZE_ROD
-    lore: "Superheated plasma lance bolted to the charge chamber."
-    pros: ["Shaped Charge radius x2"]
-    cons: ["Shaped Charge heat x2"]
-    radius-multiplier: 2.0
-    heat-multiplier: 2.0
-  scavenger_rig:
-    name: Scavenger Rig
-    rarity: RARE
-    weight: 30
-    material: TRIAL_KEY
-    lore: "Sorting arms that pick the good bits out of the slag."
-    pros: ["Rare drop and module odds x2"]
-    cons: ["Sell price -15%"]
-    rare-multiplier: 2.0
-    sell-multiplier: 0.85
+  # ---- Common ----
+  servo_actuator:
+    name: Servo Actuator
+    rarity: COMMON
+    family: kinetic
+    shape: DOT
+    weight: 40
+    material: LIGHTNING_ROD
+    lore: "A salvaged loader servo bolted to the bore head."
+    pros: { break-speed: 1.08 }
+    cons: { hand-heat: 1.2 }
+    core-part: servo_motor
+  ore_sifter:
+    name: Ore Sifter
+    rarity: COMMON
+    family: salvage
+    shape: BAR2
+    weight: 40
+    material: IRON_BARS
+    lore: "A shaker screen that catches the ore the bore throws."
+    pros: { yield: 1.06 }
+    cons: { tokens: 0.85 }
+    core-part: circuit_board
   coolant_loop:
     name: Cryo Coolant Loop
     rarity: COMMON
-    weight: 45
+    family: thermal
+    shape: ELL
+    weight: 40
     material: PRISMARINE_SHARD
     lore: "Stolen from the Cryo Vaults. Still frosty."
-    pros: ["Heat capacity +60%"]
-    cons: ["Overclock can't fire"]
-    capacity-multiplier: 1.6
-  token_condenser:
-    name: Token Condenser
+    pros: { heat-capacity: 1.4 }
+    cons: { overclock-chance: 0.5 }
+    core-part: capacitor
+  heat_sink_fins:
+    name: Heat Sink Fins
+    rarity: COMMON
+    family: thermal
+    shape: BAR2
+    weight: 35
+    material: IRON_TRAPDOOR
+    lore: "Copper fins. Useless unless they can breathe."
+    pros: { cooling: 1.6 }
+    cons: { break-speed: 0.95 }
+    rules: { edge: true }
+    core-part: copper_wiring
+  # ---- Rare ----
+  magnet_coil:
+    name: Magnet Coil
+    rarity: RARE
+    family: salvage
+    shape: ELL
+    weight: 30
+    material: BREEZE_ROD
+    lore: "A coil that drags ore straight to the station's buyers."
+    pros: { auto-sell: true, sell: 1.03 }
+    cons: { tokens: 0.3 }
+    core-part: copper_wiring
+  scavenger_rig:
+    name: Scavenger Rig
+    rarity: RARE
+    family: salvage
+    shape: BAR3
+    weight: 30
+    material: TRIAL_KEY
+    lore: "Sorting arms that pick the good bits out of the slag."
+    pros: { rare: 1.6, scrap: 1.3 }
+    cons: { sell: 0.85 }
+    core-part: servo_motor
+  arc_capacitor:
+    name: Arc Capacitor
+    rarity: RARE
+    family: arc
+    shape: DOT
+    weight: 25
+    material: COPPER_BULB
+    lore: "Holds a charge big enough to kick the overclock awake."
+    pros: { overclock-chance: 1.6 }
+    cons: { proc-heat: 1.25 }
+    rules: { avoid: thermal }
+    core-part: capacitor
+  thermal_recycler:
+    name: Thermal Recycler
+    rarity: RARE
+    family: thermal
+    shape: TEE
+    weight: 25
+    material: BLAST_FURNACE
+    lore: "Feeds waste heat back into the bore on every vent."
+    pros: { burst: 1.5 }
+    cons: { heat-capacity: 0.85 }
+    core-part: power_cell
+  # ---- Epic ----
+  plasma_cutter:
+    name: Plasma Cutter
     rarity: EPIC
+    family: kinetic
+    shape: BAR3
     weight: 15
-    material: ECHO_SHARD
-    # No pack art yet: uses the fallback module model.
-    model: unknown
-    lore: "Condenses token residue out of the exhaust. Runs hot."
-    pros: ["Tokens x1.5"]
-    cons: ["Heat from hand mining x2.5"]
-    token-multiplier: 1.5
-    hand-heat-multiplier: 2.5
+    material: BLAZE_ROD
+    lore: "Superheated plasma lance. Melts itself without coolant beside it."
+    pros: { shaped-radius: 1.5 }
+    cons: { shaped-heat: 2.0 }
+    rules: { needs: thermal }
+    core-part: power_cell
   seismic_dampener:
     name: Seismic Dampener
     rarity: EPIC
+    family: kinetic
+    shape: ELL
     weight: 12
     material: RECOVERY_COMPASS
-    # No pack art yet: uses the fallback module model.
-    model: unknown
     lore: "Tunes the hammer to the deck's resonance."
-    pros: ["Jackhammer fires twice as often"]
-    cons: ["Cutting Laser can't fire"]
-    jackhammer-multiplier: 2.0
+    pros: { jack-chance: 1.6 }
+    cons: { laser-chance: 0.4 }
+    core-part: seismic_sensor
+  graviton_lens:
+    name: Graviton Lens
+    rarity: EPIC
+    family: kinetic
+    shape: BAR3
+    weight: 12
+    material: SPYGLASS
+    lore: "Bends the cutting beam down the length of the deck."
+    pros: { laser-length: 1.5, laser-chance: 1.2 }
+    cons: { shaped-chance: 0.5 }
+    rules: { edge: true }
+    core-part: gyro_stabilizer
+  token_condenser:
+    name: Token Condenser
+    rarity: EPIC
+    family: salvage
+    shape: TEE
+    weight: 15
+    material: ECHO_SHARD
+    lore: "Condenses token residue out of the exhaust. Runs hot, hates sparks."
+    pros: { tokens: 1.3 }
+    cons: { hand-heat: 2.0 }
+    rules: { avoid: arc }
+    core-part: logic_chip
+  # ---- Legendary (need a core cell) ----
   overcharger:
     name: Overcharger
     rarity: LEGENDARY
+    family: arc
+    shape: TEE
     weight: 5
     material: NETHER_STAR
     lore: "Bypasses every safety limiter. Don't tell maintenance."
-    pros: ["Overclock and vent bursts last x2"]
-    cons: ["Overheat stalls last x2"]
-    burst-multiplier: 2.0
-    stall-multiplier: 2.0
+    pros: { burst: 1.7, overclock-chance: 1.2 }
+    cons: { stall: 2.0 }
+    core-part: military_relay
+  quantum_sorter:
+    name: Quantum Sorter
+    rarity: LEGENDARY
+    family: void
+    shape: SQUARE
+    weight: 4
+    material: HEART_OF_THE_SEA
+    lore: "Sorts ore it hasn't mined yet. Nobody asks how."
+    pros: { rare: 1.5, yield: 1.12, scrap: 1.25 }
+    cons: { break-speed: 0.85 }
+    rules: { drain: 1.3 }
+    core-part: data_core
+  singularity_core:
+    name: Singularity Core
+    rarity: LEGENDARY
+    family: void
+    shape: SQUARE
+    weight: 3
+    material: CONDUIT
+    lore: "A pinhole of collapsed hull plating, humming in a cage."
+    pros: { shaped-chance: 1.3, jack-chance: 1.3, laser-chance: 1.3 }
+    cons: { heat-capacity: 0.7 }
+    rules: { drain: 1.3 }
+    core-part: seismic_sensor
+
+# Hidden combos: the two modules fitted side by side (touching), both online. Players discover them.
+# effects multiply stats like a module's pros; clears switches off flags.
+combos:
+  cold_fusion:
+    name: Cold Fusion
+    modules: [coolant_loop, overcharger]
+    lore: "Overheat stalls are short, and the coolant stops choking the overclock."
+    effects: { stall: 0.45, overclock-chance: 2.0 }
+  strip_miner:
+    name: Strip Miner
+    modules: [magnet_coil, ore_sifter]
+    lore: "The sifter skims Tokens off the magnet's haul."
+    effects: { tokens: 2.5 }
+  chain_reaction:
+    name: Chain Reaction
+    modules: [plasma_cutter, seismic_dampener]
+    lore: "Charges and hammers set each other off."
+    effects: { shaped-chance: 1.25, jack-chance: 1.25 }
+  event_horizon:
+    name: Event Horizon
+    modules: [singularity_core, graviton_lens]
+    lore: "The lens focuses the singularity: lasers reach twice as far."
+    effects: { laser-length: 1.5, shaped-chance: 1.6 }

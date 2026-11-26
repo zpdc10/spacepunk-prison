@@ -1,6 +1,11 @@
 package dev.spacepunk.prison.raredrops;
 
 import dev.spacepunk.prison.api.MineService;
+import dev.spacepunk.prison.api.ScrapService;
+import dev.spacepunk.prison.api.event.ContrabandSmuggledEvent;
+import dev.spacepunk.prison.api.event.FishCaughtEvent;
+import dev.spacepunk.prison.api.event.SeaCreatureKilledEvent;
+import dev.spacepunk.prison.api.event.UndercroftKillEvent;
 import dev.spacepunk.prison.api.event.MineBlocksBrokenEvent;
 import dev.spacepunk.prison.api.event.OreSellEvent;
 import dev.spacepunk.prison.data.ProfileLoadedEvent;
@@ -24,14 +29,39 @@ import org.bukkit.inventory.ItemStack;
 /** Mining rolls, right-click use of rare items, crafting protection, collection sell bonus, profile load. */
 final class RareListener implements Listener {
     private final RareDropsManager rare;
+    private final ScrapManager scrap;
 
-    RareListener(RareDropsManager rare) { this.rare = rare; }
+    RareListener(RareDropsManager rare, ScrapManager scrap) {
+        this.rare = rare;
+        this.scrap = scrap;
+    }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onMine(MineBlocksBrokenEvent e) {
         if (e.cause() == MineService.BreakCause.ADMIN) return;
         int deck = Math.max(1, (e.mine().requiredGrade() - 1) / 5 + 1);
-        rare.roll(e.player(), e.blockCount(), e.cause() == MineService.BreakCause.HAND, deck);
+        boolean hand = e.cause() == MineService.BreakCause.HAND;
+        rare.roll(e.player(), e.blockCount(), hand, deck);
+        scrap.roll(e.player(), ScrapService.MINING, e.blockCount(), hand ? 1.0 : rare.cfg().scrapEnchantRate);
+    }
+
+    // ---- scrap from other activities ----
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onFish(FishCaughtEvent e) { scrap.roll(e.player(), ScrapService.FISHING, 1, 1.0); }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onSeaCreature(SeaCreatureKilledEvent e) { scrap.roll(e.player(), ScrapService.SEA_CREATURE, 1, 1.0); }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onUndercroftKill(UndercroftKillEvent e) {
+        if (e.killer() != null) scrap.roll(e.killer(), ScrapService.UNDERCROFT_KILL, 1, 1.0);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onSmuggle(ContrabandSmuggledEvent e) {
+        int delivered = Math.max(0, e.items() - e.confiscated());
+        if (delivered > 0) scrap.roll(e.player(), ScrapService.SMUGGLE, 1, 1.0);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -79,7 +109,9 @@ final class RareListener implements Listener {
                     default -> {}
                 }
             }
-            case FRAGMENT -> Text.send(p, "<gray>Assemble fragments into a drill module in <white>/salvage</white>.");
+            case FRAGMENT -> Text.send(p, "<gray>Decode fragments into a module schematic in <white>/salvage</white>.");
+            case PART -> Text.send(p, "<gray>Scrap parts build drill modules at your workshop's <white>Assembly Bench</white>"
+                    + ("FRIED".equals(drop.state()) ? ". Fried ones need fixing at its <white>Refurbisher</white> first." : " and fuse modules to high marks."));
         }
     }
 

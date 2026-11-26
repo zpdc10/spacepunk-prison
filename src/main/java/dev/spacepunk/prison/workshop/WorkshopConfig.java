@@ -56,7 +56,12 @@ final class WorkshopConfig {
 
     record Quality(String prefix, double price) {}
 
-    record Assembly(String id, String name, int grade, long credits, Map<String, Long> components, String command) {}
+    /** A drill module recipe; id = the drill module id. parts = scrap parts (working or better) from the inventory. */
+    record Assembly(String id, String name, int grade, long credits, Map<String, Long> components, Map<String, Integer> parts) {}
+
+    record RefurbLevel(String name, double pristine, long credits, int grade, Map<String, Long> components) {}
+
+    record RefurbCost(long credits, Map<String, Long> components) {}
 
     record Decor(Material material, int amount, long price) {}
 
@@ -88,6 +93,10 @@ final class WorkshopConfig {
     final ZoneId zone;
     final double offlineHours, offlineEfficiency;
     final Map<String, Assembly> assembly;
+    final int refurbGrade;
+    final List<RefurbLevel> refurbLevels;
+    /** Part tier id (common..legendary) -> cost to repair one fried part. */
+    final Map<String, RefurbCost> refurbCosts;
     final List<Decor> decor;
     final float yawOffset;
     final boolean hud;
@@ -311,11 +320,36 @@ final class WorkshopConfig {
                 Map<String, Long> comps = new LinkedHashMap<>();
                 ConfigurationSection cs = s.getConfigurationSection("components");
                 if (cs != null) for (String k : cs.getKeys(false)) comps.put(goodId(k), cs.getLong(k));
+                Map<String, Integer> parts = new LinkedHashMap<>();
+                ConfigurationSection pcs = s.getConfigurationSection("parts");
+                if (pcs != null) for (String k : pcs.getKeys(false)) parts.put(k, Math.max(0, pcs.getInt(k)));
                 as.put(id, new Assembly(id, s.getString("name", id), s.getInt("grade", 1), s.getLong("credits", 0),
-                        Map.copyOf(comps), s.getString("command", "")));
+                        Collections.unmodifiableMap(comps), Collections.unmodifiableMap(parts)));
             }
         }
         assembly = Collections.unmodifiableMap(as);
+
+        refurbGrade = Math.max(1, y.getInt("refurbisher.grade", 1));
+        List<RefurbLevel> refurbLevelList = new ArrayList<>();
+        for (Map<?, ?> m : y.getMapList("refurbisher.levels")) {
+            refurbLevelList.add(new RefurbLevel(String.valueOf(m.get("name") == null ? "Mk " + (refurbLevelList.size() + 1) : m.get("name")),
+                    num(m, "pristine", 0.05).doubleValue(), num(m, "credits", 0).longValue(), num(m, "grade", 1).intValue(), goods(m.get("components"))));
+        }
+        if (refurbLevelList.isEmpty()) refurbLevelList.add(new RefurbLevel("Mk I", 0.05, 0, 1, Map.of()));
+        refurbLevels = List.copyOf(refurbLevelList);
+        Map<String, RefurbCost> refurbCostMap = new LinkedHashMap<>();
+        ConfigurationSection refurbSec = y.getConfigurationSection("refurbisher.costs");
+        if (refurbSec != null) {
+            for (String tier : refurbSec.getKeys(false)) {
+                ConfigurationSection t = refurbSec.getConfigurationSection(tier);
+                if (t == null) continue;
+                Map<String, Long> comps = new LinkedHashMap<>();
+                ConfigurationSection cs = t.getConfigurationSection("components");
+                if (cs != null) for (String k : cs.getKeys(false)) comps.put(goodId(k), cs.getLong(k));
+                refurbCostMap.put(tier.toLowerCase(Locale.ROOT), new RefurbCost(t.getLong("credits", 0), Collections.unmodifiableMap(comps)));
+            }
+        }
+        refurbCosts = Collections.unmodifiableMap(refurbCostMap);
 
         List<Decor> dl = new ArrayList<>();
         for (Map<?, ?> m : y.getMapList("decor")) {
@@ -361,6 +395,14 @@ final class WorkshopConfig {
     // ---- id helpers ----
 
     /** "copper_ingot" -> "spacepunk:copper_ingot"; namespaced ids stay. */
+    private static Map<String, Long> goods(Object o) {
+        Map<String, Long> comps = new LinkedHashMap<>();
+        if (o instanceof Map<?, ?> cm) {
+            cm.forEach((k, v) -> { if (v instanceof Number n) comps.put(goodId(String.valueOf(k)), n.longValue()); });
+        }
+        return Collections.unmodifiableMap(comps);
+    }
+
     static String goodId(String s) {
         String k = s.trim().toLowerCase(Locale.ROOT);
         return k.contains(":") ? k : NS + k;

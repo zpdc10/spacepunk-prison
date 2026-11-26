@@ -1103,6 +1103,9 @@ def main():
     # Workshop machines, conveyor, goods and menu icons (workshop module); art lives in workshop_art.py.
     import workshop_art
     workshop_art.workshop(sys.modules[__name__])
+    # Module rig cells, new drill modules and scrap parts (drill + raredrops modules); art lives in scrap_art.py.
+    import scrap_art
+    scrap_art.scrap(sys.modules[__name__])
     pack_meta()
     print(f"wrote {len(written)} files under {ROOT}")
 
