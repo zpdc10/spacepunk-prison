@@ -477,7 +477,14 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
             Text.send(p, "<red>Only the bay owner can remove machines.");
             return;
         }
-        // Buffers go to the locker (anything that doesn't fit is lost, so warn first via the menu lore).
+        // Buffers go to the locker. Refuse rather than lose anything that wouldn't fit.
+        long buffered = m.inputTotal() + m.outputTotal();
+        long space = lockerCapacityOf(bay.plot) - bay.data.lockerUsed();
+        if (buffered > space) {
+            Gui.deny(p);
+            Text.send(p, "<red>Your Bay Locker can't hold this machine's " + buffered + " buffered items. <gray>Sell or take some out first.");
+            return;
+        }
         for (Map<String, Long> buf : List.of(m.input, m.output)) {
             for (Map.Entry<String, Long> e : buf.entrySet()) lockerAddClamped(bay, e.getKey(), e.getValue());
         }
@@ -558,6 +565,19 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
     void conveyorPlaced(Block b, BlockFace flow) {
         Bay bay = bayAt(b.getLocation());
         if (bay != null) bay.data.conveyors.put(BayData.pos(b.getX(), b.getY(), b.getZ()), horizontal(flow).name());
+    }
+
+    /** Sneak + right-click: the bay owner picks a conveyor straight back into their inventory. */
+    void pickupConveyor(Player p, Plot plot, Block b) {
+        if (!plot.ownerId().equals(p.getUniqueId())) {
+            Text.send(p, "<red>Only the bay owner can pick up conveyors.");
+            return;
+        }
+        conveyorRemoved(b);
+        b.setType(Material.AIR, false);
+        give(p, items.conveyor(1));
+        p.playSound(b.getLocation(), Sound.BLOCK_CHAIN_BREAK, 0.6f, 1.2f);
+        save(p.getUniqueId());
     }
 
     void conveyorRemoved(Block b) {

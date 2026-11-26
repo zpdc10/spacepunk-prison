@@ -103,6 +103,7 @@ final class WorkshopItems {
             lore.add("");
             lore.add("<dark_gray>Right-click a block in your bay to place.");
             lore.add("<dark_gray>Output points the way you face.");
+            lore.add("<dark_gray>Sneak + right-click a placed machine to pick it up.");
         }
         return lore;
     }
@@ -137,7 +138,8 @@ final class WorkshopItems {
                     "<gray>Carries items between machines.",
                     "<gray>Place it in your bay: it runs the way you face.",
                     "<gray>A machine pushing into a conveyor line feeds",
-                    "<gray>the machine at the end of the line.")));
+                    "<gray>the machine at the end of the line.",
+                    "<dark_gray>Sneak + right-click a placed conveyor to pick it up.")));
             meta.addItemFlags(ItemFlag.values());
             meta.getPersistentDataContainer().set(conveyorKey, PersistentDataType.BYTE, (byte) 1);
         });
