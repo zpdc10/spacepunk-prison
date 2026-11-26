@@ -17,6 +17,8 @@ layout:
   base-y: 40          # bottom layer of every mine
   spacing: 150        # blocks between mine centres
   rim-width: 4        # walkway around the top of each pit
+  enclosed: true      # build each mine as a closed room: walls and a lit ceiling over the pit and walkway
+  room-height: 9      # blocks from the walkway up to the ceiling
 
 refill:
   mined-fraction: 0.65      # refill once 65% of a mine's blocks are gone

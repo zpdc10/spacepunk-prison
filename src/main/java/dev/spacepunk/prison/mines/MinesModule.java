@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-/** Shared mines: 25 refilling pits, block breaking for the mining loop, /mine and /mineadmin. */
+/** Shared mines: 25 refilling mine rooms, block breaking for the mining loop, /mine and /mineadmin. */
 public final class MinesModule implements FeatureModule {
     private SpacepunkPrison plugin;
     private MineManager manager;
@@ -50,10 +50,11 @@ public final class MinesModule implements FeatureModule {
         plugin.addCommand("mineadmin", "Create, place and reset mines", List.of("madmin"), commands.admin());
 
         ticker = plugin.getServer().getScheduler().runTaskTimer(plugin, manager::tick, 20L, 20L);
-        if (config.settings().refillOnStartup()) {
-            // One tick later so every world is fully loaded.
-            plugin.getServer().getScheduler().runTask(plugin, manager::refillAll);
-        }
+        // One tick later so every world is fully loaded: bring generated mines up to the current layout, then refill.
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            upgradeLayout();
+            if (manager.config().settings().refillOnStartup()) manager.refillAll();
+        });
         long placed = manager.mines().stream().filter(Mine::placed).count();
         plugin.getLogger().info("[mines] " + manager.mines().size() + " mines configured, " + placed
                 + " placed, refiller: " + manager.refiller().name());
@@ -114,6 +115,7 @@ public final class MinesModule implements FeatureModule {
             manager.place(m, r, spawn);
             done.add(m);
         }
+        manager.store().layoutVersion(MineLayout.VERSION);
         if (manager.config().settings().setWorldSpawn()) {
             manager.mines().stream().filter(Mine::placed).findFirst().ifPresent(first -> {
                 Location s = first.spawn();
@@ -121,6 +123,29 @@ public final class MinesModule implements FeatureModule {
             });
         }
         return done;
+    }
+
+    /**
+     * Rebuilds the shells of mines placed by the auto layout when they were built with an older layout version,
+     * e.g. open pits from before mines became enclosed rooms. Mines placed by hand (define/create) are left alone.
+     */
+    private void upgradeLayout() {
+        MineStore store = manager.store();
+        if (store.layoutVersion() >= MineLayout.VERSION) return;
+        World world = plugin.getServer().getWorld(manager.config().settings().world());
+        int rebuilt = 0;
+        if (world != null) {
+            for (Mine m : manager.mines()) {
+                if (!m.placed() || m.def().custom()) continue;
+                Region expected = MineLayout.regionFor(manager.config(), m, world);
+                if (!expected.equals(m.region())) continue;
+                MineLayout.buildShell(manager.config(), m, expected, world);
+                rebuilt++;
+            }
+        }
+        store.layoutVersion(MineLayout.VERSION);
+        if (rebuilt > 0) plugin.getLogger().info("[mines] Rebuilt " + rebuilt + " mines with layout v" + MineLayout.VERSION
+                + (manager.config().settings().enclosed() ? " (enclosed rooms)" : ""));
     }
 
     /** Loads (or with create=true / create-if-missing, creates) the void mines world. */
