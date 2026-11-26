@@ -17,7 +17,6 @@ import dev.spacepunk.prison.data.ProfileLoadedEvent;
 import dev.spacepunk.prison.util.Numbers;
 import dev.spacepunk.prison.util.Text;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
-import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -50,7 +49,7 @@ import java.util.function.Supplier;
 /**
  * Owns everything on the player's screen that isn't a menu: the action bar (module segments such as the
  * drill's heat gauge, then mining gains, then flashes), a per-player sidebar, the tab list header/footer and
- * a cargo hold boss bar while mining. Main thread only.
+ * cargo-full alarms. Main thread only.
  */
 final class HudManager implements HudService, Listener {
     static final String DATA_KEY = "hud";
@@ -103,8 +102,6 @@ final class HudManager implements HudService, Listener {
         /** Sidebar blocks owned by other modules (HudService#sidebarSection), in insertion order. */
         final LinkedHashMap<String, List<String>> sections = new LinkedHashMap<>();
 
-        BossBar cargoBar;
-        boolean cargoBarShown;
         long valueForUsed = -1;
         long value;
     }
@@ -175,14 +172,12 @@ final class HudManager implements HudService, Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         State s = states.remove(e.getPlayer().getUniqueId());
-        if (s != null && s.cargoBarShown && s.cargoBar != null) e.getPlayer().hideBossBar(s.cargoBar);
     }
 
     void detachAll() {
         for (Player p : Bukkit.getOnlinePlayers()) {
             State s = states.get(p.getUniqueId());
             if (s == null) continue;
-            if (s.cargoBarShown && s.cargoBar != null) p.hideBossBar(s.cargoBar);
             if (s.board != null && p.getScoreboard() == s.board) p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
             if (!s.lastBar.isEmpty()) p.sendActionBar(Component.empty());
         }
@@ -396,7 +391,7 @@ final class HudManager implements HudService, Listener {
 
     // ------------------------------------------------------------------ ticking
 
-    /** Every few ticks: expire action bar parts, cargo boss bar. */
+    /** Every few ticks: expire action bar parts and the cargo-full state. */
     void tickFast() {
         long now = System.currentTimeMillis();
         for (Player p : Bukkit.getOnlinePlayers()) {
@@ -404,7 +399,6 @@ final class HudManager implements HudService, Listener {
             if (s == null) continue;
             if (s.full && progression().map(pr -> pr.cargoSpace(p.getUniqueId()) > 0).orElse(true)) s.full = false;
             renderActionBar(p, s, false);
-            renderCargoBar(p, s, now);
         }
     }
 
@@ -419,43 +413,6 @@ final class HudManager implements HudService, Listener {
         if (!cfg().tab()) return;
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (states.containsKey(p.getUniqueId())) renderTab(p);
-        }
-    }
-
-    // ------------------------------------------------------------------ cargo boss bar
-
-    private void renderCargoBar(Player p, State s, long now) {
-        HudConfig c = cfg();
-        boolean want = c.cargoBar() && (now - s.lastMined < c.cargoBarLingerMillis()) && progression().isPresent();
-        if (!want) {
-            if (s.cargoBarShown) {
-                p.hideBossBar(s.cargoBar);
-                s.cargoBarShown = false;
-            }
-            return;
-        }
-        UUID id = p.getUniqueId();
-        ProgressionService prog = progression().get();
-        if (s.cargoBar == null) s.cargoBar = BossBar.bossBar(Component.empty(), 0f, BossBar.Color.GREEN, BossBar.Overlay.NOTCHED_20);
-        if (autoSelling(id)) {
-            s.cargoBar.name(Text.mm("<#c8743a><bold>CARGO</bold></#c8743a> <dark_gray>|</dark_gray> <aqua>Auto-sell online</aqua> "
-                    + "<dark_gray>|</dark_gray> <gray>ore is sold as you mine"));
-            s.cargoBar.progress(1f);
-            s.cargoBar.color(BossBar.Color.BLUE);
-        } else {
-            long cap = prog.cargoCapacity(id);
-            long used = cap - prog.cargoSpace(id);
-            double frac = cap <= 0 ? 0 : Math.min(1.0, (double) used / cap);
-            String state = frac >= 1.0 ? "<red><bold>FULL</bold></red> <gray>· <white>/sell</white>"
-                    : "<gray>worth <gold>~" + Numbers.shortFormat(cargoValue(p, s, used)) + " ¢</gold>";
-            s.cargoBar.name(Text.mm("<#c8743a><bold>CARGO HOLD</bold></#c8743a> <white>" + Numbers.shortFormat(used)
-                    + "</white><dark_gray>/</dark_gray><gray>" + Numbers.shortFormat(cap) + "</gray> <dark_gray>|</dark_gray> " + state));
-            s.cargoBar.progress((float) frac);
-            s.cargoBar.color(frac >= c.dangerAt() ? BossBar.Color.RED : frac >= c.warnAt() ? BossBar.Color.YELLOW : BossBar.Color.GREEN);
-        }
-        if (!s.cargoBarShown) {
-            p.showBossBar(s.cargoBar);
-            s.cargoBarShown = true;
         }
     }
 
