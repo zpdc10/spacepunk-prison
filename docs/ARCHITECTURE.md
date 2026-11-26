@@ -32,6 +32,8 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `hud/` + `hud.yml` | hud | `HudService` (shared action bar), sidebar, tab list, cargo boss bar, per-break feedback, `/hud` |
 | `gangs/` + `gangs.yml` | gangs | `GangService`, crews and ranks, gang bank (prestige lock), crew chat, upgrades, weekly contracts and leaderboard, turf ownership, `/gang` `/gc` |
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
+| `raredrops/` + `raredrops.yml` | rare drops | Tiered finds while mining, relic collections (sell bonus via `OreSellEvent`), salvage caches, blueprint fragments → drill modules, `/salvage` |
+| `auction/` + `auction.yml` | auction house | The Black Market: buy-it-now + escrowed auctions, fees/tax sink, `auctions.json`, `/ah`; blocks prestige while the player leads a bid (`PrestigeAttemptEvent`) |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
 in your PR description. If you need something from another module, add an interface method or event in
@@ -39,7 +41,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, progression, drill, gangs, hud. Missing classes are skipped, so each module can
+Load order: resourcepack, mines, progression, drill, gangs, hud, raredrops, auction. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -61,6 +63,14 @@ use `HudService#flash` for a short notice, or `HudService#segment(player, key, t
 The sidebar uses a per-player scoreboard, so any future nametag/team feature must add its teams to each
 player's board (ask the hud module for a hook) instead of the main scoreboard. Boss bars: mines shows the
 current mine's fill, hud shows the cargo hold while mining.
+
+## Money that never counts toward prestige
+
+Prestige wipes Credits and pays Tokens for server income earned this run (EconomyService reasons starting
+`sell:` or `income:`). Player-to-player money must use any other reason: the auction house uses `auction:buy`,
+`auction:bid`, `auction:sale`, `auction:refund` and `auction:fee`. Anything that holds a player's Credits outside
+their balance (escrow, banks) must stop that money surviving a prestige: listen to `PrestigeAttemptEvent` and
+`deny(...)` it while the player has money held (the auction house does this for leading bids).
 
 ## Gangs hooks
 
@@ -103,6 +113,7 @@ here in the same PR that needs them, and the pack falls back to a vanilla look u
 | `spacepunk:currency/token` | Token item/icon |
 | `spacepunk:currency/shard` | Prestige Shard icon |
 | `spacepunk:currency/credit` | Credits (scrip) icon |
+| `spacepunk:raredrop/<drop_id>` | Rare drop items from `raredrops.yml` (art in `tools/resourcepack/raredrops_art.py`): `scrap_cache`, `sealed_crate`, `armored_strongbox`, `vault_core`, `fragment_common`, `fragment_rare`, `fragment_epic`, `fragment_legendary`, relics `inmate_tag` ... `warden_key` |
 
 UI icons available as `spacepunk:ui/<name>`: `panel` (default filler), `panel_rust`, `panel_hazard`, `divider`,
 `blank` (invisible), `back`, `previous`, `next`, `close`, `cancel`, `confirm`, `upgrade`, `add`, `info`, `sell`,

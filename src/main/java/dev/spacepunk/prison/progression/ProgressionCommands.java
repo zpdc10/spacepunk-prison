@@ -113,6 +113,7 @@ final class ProgressionCommands {
                             + "<red>.</red> <gray>You're at " + progression.gradeLabel(progression.grade(id)) + "<gray>.");
                     return;
                 }
+                case BLOCKED -> { return; } // the blocking module already told the player why
                 case OK -> {}
             }
             boolean confirming = args.length > 0 && args[0].equalsIgnoreCase("confirm");

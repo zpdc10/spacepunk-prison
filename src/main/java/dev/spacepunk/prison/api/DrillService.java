@@ -27,4 +27,16 @@ public interface DrillService {
 
     /** True if the item is a drill (anyone's). */
     boolean isDrill(ItemStack item);
+
+    /**
+     * Drill module ids of one rarity ("COMMON", "RARE", "EPIC", "LEGENDARY"; case-insensitive) mapped to their
+     * find weight. Empty if none. Used by the rare drops system to assemble modules from blueprint fragments.
+     */
+    java.util.Map<String, Double> moduleWeights(String rarity);
+
+    /** A new drill module item for this module id, or null if the id is unknown. */
+    ItemStack createModuleItem(String moduleId);
+
+    /** True if the item is a drill module item. */
+    boolean isModule(ItemStack item);
 }
