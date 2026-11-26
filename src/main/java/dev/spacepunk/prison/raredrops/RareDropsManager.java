@@ -3,6 +3,8 @@ package dev.spacepunk.prison.raredrops;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import dev.spacepunk.prison.api.Currency;
+import dev.spacepunk.prison.api.ObjectiveTypes;
+import dev.spacepunk.prison.api.Objectives;
 import dev.spacepunk.prison.api.DrillService;
 import dev.spacepunk.prison.api.EconomyService;
 import dev.spacepunk.prison.api.HudService;
@@ -149,6 +151,7 @@ final class RareDropsManager {
         d.found.merge(drop.id(), 1L, Long::sum);
         save(p.getUniqueId());
         if (announce) announce(p, drop);
+        Objectives.report(p, ObjectiveTypes.RARE_DROP, 1, drop.id(), "rarity:" + drop.tier().id());
     }
 
     /** Puts items in the inventory; whatever does not fit waits in the /salvage stash (never dropped in the mine). */

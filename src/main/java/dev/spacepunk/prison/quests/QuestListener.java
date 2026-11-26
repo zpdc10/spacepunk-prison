@@ -59,6 +59,8 @@ final class QuestListener implements Listener {
         if (delta > 0) {
             if (e.currency() == Currency.CREDITS && reason.startsWith("sell:")) {
                 quests.progress(p, ObjectiveTypes.SELL_CREDITS, delta);
+            } else if (e.currency() == Currency.CREDITS && reason.equals("auction:sale")) {
+                quests.progress(p, ObjectiveTypes.AUCTION_SELL, 1);
             } else if (e.currency() == Currency.TOKENS) {
                 for (String prefix : quests.cfg().earnTokenReasons) {
                     if (reason.startsWith(prefix)) {
@@ -74,6 +76,8 @@ final class QuestListener implements Listener {
                 quests.progress(p, ObjectiveTypes.FRAME_UPGRADE, 1, "frame:" + reason.substring("drill:frame:".length()));
             } else if (reason.equals("cargo-upgrade")) {
                 quests.progress(p, ObjectiveTypes.CARGO_UPGRADE, 1);
+            } else if (reason.equals("auction:buy")) {
+                quests.progress(p, ObjectiveTypes.AUCTION_BUY, 1);
             } else if (reason.equals("auto-sell-unlock")) {
                 quests.progress(p, ObjectiveTypes.AUTOSELL_UNLOCK, 1);
             }

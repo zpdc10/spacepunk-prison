@@ -1,7 +1,9 @@
 package dev.spacepunk.prison.quests;
 
 import dev.spacepunk.prison.util.Text;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -14,6 +16,11 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Quest characters as villagers placed by admins (/questadmin npc CHARACTER). Right-clicking one opens the quest log:
@@ -54,6 +61,42 @@ final class QuestNpcs implements Listener {
             v.getPersistentDataContainer().set(key, PersistentDataType.STRING, character);
         });
         return true;
+    }
+
+    /**
+     * Makes the configured hub spots match the world: one villager per listed character, standing at its spot.
+     * Missing ones are spawned, misplaced ones moved, duplicates removed. Only call it when the entities of every
+     * spot's chunk are loaded, or a villager still on disk would be spawned twice. Returns how many were spawned.
+     */
+    int place(World world) {
+        Map<String, List<Villager>> found = new HashMap<>();
+        for (Villager v : world.getEntitiesByClass(Villager.class)) {
+            String c = v.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+            if (c != null) found.computeIfAbsent(c, k -> new ArrayList<>()).add(v);
+        }
+        int spawned = 0;
+        for (QuestConfig.NpcSpot spot : quests.cfg().npcSpots.values()) {
+            Location at = new Location(world, spot.x(), spot.y(), spot.z(), spot.yaw(), 0f);
+            List<Villager> have = found.getOrDefault(spot.character(), List.of());
+            if (have.isEmpty()) {
+                if (spawn(at, spot.character())) spawned++;
+                continue;
+            }
+            Villager keep = have.getFirst();
+            if (keep.getLocation().distanceSquared(at) > 0.25 || Math.abs(keep.getYaw() - spot.yaw()) > 1) keep.teleport(at);
+            for (int i = 1; i < have.size(); i++) have.get(i).remove();
+        }
+        return spawned;
+    }
+
+    /** Chunks holding the configured spots, so their entities can be loaded before {@link #place}. */
+    List<Chunk> spotChunks(World world) {
+        List<Chunk> out = new ArrayList<>();
+        for (QuestConfig.NpcSpot spot : quests.cfg().npcSpots.values()) {
+            Chunk c = world.getChunkAt((int) Math.floor(spot.x()) >> 4, (int) Math.floor(spot.z()) >> 4);
+            if (!out.contains(c)) out.add(c);
+        }
+        return out;
     }
 
     /** Removes quest NPCs within radius. Returns how many. */

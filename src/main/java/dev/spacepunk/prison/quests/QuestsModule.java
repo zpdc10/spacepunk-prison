@@ -66,10 +66,19 @@ public final class QuestsModule implements FeatureModule {
                 manager.registerObjectiveType(ObjectiveTypes.UNDERCROFT_WIN, "Win Undercroft fights");
                 manager.registerObjectiveType(ObjectiveTypes.SMUGGLE, "Smuggle contraband");
             }
+            java.util.Set<String> loaded = new java.util.HashSet<>();
+            plugin.modules().forEach(m -> loaded.add(m.id()));
+            if (loaded.contains("workshop")) manager.registerObjectiveType(ObjectiveTypes.PROCESS_ITEM, "Process workshop goods");
+            if (loaded.contains("raredrops")) manager.registerObjectiveType(ObjectiveTypes.RARE_DROP, "Find rare drops");
+            if (loaded.contains("auction")) {
+                manager.registerObjectiveType(ObjectiveTypes.AUCTION_SELL, "Sell on the auction house");
+                manager.registerObjectiveType(ObjectiveTypes.AUCTION_BUY, "Buy on the auction house");
+            }
             Services.find(GangService.class).ifPresent(g -> {
                 manager.registerObjectiveType(ObjectiveTypes.GANG_JOIN, "Join a gang");
                 g.registerContractObjective("quests_done", "Quests and contracts finished");
             });
+            placeNpcs(0);
             ProfileService profiles = Services.get(ProfileService.class);
             for (Player p : Bukkit.getOnlinePlayers()) profiles.get(p.getUniqueId()).ifPresent(prof -> manager.load(p, prof));
         });
@@ -80,6 +89,7 @@ public final class QuestsModule implements FeatureModule {
 
     @Override
     public void disable() {
+        releaseNpcChunks();
         tasks.forEach(BukkitTask::cancel);
         tasks.clear();
         listeners.forEach(HandlerList::unregisterAll);
@@ -90,12 +100,48 @@ public final class QuestsModule implements FeatureModule {
         }
     }
 
+    /**
+     * Places the quest NPCs on the Crew Deck once the station hub exists. Keeps the spot chunks loaded with a plugin
+     * ticket, then waits until their entities are in memory, so villagers saved on disk are found instead of doubled.
+     */
+    void placeNpcs(int attempt) {
+        if (!config.npcAutoPlace || config.npcSpots.isEmpty()) return;
+        var warps = Services.find(dev.spacepunk.prison.api.WarpService.class);
+        org.bukkit.World world = Bukkit.getWorld(config.npcWorld);
+        boolean hubReady = warps.isPresent() && warps.get().hub() != null && world != null;
+        if (!hubReady || !npcChunksReady(world)) {
+            if (attempt < 150) tasks.add(Bukkit.getScheduler().runTaskLater(plugin, () -> placeNpcs(attempt + 1), 40L));
+            else plugin.getLogger().warning("[quests] station hub '" + config.npcWorld + "' not ready after 5 minutes; quest NPCs not placed");
+            return;
+        }
+        int n = npcs.place(world);
+        releaseNpcChunks();
+        if (n > 0) plugin.getLogger().info("[quests] placed " + n + " quest NPC(s) on the Crew Deck");
+    }
+
+    private final List<org.bukkit.Chunk> ticketed = new ArrayList<>();
+
+    private void releaseNpcChunks() {
+        ticketed.forEach(c -> c.removePluginChunkTicket(plugin));
+        ticketed.clear();
+    }
+
+    private boolean npcChunksReady(org.bukkit.World world) {
+        boolean ready = true;
+        for (org.bukkit.Chunk c : npcs.spotChunks(world)) {
+            if (!ticketed.contains(c)) { c.addPluginChunkTicket(plugin); ticketed.add(c); }
+            if (!c.isEntitiesLoaded()) ready = false;
+        }
+        return ready;
+    }
+
     void reload() {
         config = QuestConfig.load(new File(plugin.getDataFolder(), "quests.yml"), plugin.getLogger());
         for (Player p : Bukkit.getOnlinePlayers()) {
             QuestData d = manager.data(p.getUniqueId());
             if (d != null) manager.settle(p, d, true);
         }
+        placeNpcs(0);
     }
 
     List<String> typeIds() { return manager.registeredTypes(); }

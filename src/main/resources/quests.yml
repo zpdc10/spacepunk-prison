@@ -38,6 +38,19 @@ characters:
   kade:   {name: "Kade", color: "<#b07cff>", title: "Breach Smuggler"}
   warden: {name: "THE WARDEN", color: "<#ff5a3c>", title: "Station Intelligence"}
 
+# Quest NPCs placed automatically on the station's Crew Deck once the hub is built. Each character keeps exactly one
+# villager: a missing one is spawned, a moved spot moves it, and extra copies are removed, so restarts never duplicate.
+# Characters (or "board" for a contract board) not listed here are left alone; /questadmin npc still places by hand.
+npcs:
+  auto-place: true
+  world: station
+  spots:
+    warden: {x: -51.5, y: 64, z: -1.5, yaw: -90}   # between the Quest Board and Contracts terminals
+    rusk:   {x: -49.5, y: 64, z: -9.5, yaw: -90}
+    vell:   {x: -49.5, y: 64, z: 5.5, yaw: -90}
+    nhem:   {x: -38.5, y: 64, z: -9.5, yaw: 90}
+    kade:   {x: -40.5, y: 64, z: 12.5, yaw: 180}  # behind the bar
+
 # Notable ores of the mine for each grade (10%+ of its blocks), used by {mine_item}.
 mine-items:
   1: [minecraft:coal_ore]
