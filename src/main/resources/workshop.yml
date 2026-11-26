@@ -398,7 +398,7 @@ decor:
   - { material: TUFF_BRICKS, amount: 32, price: 250 }
   - { material: IRON_BLOCK, amount: 8, price: 1500 }
   - { material: IRON_BARS, amount: 32, price: 300 }
-  - { material: CHAIN, amount: 32, price: 300 }
+  - { material: IRON_CHAIN, amount: 32, price: 300 }
   - { material: IRON_TRAPDOOR, amount: 16, price: 400 }
   - { material: WAXED_COPPER_TRAPDOOR, amount: 16, price: 400 }
   - { material: TINTED_GLASS, amount: 16, price: 400 }
