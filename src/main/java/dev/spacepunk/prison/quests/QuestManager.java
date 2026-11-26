@@ -335,6 +335,7 @@ final class QuestManager implements QuestService {
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 0.8f);
                 Bukkit.getScheduler().runTask(plugin, () -> progress(p, ObjectiveTypes.CONTRACT_COMPLETE, 1, kind.key));
                 dev.spacepunk.prison.api.ScrapDrops.roll(p, dev.spacepunk.prison.api.ScrapService.CONTRACT, 1);
+                dev.spacepunk.prison.api.Services.find(dev.spacepunk.prison.api.DrillService.class).ifPresent(ds -> ds.rollModuleFind(p, "exo", "contract"));
                 if (kind == QuestKind.DAILY && !d.dailyBonus && !d.daily.isEmpty() && d.daily.stream().allMatch(x -> x.done)) {
                     d.dailyBonus = true;
                     Ctx ctx = ctx(p, d);

@@ -161,6 +161,7 @@ public final class ModuleRig {
         return switch (kind) {
             case DrillConfig.KIND_ROD -> "Rod Rig";
             case DrillConfig.KIND_GUN -> "Weapon Rig";
+            case DrillConfig.KIND_EXO -> "Exo-Rig";
             default -> "drill's Module Rig";
         };
     }

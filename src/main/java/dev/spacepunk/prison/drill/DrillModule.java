@@ -47,6 +47,7 @@ public final class DrillModule implements FeatureModule {
         pm.registerEvents(rig, plugin);
         pm.registerEvents(new SellListener(drills, heat), plugin);
         pm.registerEvents(new GearFindListener(drills), plugin);
+        pm.registerEvents(new GadgetListener(drills), plugin);
         pm.registerEvents(new DrillListener(plugin, drills, heat, mining, menu), plugin);
 
         plugin.addCommand("drill", "Open your drill bay", List.of("pickaxe", "pick"), new DrillCommand(this));
@@ -61,6 +62,7 @@ public final class DrillModule implements FeatureModule {
             profiles.get(p.getUniqueId()).ifPresent(prof -> {
                 drills.load(prof);
                 drills.ensureDrill(p);
+                drills.applyExo(p);
             });
         }
     }
@@ -74,6 +76,7 @@ public final class DrillModule implements FeatureModule {
             var holder = p.getOpenInventory().getTopInventory().getHolder();
             if (holder instanceof DrillMenu.Holder || holder instanceof RigMenu.Holder) p.closeInventory();
             HeatManager.clearModifiers(p);
+            DrillManager.clearExo(p);
         }
         drills.flushAll();
     }
@@ -85,6 +88,7 @@ public final class DrillModule implements FeatureModule {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 drills.refreshItem(p);
                 drills.ejectMisfits(p);
+                drills.applyExo(p);
                 menu.refreshIfOpen(p);
                 rig.refreshIfOpen(p);
             }

@@ -161,7 +161,20 @@ public final class DrillMath {
         STATS.put("reload-time", "reload time");
         STATS.put("range", "range");
         STATS.put("headshot", "headshot damage");
+        // Exo-Rig (player attributes; sell multiplies ore sale prices)
+        STATS.put("speed", "movement speed");
+        STATS.put("health", "max health");
+        STATS.put("armor", "armor");
+        STATS.put("toughness", "knockback resistance");
+        STATS.put("jump", "jump height");
+        STATS.put("fall", "fall damage");
+        STATS.put("sell", "sell price");
+        STATS.put("gadget-cooldown", "gadget recharge time");
         FLAGS.put("auto-sell", "Auto-sells everything you mine");
+        FLAGS.put("gadget-dash", "Gadget: grapple dash (sneak + F)");
+        FLAGS.put("gadget-scan", "Gadget: scanner pulse, nearby players glow (sneak + F)");
+        FLAGS.put("gadget-stim", "Gadget: stim shot, regeneration + absorption (sneak + F)");
+        FLAGS.put("gadget-cloak", "Gadget: phase cloak, 5 s invisible (sneak + F)");
     }
 
     /** "+50% Token finds" for a multiplier, coloured by whether it's an upside. */

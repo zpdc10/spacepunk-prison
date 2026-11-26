@@ -471,8 +471,84 @@ def gear_modules(g):
         g.generated_model(f"module/{name}")
 
 
+def exo_modules(g):
+    """Exo-Rig modules on the chip housing (violet pin)."""
+    out = g.SP / "textures" / "item" / "module"
+    P = g.VIOLET_L
+
+    c = g.module_base(250, P)  # servo greaves: leg brace
+    c.line(7, 4, 7, 11, g.STEEL_L, wrap=False); c.line(8, 4, 8, 11, g.GUN_L, wrap=False)
+    c.set(6, 7, g.HAZ); c.set(9, 7, g.HAZ); c.rect(6, 11, 9, 11, g.GUN_D)
+    c.save(out / "servo_greaves.png")
+
+    c = g.module_base(251, P)  # ceramic plate: cracked white tile
+    c.rect(5, 5, 10, 10, g.FROST_L); c.rect(5, 10, 10, 10, g.FROST)
+    for x, y in ((6, 6), (7, 7), (8, 7), (9, 8)):
+        c.set(x, y, g.STEEL)
+    c.save(out / "ceramic_plate.png")
+
+    c = g.module_base(252, P)  # shock absorbers: two springs
+    for x in (6, 9):
+        for y in range(5, 11):
+            c.set(x + (y % 2), y, g.STEEL_L)
+    c.line(5, 4, 10, 4, g.GUN_L, wrap=False); c.line(5, 11, 10, 11, g.GUN_L, wrap=False)
+    c.save(out / "shock_absorbers.png")
+
+    c = g.module_base(253, P)  # bio-monitor: heartbeat line on a screen
+    c.rect(4, 6, 11, 10, g.VOID_D)
+    for x, y in ((4, 8), (5, 8), (6, 8), (7, 6), (8, 10), (9, 8), (10, 8), (11, 8)):
+        c.set(x, y, g.GREEN)
+    c.save(out / "bio_monitor.png")
+
+    c = g.module_base(254, P)  # trader uplink: antenna with gold signal
+    c.line(7, 5, 7, 11, g.STEEL, wrap=False); c.set(6, 11, g.GUN_L); c.set(8, 11, g.GUN_L)
+    for x, y in ((9, 5), (10, 6), (9, 7), (11, 4), (12, 6)):
+        c.set(x, y, g.BRASS_L)
+    c.save(out / "trader_uplink.png")
+
+    c = g.module_base(255, P)  # reactive mesh: hex mesh
+    for y in range(5, 11):
+        for x in range(5, 11):
+            if (x + 2 * y) % 3 == 0:
+                c.set(x, y, g.STEEL_L)
+            elif (x + y) % 4 == 0:
+                c.set(x, y, g.LAPIS_L)
+    c.save(out / "reactive_mesh.png")
+
+    c = g.module_base(256, P)  # grapple launcher: hook on a line
+    c.line(5, 10, 9, 6, g.STEEL, wrap=False)
+    for x, y in ((9, 5), (10, 5), (10, 6), (11, 7), (8, 5)):
+        c.set(x, y, g.STEEL_L)
+    c.rect(4, 10, 5, 11, g.HAZ)
+    c.save(out / "grapple_launcher.png")
+
+    c = g.module_base(257, P)  # scanner pulse: eye with rings
+    c.rect(6, 7, 9, 8, g.CYAN); c.rect(7, 7, 8, 8, g.VOID_D)
+    for x, y in ((5, 6), (10, 6), (5, 9), (10, 9), (4, 7), (11, 8)):
+        c.set(x, y, g.CYAN_L)
+    c.save(out / "scanner_pulse.png")
+
+    c = g.module_base(258, P)  # stim injector: syringe with green fluid
+    for i in range(6):
+        c.set(4 + i, 10 - i, g.FROST_L)
+    c.set(6, 8, g.GREEN); c.set(7, 7, g.GREEN); c.set(8, 6, g.GREEN)
+    c.set(10, 4, g.STEEL_L); c.set(11, 3, g.WHITE)
+    c.save(out / "stim_injector.png")
+
+    c = g.module_base(259, P)  # phase cloak: shimmering violet silhouette
+    c.rect(6, 5, 9, 11, g.VOID); c.rect(7, 4, 8, 5, g.VOID)
+    for x, y in ((6, 6), (9, 8), (7, 10), (8, 4)):
+        c.set(x, y, g.VIOLET_L)
+    c.save(out / "phase_cloak.png")
+
+    for name in ("servo_greaves", "ceramic_plate", "shock_absorbers", "bio_monitor", "trader_uplink", "reactive_mesh",
+                 "grapple_launcher", "scanner_pulse", "stim_injector", "phase_cloak"):
+        g.generated_model(f"module/{name}")
+
+
 def scrap(g):
     modules(g)
     gear_modules(g)
+    exo_modules(g)
     parts(g)
     ui(g)

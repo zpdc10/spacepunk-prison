@@ -55,6 +55,7 @@ public final class RigMenu implements Listener {
     private static final int SLOT_TAB_ROD = 46;
     private static final int SLOT_TAB_GUN0 = 47;
     private static final int MAX_GUN_TABS = 5;
+    private static final int SLOT_TAB_EXO = 52;
 
     private final DrillManager drills;
     private final DrillMenu bay;
@@ -95,6 +96,7 @@ public final class RigMenu implements Listener {
     private String rigFor(String kind, String current) {
         if (DrillManager.kindOf(current).equals(kind)) return current;
         if (DrillConfig.KIND_ROD.equals(kind)) return DrillManager.RIG_ROD;
+        if (DrillConfig.KIND_EXO.equals(kind)) return DrillManager.RIG_EXO;
         if (DrillConfig.KIND_GUN.equals(kind) && !drills.cfg().rigGuns().isEmpty()) return DrillManager.gunRigKey(drills.cfg().rigGuns().getFirst());
         return DrillManager.RIG_DRILL;
     }
@@ -163,6 +165,12 @@ public final class RigMenu implements Listener {
                 inv.setItem(slot, e == null ? emptyCell(rig, x, y, heldDef) : moduleCell(e, x, y, heldDef != null));
             }
         }
+        if (rig.cellCount() == 0 && DrillManager.RIG_EXO.equals(h.rigKey)) {
+            DrillConfig.ExoTier first = drills.nextExoTier(p.getUniqueId());
+            inv.setItem(boardSlot(3, 1), items.icon(Material.IRON_BARS, "ui/locked", "<red>No Exo-Rig yet",
+                    List.of("<gray>Buy your first Exo-Rig frame with the", "<gray>upgrade button on the right" + (first == null ? "." : ":"),
+                            first == null ? "" : "<white>" + first.name() + "<gray>, " + first.requirementText())));
+        }
         if (rig.cellCount() == 0 && drillRig) {
             FrameDef0 info = firstRigFrame(cfg);
             inv.setItem(boardSlot(3, 1), items.icon(Material.IRON_BARS, "ui/locked", "<red>No module rig",
@@ -184,6 +192,7 @@ public final class RigMenu implements Listener {
         inv.setItem(SLOT_FAMILIES, familiesIcon(cfg, rig));
         inv.setItem(SLOT_COMBOS, combosIcon(cfg, d, rig));
         if (drillRig) inv.setItem(SLOT_EXPAND, expandIcon(cfg, d, eff, p.getUniqueId()));
+        else if (DrillManager.RIG_EXO.equals(h.rigKey)) inv.setItem(SLOT_EXPAND, exoIcon(p));
         else inv.setItem(SLOT_EXPAND, gearSizeIcon(p, h.rigKey, rig));
         inv.setItem(SLOT_STATS, statsIcon(rig.totals(cfg), h.rigKey));
         renderTabs(p, h);
@@ -200,6 +209,10 @@ public final class RigMenu implements Listener {
                 "<gray>Mining upgrades."));
         h.inventory.setItem(SLOT_TAB_ROD, tab(Material.FISHING_ROD, null, "<#5fb4c8>Rod rig", DrillManager.RIG_ROD, h, id,
                 "<gray>Fishing upgrades. Grows with your rod tier."));
+        if (drills.validRig(DrillManager.RIG_EXO)) {
+            h.inventory.setItem(SLOT_TAB_EXO, tab(Material.NETHERITE_CHESTPLATE, null, "<#b07cff>Exo-Rig", DrillManager.RIG_EXO, h, id,
+                    "<gray>Body upgrades and gadgets. Always on."));
+        }
         List<String> guns = drills.cfg().rigGuns();
         for (int i = 0; i < Math.min(MAX_GUN_TABS, guns.size()); i++) {
             String gun = guns.get(i);
@@ -223,6 +236,31 @@ public final class RigMenu implements Listener {
             icon.setItemMeta(meta);
         }
         return icon;
+    }
+
+    /** Exo-Rig: current frame and the next one to buy. */
+    private ItemStack exoIcon(Player p) {
+        UUID id = p.getUniqueId();
+        DrillConfig.ExoTier now = drills.exoTier(id);
+        DrillConfig.ExoTier next = drills.nextExoTier(id);
+        List<String> lore = new ArrayList<>();
+        lore.add("<gray>Current: <white>" + (now == null ? "none" : now.name() + " (" + now.size().width() + "x" + now.size().height() + ")"));
+        lore.add("<gray>Kept through prestige.");
+        lore.add("");
+        if (next == null) {
+            lore.add("<gold>Top Exo-Rig frame.");
+            return drills.items().icon(Material.NETHERITE_BLOCK, "ui/upgrade", "<#b07cff>Exo-Rig frame", lore);
+        }
+        EconomyService eco = Services.get(EconomyService.class);
+        boolean unlocked = next.unlockedFor(drills.grade(p), drills.prestige(p));
+        boolean afford = eco.balance(id, next.currency()) >= next.cost();
+        lore.add("<gray>Next: <white>" + next.name() + "</white> <dark_gray>(" + next.size().width() + "x" + next.size().height()
+                + (next.size().core().isEmpty() ? "" : ", core cell") + ")");
+        lore.add((unlocked ? "<green>✔ " : "<red>✘ ") + "<gray>Needs " + next.requirementText());
+        lore.add((afford ? "<green>✔ " : "<red>✘ ") + "<gray>Costs " + eco.format(next.currency(), next.cost()));
+        lore.add("");
+        lore.add(unlocked && afford ? "<#c8743a>Click</#c8743a> <gray>to buy" : "<dark_gray>Not available yet");
+        return drills.items().icon(unlocked && afford ? Material.ANVIL : Material.CHIPPED_ANVIL, "ui/upgrade", "<#b07cff>Exo-Rig frame", lore);
     }
 
     /** For the rod and gun rigs: what sets the grid size. */
@@ -473,7 +511,7 @@ public final class RigMenu implements Listener {
     static final class Bad {
         static boolean isBadWhenHigher(String stat) {
             return switch (stat) {
-                case "hand-heat", "proc-heat", "shaped-heat", "stall", "spread", "recoil", "reload-time" -> true;
+                case "hand-heat", "proc-heat", "shaped-heat", "stall", "spread", "recoil", "reload-time", "fall", "gadget-cooldown" -> true;
                 default -> false;
             };
         }
@@ -607,6 +645,11 @@ public final class RigMenu implements Listener {
             render(p, h);
             return;
         }
+        if (slot == SLOT_TAB_EXO && drills.validRig(DrillManager.RIG_EXO) && !DrillManager.RIG_EXO.equals(h.rigKey)) {
+            p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 1.2f);
+            open(p, DrillManager.RIG_EXO, h.held);
+            return;
+        }
         if (slot == SLOT_TAB_DRILL || slot == SLOT_TAB_ROD || (slot >= SLOT_TAB_GUN0 && slot < SLOT_TAB_GUN0 + MAX_GUN_TABS)) {
             String key;
             if (slot == SLOT_TAB_DRILL) key = DrillManager.RIG_DRILL;
@@ -620,6 +663,21 @@ public final class RigMenu implements Listener {
             if (key.equals(h.rigKey)) return;
             p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 1.2f);
             open(p, key, h.held);
+            return;
+        }
+        if (slot == SLOT_EXPAND && DrillManager.RIG_EXO.equals(h.rigKey)) {
+            switch (drills.upgradeExo(p)) {
+                case OK -> {
+                    p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_USE, 0.8f, 1.1f);
+                    p.playSound(p.getLocation(), Sound.ITEM_ARMOR_EQUIP_NETHERITE, 0.8f, 1.0f);
+                    DrillConfig.ExoTier t = drills.exoTier(p.getUniqueId());
+                    Text.send(p, "<green>Exo-Rig fitted: <white>" + (t == null ? "" : t.name()) + "<green>.");
+                }
+                case MAX -> deny(p, "Your Exo-Rig is the best there is.");
+                case LOCKED -> deny(p, "You can't fit that Exo-Rig frame yet.");
+                case POOR -> deny(p, "You can't afford that Exo-Rig frame.");
+            }
+            render(p, h);
             return;
         }
         if (slot == SLOT_EXPAND) {

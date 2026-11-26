@@ -284,7 +284,7 @@ rig-expansion:
   - { shards: 75, columns: 1, frame: military }
 
 # Schematics every player knows from the start (the Assembly Bench in the workshop builds known schematics).
-starting-schematics: [servo_actuator, ore_sifter, reel_servo, extended_mag]
+starting-schematics: [servo_actuator, ore_sifter, reel_servo, extended_mag, servo_greaves]
 
 # Rod Rig and Weapon Rigs: the same module system for fishing rods and guns (/rig rod, /rig gun).
 # rod = one grid per rod tier, in fishing.yml rod.tiers order. gun = one grid per gun id (each gun model has its
@@ -315,6 +315,27 @@ module-drops:
   gun:
     undercroft-kill: 0.03
     smuggle: 0.05
+  # Exo modules: activities with no gear of their own. parkour = per daily reward roll, contract = per contract done.
+  exo:
+    parkour: 0.12
+    contract: 0.06
+
+# Exo-Rig (/rig exo): a body rig that is always on, whatever you're doing. Bought in order; kept through prestige.
+# Exo stats: speed, health (x20 = hit points: 1.1 = +2), armor (x20 = armor points), toughness (knockback
+# resistance), jump, fall (fall damage, lower is better), sell (ore sale price), gadget-cooldown (lower is better).
+# Gadget modules (family gadget, one per rig) add an ability: sneak + swap hands (F) fires it.
+exo-rig:
+  tiers:
+    - { name: Scrap Harness,  grade: 5,  currency: CREDITS, cost: 60000,   width: 2, height: 2 }
+    - { name: Field Exo,      grade: 14, currency: CREDITS, cost: 6000000, width: 3, height: 2 }
+    - { name: Combat Exo,     prestige: 1, currency: SHARDS, cost: 10,     width: 3, height: 3, core: [[2, 1]] }
+    - { name: Prototype Exo,  prestige: 5, currency: SHARDS, cost: 50,     width: 4, height: 3, core: [[3, 1]] }
+  # Seconds between uses, by gadget.
+  gadget-cooldowns:
+    gadget-dash: 8
+    gadget-scan: 30
+    gadget-stim: 45
+    gadget-cloak: 60
 
 # Families: running several online modules of a family gives the listed bonuses (each threshold adds on).
 # max = how many of the family one rig can run.
@@ -367,6 +388,26 @@ families:
     bonuses:
       2: { strength: 1.1 }
       3: { bite-speed: 1.06, double-catch: 1.02 }
+  # ---- Exo-Rig families ----
+  plating:
+    name: Plating
+    color: "#b0b8c0"
+    lore: "Armour plates and life support."
+    bonuses:
+      2: { armor: 1.05 }
+      3: { health: 1.1, toughness: 1.1 }
+  servo:
+    name: Servo
+    color: "#e0c060"
+    lore: "Leg servos and shock absorbers."
+    bonuses:
+      2: { speed: 1.03 }
+      3: { jump: 1.05, fall: 0.8 }
+  gadget:
+    name: Gadget
+    color: "#c070ff"
+    max: 1
+    lore: "Active tools: sneak + F fires one. A rig can only drive one."
   # ---- Weapon Rig families ----
   ballistic:
     name: Ballistic
@@ -662,6 +703,129 @@ modules:
     cons: { bite-speed: 0.85 }
     core-part: sonar_array
 
+  # ================= Exo modules (kind: exo), fitted on the Exo-Rig =================
+  servo_greaves:
+    kind: exo
+    name: Servo Greaves
+    rarity: COMMON
+    family: servo
+    shape: DOT
+    weight: 40
+    material: PRISMARINE_SHARD
+    lore: "Leg braces off a loader suit. Light, and thin."
+    pros: { speed: 1.06 }
+    cons: { armor: 0.95 }
+    core-part: servo_motor
+  ceramic_plate:
+    kind: exo
+    name: Ceramic Plate
+    rarity: COMMON
+    family: plating
+    shape: BAR2
+    weight: 40
+    material: PRISMARINE_SHARD
+    lore: "A cracked heat tile from the hull. Stops a rivet. Heavy."
+    pros: { armor: 1.15 }
+    cons: { speed: 0.96 }
+    core-part: copper_wiring
+  shock_absorbers:
+    kind: exo
+    name: Shock Absorbers
+    rarity: RARE
+    family: servo
+    shape: BAR2
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Hydraulic knees. Jump off anything."
+    pros: { fall: 0.6, jump: 1.1 }
+    cons: { armor: 0.97 }
+    core-part: gyro_stabilizer
+  bio_monitor:
+    kind: exo
+    name: Bio-Monitor
+    rarity: RARE
+    family: plating
+    shape: ELL
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Keeps your heart going. Reports you to the warden's ledger."
+    pros: { health: 1.1 }
+    cons: { sell: 0.97 }
+    core-part: data_core
+  trader_uplink:
+    kind: exo
+    name: Trader Uplink
+    rarity: RARE
+    shape: DOT
+    weight: 20
+    material: PRISMARINE_SHARD
+    lore: "Patched into the Exchange feed. Sells high, draws power from your life support."
+    pros: { sell: 1.05 }
+    cons: { health: 0.95 }
+    rules: { edge: true }
+    core-part: logic_chip
+  reactive_mesh:
+    kind: exo
+    name: Reactive Mesh
+    rarity: EPIC
+    family: plating
+    shape: SQUARE
+    weight: 10
+    material: PRISMARINE_SHARD
+    lore: "Stiffens when hit. Also when you try to run."
+    pros: { armor: 1.2, toughness: 1.2 }
+    cons: { speed: 0.93 }
+    rules: { needs: plating }
+    core-part: military_relay
+  grapple_launcher:
+    kind: exo
+    name: Grapple Launcher
+    rarity: RARE
+    family: gadget
+    shape: BAR2
+    weight: 15
+    material: PRISMARINE_SHARD
+    lore: "A cargo hook on a gas spring. Sneak + F to dash."
+    pros: { gadget-dash: true }
+    cons: { armor: 0.97 }
+    core-part: servo_motor
+  scanner_pulse:
+    kind: exo
+    name: Scanner Pulse
+    rarity: RARE
+    family: gadget
+    shape: TEE
+    weight: 15
+    material: PRISMARINE_SHARD
+    lore: "A guard-drone sensor. Sneak + F lights up everyone nearby."
+    pros: { gadget-scan: true }
+    cons: { speed: 0.98 }
+    core-part: sonar_array
+  stim_injector:
+    kind: exo
+    name: Stim Injector
+    rarity: EPIC
+    family: gadget
+    shape: ELL
+    weight: 8
+    material: PRISMARINE_SHARD
+    lore: "Med-bay auto-injector, refilled with something stronger. Sneak + F."
+    pros: { gadget-stim: true }
+    cons: { health: 0.95 }
+    core-part: power_cell
+  phase_cloak:
+    kind: exo
+    name: Phase Cloak
+    rarity: LEGENDARY
+    family: gadget
+    shape: ZIG
+    weight: 3
+    material: PRISMARINE_SHARD
+    lore: "Bends light around you for a few seconds. Sneak + F. Don't ask what it bends inside."
+    pros: { gadget-cloak: true, speed: 1.03 }
+    cons: { health: 0.9 }
+    core-part: quantum_core
+
   # ================= Weapon modules (kind: gun), fitted on a gun model's Weapon Rig =================
   # Gun stats multiply the gun's numbers: damage, fire-rate, spread, recoil, magazine, reload-time, range, headshot.
   # Lower spread, recoil and reload-time are better.
@@ -809,3 +973,14 @@ combos:
     modules: [long_barrel, laser_sight]
     lore: "The dot and the barrel finally agree."
     effects: { headshot: 1.15, range: 1.2 }
+  # ---- Exo-Rig combos ----
+  juggernaut:
+    name: Juggernaut
+    modules: [reactive_mesh, ceramic_plate]
+    lore: "Plate over mesh: you stop being knocked around."
+    effects: { health: 1.1, toughness: 1.3 }
+  free_runner:
+    name: Free Runner
+    modules: [servo_greaves, shock_absorbers]
+    lore: "Servos and shocks in step: faster, higher, softer landings."
+    effects: { speed: 1.05, jump: 1.05, fall: 0.7 }

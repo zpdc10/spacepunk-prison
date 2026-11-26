@@ -338,6 +338,14 @@ chapters:
 
         <em>Weapon Rigs</em> [[/rig gun]] one per gun model. Weapon modules come from the Undercroft.
       - |
+        <h>EXO-RIG</h>
+
+        A body rig, always on: speed, health, armour, jumps, sell price. [[/rig exo]]
+
+        Buy the frame in the rig (Grade 5). Exo modules come from parkour and contracts.
+
+        <em>Gadget</em> modules: <em>sneak + F</em> to dash, scan, stim or cloak.
+      - |
         <h>HEAT</h>
 
         Every block adds heat. At 100% the drill stalls for 3 s.

@@ -53,6 +53,10 @@ public final class DrillConfig {
     public final Map<String, RigSize> gunRigs;
     /** Chance per event to find a random module of a kind: "rod.fish", "rod.sea-creature", "gun.undercroft-kill", "gun.smuggle". */
     public final Map<String, Double> moduleDrops;
+    /** Exo-Rig tiers, bought in order (index 0 = the first tier; players start with none). */
+    public final List<ExoTier> exoTiers;
+    /** Seconds between gadget uses, by gadget flag ("gadget-dash"). */
+    public final Map<String, Double> gadgetCooldowns;
 
     public final Heat heat;
 
@@ -251,6 +255,24 @@ public final class DrillConfig {
         }
         moduleDrops = Collections.unmodifiableMap(md);
 
+        List<ExoTier> et = new ArrayList<>();
+        for (Map<?, ?> m : y.getMapList("exo-rig.tiers")) {
+            Currency cur;
+            try {
+                cur = Currency.valueOf(String.valueOf(m.get("currency") == null ? "CREDITS" : m.get("currency")).toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                cur = Currency.CREDITS;
+            }
+            RigSize size = rigSize(m);
+            et.add(new ExoTier(String.valueOf(m.get("name") == null ? "Exo-Rig" : m.get("name")), num(m.get("grade"), 1).intValue(),
+                    num(m.get("prestige"), 0).intValue(), cur, num(m.get("cost"), 0).longValue(), size));
+        }
+        exoTiers = List.copyOf(et);
+        Map<String, Double> gc = new LinkedHashMap<>();
+        ConfigurationSection gcs = y.getConfigurationSection("exo-rig.gadget-cooldowns");
+        if (gcs != null) for (String k : gcs.getKeys(false)) gc.put(k, Math.max(1, gcs.getDouble(k)));
+        gadgetCooldowns = Collections.unmodifiableMap(gc);
+
         List<Double> deck = y.getDoubleList("heat.deck-multiplier");
         heat = new Heat(
                 y.getDouble("heat.base-capacity", 100),
@@ -333,7 +355,7 @@ public final class DrillConfig {
 
     private static String kind(String raw, String id, Logger log) {
         String k = raw == null ? KIND_DRILL : raw.trim().toLowerCase(Locale.ROOT);
-        if (!k.equals(KIND_DRILL) && !k.equals(KIND_ROD) && !k.equals(KIND_GUN)) {
+        if (!k.equals(KIND_DRILL) && !k.equals(KIND_ROD) && !k.equals(KIND_GUN) && !k.equals(KIND_EXO)) {
             log.warning("drill.yml: module " + id + " has unknown kind " + raw + "; using drill");
             return KIND_DRILL;
         }
@@ -362,14 +384,29 @@ public final class DrillConfig {
     public static final String KIND_DRILL = "drill";
     public static final String KIND_ROD = "rod";
     public static final String KIND_GUN = "gun";
+    public static final String KIND_EXO = "exo";
 
     /** Player-facing name of a kind's modules ("drill module"). */
     public static String kindLabel(String kind) {
         return switch (kind) {
             case KIND_ROD -> "rod module";
             case KIND_GUN -> "weapon module";
+            case KIND_EXO -> "exo module";
             default -> "drill module";
         };
+    }
+
+    /** An Exo-Rig tier: requirement, price and grid. */
+    public record ExoTier(String name, int grade, int prestige, Currency currency, long cost, RigSize size) {
+        public boolean unlockedFor(int playerGrade, int playerPrestige) {
+            return playerPrestige > prestige || (playerPrestige == prestige && playerGrade >= grade);
+        }
+
+        public String requirementText() {
+            if (prestige <= 0) return "Grade " + grade;
+            if (grade <= 1) return "Prestige " + prestige;
+            return "Prestige " + prestige + ", Grade " + grade;
+        }
     }
 
     /** A gear rig's grid. core = Legendary-only cells. */
