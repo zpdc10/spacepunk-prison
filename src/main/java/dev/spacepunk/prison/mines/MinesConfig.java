@@ -27,7 +27,7 @@ public final class MinesConfig {
             double refillMinedFraction, int refillIntervalSeconds, int warnSeconds, boolean refillOnStartup,
             int blocksPerTick, boolean useFawe, long maxVolume,
             boolean pvp, boolean fallDamage, boolean protectWorld, boolean bossBar, boolean setWorldSpawn,
-            boolean enclosed, int roomHeight) {}
+            boolean enclosed, int roomHeight, int laddersPerWall) {}
 
     private final Settings settings;
     private final Map<String, Deck> decks;
@@ -67,7 +67,8 @@ public final class MinesConfig {
                 y.getBoolean("display.boss-bar", true),
                 y.getBoolean("world.set-spawn-to-first-mine", true),
                 y.getBoolean("layout.enclosed", true),
-                Math.max(4, y.getInt("layout.room-height", 9)));
+                Math.max(4, y.getInt("layout.room-height", 9)),
+                Math.max(0, y.getInt("layout.ladders-per-wall", 3)));
 
         Map<String, Deck> decks = new LinkedHashMap<>();
         ConfigurationSection ds = y.getConfigurationSection("decks");

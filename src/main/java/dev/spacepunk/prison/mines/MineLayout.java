@@ -3,6 +3,8 @@ package dev.spacepunk.prison.mines;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.Directional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
  */
 final class MineLayout {
     /** Bump when the generated structure changes; placed auto-layout mines are rebuilt on the next start. */
-    static final int VERSION = 2;
+    static final int VERSION = 3;
 
     private MineLayout() {}
 
@@ -80,6 +82,7 @@ final class MineLayout {
         // Top of the pit walls flush with the rim
         for (int x = x0; x <= x1; x++) { set(world, x, r.maxY(), z0, rimMat); set(world, x, r.maxY(), z1, rimMat); }
         for (int z = z0; z <= z1; z++) { set(world, x0, r.maxY(), z, rimMat); set(world, x1, r.maxY(), z, rimMat); }
+        buildLadders(cfg, r, world, wall);
 
         Location spawn = spawnFor(cfg, r, world);
         int sx = spawn.getBlockX(), sz = spawn.getBlockZ();
@@ -144,6 +147,36 @@ final class MineLayout {
         if (y == bandY) return pillar ? light : trim;
         if (pillar || y == floorY + 1) return trim;
         return wall;
+    }
+
+    /**
+     * Ladders from the pit floor to the walkway, set into the pit walls so players can always climb out. Each
+     * ladder takes the place of a wall block (outside the refill region, so refills never touch it, and outside
+     * the pit, so map protection keeps it), with a backing block behind it. They are spread evenly along every wall.
+     */
+    private static void buildLadders(MinesConfig cfg, Region r, World world, Material backing) {
+        int per = cfg.settings().laddersPerWall();
+        if (per <= 0) return;
+        int x0 = r.minX() - 1, x1 = r.maxX() + 1, z0 = r.minZ() - 1, z1 = r.maxZ() + 1;
+        for (int i = 1; i <= per; i++) {
+            int lx = r.minX() + (int) Math.round((double) i * (r.sizeX() - 1) / (per + 1));
+            int lz = r.minZ() + (int) Math.round((double) i * (r.sizeZ() - 1) / (per + 1));
+            ladder(world, r, x0, lz, x0 - 1, lz, BlockFace.EAST, backing);
+            ladder(world, r, x1, lz, x1 + 1, lz, BlockFace.WEST, backing);
+            ladder(world, r, lx, z0, lx, z0 - 1, BlockFace.SOUTH, backing);
+            ladder(world, r, lx, z1, lx, z1 + 1, BlockFace.NORTH, backing);
+        }
+    }
+
+    private static void ladder(World w, Region r, int x, int z, int bx, int bz, BlockFace facing, Material backing) {
+        Directional data = (Directional) Material.LADDER.createBlockData();
+        data.setFacing(facing);
+        // Backing below the walkway support (the support and walkway layers are already solid there).
+        for (int y = r.minY() - 1; y <= r.maxY() - 2; y++) set(w, bx, y, bz, backing);
+        for (int y = r.minY(); y <= r.maxY(); y++) {
+            if (y < w.getMinHeight() || y >= w.getMaxHeight()) continue;
+            w.getBlockAt(x, y, z).setBlockData(data, false);
+        }
     }
 
     private static void set(World w, int x, int y, int z, Material m) {
