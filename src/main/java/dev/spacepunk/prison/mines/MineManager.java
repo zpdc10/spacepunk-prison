@@ -102,6 +102,8 @@ public final class MineManager implements MineService {
     public int breakBlocks(Player player, Collection<Block> blocks, BreakCause cause) {
         Map<Mine, Map<Material, Long>> drops = new LinkedHashMap<>();
         Map<Mine, Integer> counts = new HashMap<>();
+        // A hand break is one block: hand it to listeners as the origin so area enchants can center on it.
+        Block origin = cause == BreakCause.HAND && blocks.size() == 1 ? blocks.iterator().next() : null;
         for (Block b : blocks) {
             Mine m = mineFor(b);
             if (m == null || m.refilling()) continue;
@@ -112,8 +114,6 @@ public final class MineManager implements MineService {
             counts.merge(m, 1, Integer::sum);
         }
         int total = 0;
-        // Drill area enchants center on the hand-broken block.
-        Block origin = cause == BreakCause.HAND && blocks.size() == 1 ? blocks.iterator().next() : null;
         for (Map.Entry<Mine, Map<Material, Long>> e : drops.entrySet()) {
             Mine m = e.getKey();
             int n = counts.get(m);
