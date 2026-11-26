@@ -34,6 +34,8 @@ final class BayData {
     long refurbished = 0;
     /** Lifetime drill modules built at the Assembly Bench. */
     long modulesBuilt = 0;
+    /** True once the one-time starter fuel has been put in the locker. */
+    boolean starterFuel = false;
 
     static final class MachineData {
         int id;

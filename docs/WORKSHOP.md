@@ -25,8 +25,10 @@ freely. Package `workshop/`, config `workshop.yml`, art `tools/resourcepack/work
 Machines push out of their front (the way the player faced when placing; rotate in the machine menu). The
 block in front can be another machine, or a **conveyor** line (restyled repeaters) that ends at a machine.
 
-**Power:** Slag Burners burn fuel (slag dust, carbon, fuel cells; from their input or straight from the
-locker) only as much as the bay needs. Short on power = every machine runs slower (brownout).
+**Power:** Slag Burners burn fuel only as much as the bay needs. Fuel comes from, in order: the burner's
+own hopper (click fuel from your inventory in its menu, or feed it by conveyor), the Bay Locker (slag dust,
+carbon, fuel cells), then Slag/Slag Rubble in the cargo hold (`cargo-fuels`). Every bay gets 200 slag dust
+once (`starter-fuel`) so a new player's first burner lights. Short on power = every machine runs slower (brownout).
 **Coolant:** pumps share coolant with every washer and forge; short = they slow down.
 **Heat:** running machines heat up, +35% per running neighbour; all shed 3/s; a touching Heat Sink sheds
 4/s more. At 100 the machine jams until it cools to 25. An Arc Furnace (6/s) overheats alone without a sink.

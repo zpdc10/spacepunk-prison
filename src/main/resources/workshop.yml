@@ -203,6 +203,12 @@ fuels:
   "spacepunk:crushed_carbon": 30
   "spacepunk:fuel_cell": 240
 
+# Slag Burners burn fuel from: their own input (click fuel in from your inventory in the burner's menu), then the
+# Bay Locker, then these from the cargo hold. Only cheap filler here, so ore you meant to sell isn't burned.
+cargo-fuels: ["minecraft:stone", "minecraft:cobblestone"]
+# Slag dust put in every bay's locker once, so a new player's first burner lights before the Crusher runs.
+starter-fuel: 200
+
 # Ore families: crush -> wash -> smelt. value = Credits value of one crushed unit before markup; each ore
 # yields (its sell price / value) crushed units on average, so crushing never loses value. Goods prices
 # are derived: each step multiplies by its machine's markup. ids are spacepunk:<id>.

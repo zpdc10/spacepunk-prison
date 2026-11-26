@@ -464,7 +464,8 @@ chapters:
         target: "machine:generator"
         text: "Place a Slag Burner for power"
         hint:
-          - "Anywhere in the bay. It burns slag dust (the Crusher makes it) and stone from your locker. 2,500 Credits."
+          - "Anywhere in the bay. 2,500 Credits. You start with 200 <white>Slag Dust</white> fuel in your Bay Locker."
+          - "It also burns <white>Slag</white> from your cargo hold, slag dust the Crusher makes, and fuel you click in from your inventory in its menu."
           - "Short on power, every machine runs slower."
       - on: objective:process_item
         text: "Process your first goods"
@@ -480,6 +481,7 @@ chapters:
       - "<white>2 </white><gray>Place in a row, each facing the next:"
       - "<white>   Cargo Intake → Jaw Crusher → Depot Hatch"
       - "<white>3 </white><gray>A <white>Slag Burner</white> anywhere for power"
+      - "<gray>   Fuel: locker slag dust, Slag in cargo, or click in"
       - "<white>4 </white><gray>Keep ore in your cargo hold. It runs itself."
       - ""
       - "<gray>Machines push out their <white>front</white> (the way you faced)."
@@ -526,6 +528,8 @@ chapters:
         <h>POWER, HEAT</h>
 
         <em>Slag Burners</em> make power from fuel. Too little: slower machines.
+
+        Fuel: locker slag dust, <em>Slag</em> in cargo, or click it in.
 
         Running machines heat up, more when they touch. At 100 a machine <bad>jams</bad>. A <em>Heat Sink</em> next to it cools it.
 
