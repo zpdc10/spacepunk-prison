@@ -1,3 +1,6 @@
 # Spacepunk Prison core config. Each feature module has its own section or file (mines.yml, drill.yml, ...).
 storage:
   autosave-seconds: 120
+worlds:
+  # No rain or thunder in any world, ever (the station has no sky).
+  disable-weather: true

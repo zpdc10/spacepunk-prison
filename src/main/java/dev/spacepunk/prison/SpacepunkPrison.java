@@ -77,6 +77,7 @@ public final class SpacepunkPrison extends JavaPlugin {
             for (PendingCommand c : commands) event.registrar().register(c.label, c.description, c.aliases, c.command);
         });
 
+        new dev.spacepunk.prison.core.WorldRules(getConfig().getBoolean("worlds.disable-weather", true)).start(this);
         profileManager.start(getConfig().getInt("storage.autosave-seconds", 120));
     }
 
