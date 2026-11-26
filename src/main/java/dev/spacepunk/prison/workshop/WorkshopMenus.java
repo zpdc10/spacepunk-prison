@@ -89,7 +89,7 @@ final class WorkshopMenus {
         g.set(23, Gui.icon(Material.SMITHING_TABLE, "workshop/ui/shop", "<#c8743a>Machine Shop", List.of(
                 "<gray>Buy machines, conveyors and decor.", "", "<yellow>Click to open")), e -> { Gui.click(p); shop(p); });
         g.set(25, Gui.icon(Material.CRAFTER, "workshop/ui/assembly", "<#6fd6a8>Assembly Bench", List.of(
-                "<gray>Build drill modules from schematics,", "<gray>scrap parts and workshop components.", "", "<yellow>Click to open")),
+                "<gray>Build drill, rod and weapon modules from schematics,", "<gray>scrap parts and workshop components.", "", "<yellow>Click to open")),
                 e -> { Gui.click(p); assembly(p, 0); });
         g.set(30, Gui.icon(Material.GRINDSTONE, "workshop/ui/refurbisher", "<#c8a070>Refurbisher", List.of(
                 "<gray>Repair fried scrap parts. Some come", "<gray>out pristine.", "", "<yellow>Click to open")),
@@ -630,7 +630,7 @@ final class WorkshopMenus {
         g.renderer(gui -> {
             int grade = ws.grade(p.getUniqueId());
             gui.set(4, Gui.icon(Material.CRAFTER, "workshop/ui/assembly", "<#6fd6a8>Assembly Bench", List.of(
-                    "<gray>Build drill modules you know the", "<gray>schematic for. Components come from",
+                    "<gray>Build drill, rod and weapon modules you know the", "<gray>schematic for. Components come from",
                     "<gray>your Bay Locker, scrap parts from your", "<gray>inventory (working or pristine).", "",
                     "<gray>Learn schematics by decoding blueprint", "<gray>fragments in <white>/salvage</white><gray>.")));
             int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};

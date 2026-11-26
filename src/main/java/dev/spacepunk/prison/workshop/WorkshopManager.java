@@ -780,7 +780,7 @@ final class WorkshopManager implements WorkshopService, Simulator.Hooks {
         d.modulesBuilt++;
         p.playSound(p.getLocation(), Sound.BLOCK_SMITHING_TABLE_USE, 1f, 0.8f);
         p.playSound(p.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 0.6f, 1.6f);
-        Text.send(p, "<green>Assembled " + name + "<green>. Fit it on your drill's module rig.");
+        Text.send(p, "<green>Assembled " + name + "<green>. Fit it with <white>/rig</white><green>.");
         save(p.getUniqueId());
     }
 

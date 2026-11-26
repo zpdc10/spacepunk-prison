@@ -132,6 +132,7 @@ public final class DrillCommand implements BasicCommand {
                 d.levels.clear();
                 d.sockets.clear();
                 d.rig.clear();
+                d.gear.clear();
                 d.expansion = 0;
                 drills.changed(target);
                 Text.send(sender, "<gray>Reset " + target.getName() + "'s drill (fitted modules were deleted; schematics kept).");

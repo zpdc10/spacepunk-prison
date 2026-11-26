@@ -88,7 +88,7 @@ final class RareItems {
                         lore.add("<gold>Perfect condition.</gold> <gray>Counts as a working part,");
                         lore.add("<gray>and fuses modules to <white>Mk IV</white> and <white>Mk V</white>.");
                     }
-                    default -> lore.add("<gray>Builds drill modules at the <white>Assembly Bench</white>.");
+                    default -> lore.add("<gray>Builds drill, rod and weapon modules at the <white>Assembly Bench</white>.");
                 }
             }
         }

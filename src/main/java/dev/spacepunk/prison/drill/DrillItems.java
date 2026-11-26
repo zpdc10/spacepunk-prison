@@ -146,7 +146,7 @@ public final class DrillItems {
     public List<String> moduleLore(ModuleDef m, int mk, double drain, boolean asItem) {
         List<String> lore = new ArrayList<>();
         DrillConfig.FamilyDef fam = cfg.family(m.family());
-        lore.add(m.rarity().color + m.rarity().label + " drill module" + (fam == null ? "" : " <dark_gray>· " + fam.coloredName()));
+        lore.add(m.rarity().color + m.rarity().label + " " + DrillConfig.kindLabel(m.kind()) + (fam == null ? "" : " <dark_gray>· " + fam.coloredName()));
         if (!m.lore().isEmpty()) lore.add("<#8a8070><i>" + m.lore());
         lore.add("");
         lore.addAll(DrillMath.effectLines(cfg, m, mk, drain));
@@ -170,8 +170,20 @@ public final class DrillItems {
         else lore.add("<gold>Top mark");
         if (asItem) {
             lore.add("");
-            lore.add("<gray>Fit it in your drill's module rig");
-            lore.add("<gray>(shift + right-click the drill).");
+            switch (m.kind()) {
+                case DrillConfig.KIND_ROD -> {
+                    lore.add("<gray>Fit it on your Rod Rig: <white>/rig rod");
+                    lore.add("<gray>Boosts your fishing rod.");
+                }
+                case DrillConfig.KIND_GUN -> {
+                    lore.add("<gray>Fit it on a Weapon Rig: <white>/rig gun");
+                    lore.add("<gray>Each gun model has its own rig.");
+                }
+                default -> {
+                    lore.add("<gray>Fit it in your drill's module rig");
+                    lore.add("<gray>(shift + right-click the drill, or <white>/rig</white><gray>).");
+                }
+            }
             lore.add("<dark_gray>Tradeable on the Black Market (/ah)");
         }
         return lore;

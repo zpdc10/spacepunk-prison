@@ -37,6 +37,7 @@ public final class DrillModule implements FeatureModule {
         menu = new DrillMenu(drills, heat);
         rig = new RigMenu(drills, menu);
         menu.rigMenu(rig);
+        drills.rigMenu(rig);
         MiningListener mining = new MiningListener(drills, heat);
 
         Services.register(DrillService.class, drills);
@@ -45,9 +46,11 @@ public final class DrillModule implements FeatureModule {
         pm.registerEvents(menu, plugin);
         pm.registerEvents(rig, plugin);
         pm.registerEvents(new SellListener(drills, heat), plugin);
+        pm.registerEvents(new GearFindListener(drills), plugin);
         pm.registerEvents(new DrillListener(plugin, drills, heat, mining, menu), plugin);
 
         plugin.addCommand("drill", "Open your drill bay", List.of("pickaxe", "pick"), new DrillCommand(this));
+        plugin.addCommand("rig", "Fit modules on your drill, rod and guns", List.of("modules"), new RigCommand(drills));
 
         ticker = Bukkit.getScheduler().runTaskTimer(plugin, () -> heat.tick(TICK_PERIOD / 20.0), TICK_PERIOD, TICK_PERIOD);
         flusher = Bukkit.getScheduler().runTaskTimer(plugin, drills::flushAll, 20L * 30, 20L * 30);

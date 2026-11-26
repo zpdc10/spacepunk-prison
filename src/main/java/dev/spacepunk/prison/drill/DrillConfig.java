@@ -47,6 +47,12 @@ public final class DrillConfig {
     public final Map<Integer, PartCost> fuseParts;
     public final List<ExpansionDef> expansions;
     public final List<String> startingSchematics;
+    /** Rod Rig size per rod tier (fishing.yml rod.tiers order; tiers past the list keep the last one). */
+    public final List<RigSize> rodRigs;
+    /** Weapon Rig size per gun id ("default" for guns not listed). */
+    public final Map<String, RigSize> gunRigs;
+    /** Chance per event to find a random module of a kind: "rod.fish", "rod.sea-creature", "gun.undercroft-kill", "gun.smuggle". */
+    public final Map<String, Double> moduleDrops;
 
     public final Heat heat;
 
@@ -163,7 +169,8 @@ public final class DrillConfig {
                         material(s.getString("material"), Material.PRISMARINE_SHARD, log), s.getString("model", id), s.getString("lore", ""),
                         family, ModuleShape.parse(s.getString("shape"), ModuleShape.DOT), pros, cons, Set.copyOf(flags),
                         s.getBoolean("rules.edge", false), lower(s.getString("rules.needs")), lower(s.getString("rules.avoid")),
-                        Math.max(1.0, s.getDouble("rules.drain", 1.0)), lower(s.getString("core-part"))));
+                        Math.max(1.0, s.getDouble("rules.drain", 1.0)), lower(s.getString("core-part")),
+                        kind(s.getString("kind"), id, log)));
             }
         }
         modules = Collections.unmodifiableMap(ml);
@@ -217,6 +224,32 @@ public final class DrillConfig {
         }
         expansions = List.copyOf(ex);
         startingSchematics = List.copyOf(y.getStringList("starting-schematics"));
+
+        List<RigSize> rr = new ArrayList<>();
+        for (Map<?, ?> m : y.getMapList("gear-rigs.rod")) rr.add(rigSize(m));
+        if (rr.isEmpty()) rr.add(new RigSize(2, 2, List.of()));
+        rodRigs = List.copyOf(rr);
+        Map<String, RigSize> gr = new LinkedHashMap<>();
+        ConfigurationSection gs = y.getConfigurationSection("gear-rigs.gun");
+        if (gs != null) {
+            for (String id : gs.getKeys(false)) {
+                ConfigurationSection s = gs.getConfigurationSection(id);
+                if (s == null) continue;
+                gr.put(id, new RigSize(Math.max(1, Math.min(7, s.getInt("width", 2))), Math.max(1, Math.min(4, s.getInt("height", 2))),
+                        cells(s.getList("core"))));
+            }
+        }
+        gunRigs = Collections.unmodifiableMap(gr);
+        Map<String, Double> md = new LinkedHashMap<>();
+        ConfigurationSection mds = y.getConfigurationSection("module-drops");
+        if (mds != null) {
+            for (String kind : mds.getKeys(false)) {
+                ConfigurationSection s = mds.getConfigurationSection(kind);
+                if (s == null) continue;
+                for (String k : s.getKeys(false)) md.put(kind + "." + k, Math.max(0, s.getDouble(k)));
+            }
+        }
+        moduleDrops = Collections.unmodifiableMap(md);
 
         List<Double> deck = y.getDoubleList("heat.deck-multiplier");
         heat = new Heat(
@@ -292,6 +325,21 @@ public final class DrillConfig {
         return def;
     }
 
+    private static RigSize rigSize(Map<?, ?> m) {
+        int w = Math.max(1, Math.min(7, num(m.get("width"), 2).intValue()));
+        int h = Math.max(1, Math.min(4, num(m.get("height"), 2).intValue()));
+        return new RigSize(w, h, m.get("core") instanceof List<?> l ? cells(l) : List.<int[]>of());
+    }
+
+    private static String kind(String raw, String id, Logger log) {
+        String k = raw == null ? KIND_DRILL : raw.trim().toLowerCase(Locale.ROOT);
+        if (!k.equals(KIND_DRILL) && !k.equals(KIND_ROD) && !k.equals(KIND_GUN)) {
+            log.warning("drill.yml: module " + id + " has unknown kind " + raw + "; using drill");
+            return KIND_DRILL;
+        }
+        return k;
+    }
+
     private static String lower(String s) { return s == null || s.isBlank() ? null : s.trim().toLowerCase(Locale.ROOT); }
 
     public FrameDef frame(String id) {
@@ -309,6 +357,40 @@ public final class DrillConfig {
     public ModuleDef module(String id) { return id == null ? null : modules.get(id); }
 
     // ---- definitions ----
+
+    /** Module kinds: which rig a module fits. */
+    public static final String KIND_DRILL = "drill";
+    public static final String KIND_ROD = "rod";
+    public static final String KIND_GUN = "gun";
+
+    /** Player-facing name of a kind's modules ("drill module"). */
+    public static String kindLabel(String kind) {
+        return switch (kind) {
+            case KIND_ROD -> "rod module";
+            case KIND_GUN -> "weapon module";
+            default -> "drill module";
+        };
+    }
+
+    /** A gear rig's grid. core = Legendary-only cells. */
+    public record RigSize(int width, int height, List<int[]> core) {}
+
+    /** Rod Rig size for a rod tier index. */
+    public RigSize rodRig(int tier) { return rodRigs.get(Math.max(0, Math.min(rodRigs.size() - 1, tier))); }
+
+    /** Weapon Rig size for a gun id. */
+    public RigSize gunRig(String gunId) {
+        RigSize r = gunRigs.get(gunId);
+        if (r == null) r = gunRigs.get("default");
+        return r == null ? new RigSize(2, 2, List.of()) : r;
+    }
+
+    /** Guns with their own listed Weapon Rig (tab order in the rig menu). */
+    public List<String> rigGuns() {
+        List<String> out = new ArrayList<>();
+        for (String id : gunRigs.keySet()) if (!id.equals("default")) out.add(id);
+        return out;
+    }
 
     public record FrameDef(String id, int index, String name, String color, int grade, int prestige,
                            Currency costCurrency, long cost, int sockets, double baseSpeed, double heatCapacity,
@@ -366,7 +448,8 @@ public final class DrillConfig {
      */
     public record ModuleDef(String id, String name, Rarity rarity, double weight, Material material, String model, String lore,
                             String family, ModuleShape shape, Map<String, Double> pros, Map<String, Double> cons,
-                            Set<String> flags, boolean edge, String needs, String avoid, double drain, String corePart) {
+                            Set<String> flags, boolean edge, String needs, String avoid, double drain, String corePart,
+                            String kind) {
         public String coloredName() { return rarity.color + name + "</" + rarity.color.substring(1); }
 
         public String coloredName(int mk) { return rarity.color + name + " " + DrillMath.roman(mk) + "</" + rarity.color.substring(1); }

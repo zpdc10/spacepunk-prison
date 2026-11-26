@@ -93,9 +93,16 @@ public final class GunManager implements GunService {
 
     // ---- firing ----
 
+    /** The gun's numbers with this player's Weapon Rig modules for that gun model applied. */
+    GunDef tune(Player p, GunDef g) {
+        if (g == null) return null;
+        return Services.find(dev.spacepunk.prison.api.DrillService.class)
+                .map(d -> g.tuned(d.gearMultipliers(p.getUniqueId(), "gun:" + g.id()))).orElse(g);
+    }
+
     /** Trigger pull from the listener. */
     void trigger(Player p, ItemStack gunItem) {
-        GunDef g = items.gun(gunItem);
+        GunDef g = tune(p, items.gun(gunItem));
         if (g == null) return;
         State s = state(p);
         if (s.reload != null) return;
@@ -268,7 +275,7 @@ public final class GunManager implements GunService {
         PlayerInventory inv = p.getInventory();
         int slot = inv.getHeldItemSlot();
         ItemStack item = inv.getItem(slot);
-        GunDef g = items.gun(item);
+        GunDef g = tune(p, items.gun(item));
         if (g == null) return false;
         State s = state(p);
         if (s.reload != null) return true;
@@ -359,7 +366,7 @@ public final class GunManager implements GunService {
         Optional<HudService> hud = Services.find(HudService.class);
         for (Player p : plugin.getServer().getOnlinePlayers()) {
             ItemStack held = p.getInventory().getItemInMainHand();
-            GunDef g = items.gun(held);
+            GunDef g = tune(p, items.gun(held));
             State s = states.get(p.getUniqueId());
             if (g == null) {
                 if (s != null && s.reload != null) cancelReload(p, true);
