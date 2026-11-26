@@ -10,6 +10,3 @@ permissions:
   spacepunk.resourcepack.bypass:
     description: Not kicked for declining the resource pack (staff testing)
     default: false
-  spacepunk.station.build:
-    description: Edit blocks in the station hub world
-    default: op

@@ -81,6 +81,9 @@ final class UndercroftListener implements Listener {
         veins = s;
     }
 
+    /** Hot-ore vein block (minable, for map protection). */
+    boolean isVein(Block b) { return in(b.getLocation()) && veins.contains(pack(b.getX(), b.getY(), b.getZ())); }
+
     private static long pack(int x, int y, int z) {
         return ((long) (x & 0x3FFFFFF) << 38) | ((long) (z & 0x3FFFFFF) << 12) | (y & 0xFFF);
     }

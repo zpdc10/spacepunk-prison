@@ -85,6 +85,17 @@ other), `registerContractObjective` + `addContractProgress` to feed weekly gang 
 moves use reasons `gang:deposit` / `gang:withdraw`, so they never count as server income for prestige.
 `GangMembershipEvent` fires on join/leave/rank/disband/recolor so tags can refresh.
 
+## Map protection (default deny)
+
+Core's `MapProtection` (`api.ProtectionService`) cancels, at LOWEST priority in every world, any block break,
+place, bucket, sign edit, block-altering right-click (tools, pots, containers...), item frame/armor stand edit,
+and any world change (explosions, fire, liquid flow, pistons, growth, fading). Ops included. Exceptions:
+- ore inside a mine pit (`MineService.mineAt`), handled by the mines module;
+- rules a module registers: `allowBreak` / `allowPlace` / `allowUse` (player + block) and `allowEnvironment`
+  (block), e.g. a workshop bay for its owner, Undercroft veins, supply drops and labs;
+- admins with `/buildmode` on (permission `spacepunk.admin`; off by default and reset on rejoin).
+New areas are protected automatically; register a rule for anything players should be able to change.
+
 ## Places and warps
 
 The station hub is the main hub (world `station`); everything else lives in its own area and is reached by a
