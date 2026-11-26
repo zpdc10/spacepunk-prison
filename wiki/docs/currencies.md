@@ -25,7 +25,7 @@ Your balances show on the sidebar and in the tab list footer. `/balance` (`/bal`
 - Opening salvage caches dug up while mining.
 - Daily parkour reward rolls.
 - Selling hot ore, stims and bounty tags at the Undercroft fence.
-- Other players: Black Market sales and gang bank withdrawals.
+- Other players: Black Market sales, direct trades (`/trade`) and gang bank withdrawals.
 
 **What you spend them on:** clearance grades (`/rankup`), cargo hold upgrades, the Auto-Seller, the Salvaged drill
 frame, workshop machines, conveyors and bay expansions, bait, guns and ammo, Smuggler's Linings and bribes,
@@ -35,7 +35,7 @@ founding a gang and paying into its bank, and Black Market purchases.
 
 !!! info "Server income vs player money"
     Credits the **server** pays you (selling, fishing, workshop, quests, salvage caches, the fence, parkour) are
-    "server income". Credits from **other players** (auction sales, gang bank) are not. Only server
+    "server income". Credits from **other players** (auction sales, direct trades, gang bank) are not. Only server
     income counts toward gang points and quest goals like "earn X Credits", so moving money between alts never
     helps.
 
