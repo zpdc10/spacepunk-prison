@@ -45,6 +45,8 @@ public final class GangsModule implements FeatureModule {
         GangMenu menu = new GangMenu(gangs);
         Bukkit.getPluginManager().registerEvents(new GangListener(plugin, gangs), plugin);
         Bukkit.getPluginManager().registerEvents(menu, plugin);
+        TurfManager turf = new TurfManager(gangs);
+        Bukkit.getPluginManager().registerEvents(turf, plugin);
 
         GangCommands cmd = new GangCommands(gangs, menu, this::reload);
         plugin.addCommand("gang", "Crews: bank, upgrades, contracts, chat", List.of("crew", "gangs"), cmd.gang());
@@ -52,6 +54,7 @@ public final class GangsModule implements FeatureModule {
 
         tasks.add(Bukkit.getScheduler().runTaskTimer(plugin, gangs::tick, 20L * 5, 20L * 60));
         tasks.add(Bukkit.getScheduler().runTaskTimer(plugin, gangs::save, 20L * 30, 20L * 30));
+        tasks.add(Bukkit.getScheduler().runTaskTimer(plugin, turf::tick, 40L, 20L));
 
         // /reload safety: refresh grades of players already online.
         ProfileService profiles = Services.get(ProfileService.class);

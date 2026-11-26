@@ -124,10 +124,11 @@ final class GangManager implements GangService {
         String old = root.territories.get(territoryId);
         if (gangId != null && !gangs.containsKey(gangId)) return;
         if (java.util.Objects.equals(old, gangId)) return;
-        String name = cfg().territoryName(territoryId);
+        String name = territoryName(territoryId);
         if (gangId == null) root.territories.remove(territoryId);
         else root.territories.put(territoryId, gangId);
         dirty();
+        pushLab(territoryId, gangId == null ? null : gangs.get(gangId));
         Gang oldGang = old == null ? null : gangs.get(old);
         Gang newGang = gangId == null ? null : gangs.get(gangId);
         if (newGang != null) {
@@ -135,7 +136,7 @@ final class GangManager implements GangService {
                     + "</white> seized the <#c8743a>" + name + "</#c8743a>"
                     + (oldGang != null ? " from <white>" + oldGang.name + "</white>." : "."));
         } else if (oldGang != null) {
-            broadcastAll("<gray>The <#c8743a>" + name + "</#c8743a> is no longer held by <white>" + oldGang.name + "</white>.");
+            broadcastAll("<gray>" + name + "<gray> is no longer held by <white>" + oldGang.name + "</white>.");
         }
     }
 
@@ -148,6 +149,32 @@ final class GangManager implements GangService {
     Gang gangFor(UUID player) {
         String id = memberIndex.get(player);
         return id == null ? null : gangs.get(id);
+    }
+
+    Gang byId(String id) { return id == null ? null : gangs.get(id); }
+
+    void addPointsTo(Gang g, long points) { if (points > 0) addPointsRaw(g, null, points); }
+
+    /** Display name of a territory: the Undercroft lab's name if it is a lab, else gangs.yml territories. */
+    String territoryName(String id) {
+        return Services.find(dev.spacepunk.prison.api.UndercroftService.class)
+                .flatMap(u -> u.lab(id)).map(dev.spacepunk.prison.api.UndercroftService.LabInfo::displayName)
+                .orElseGet(() -> cfg().territoryName(id));
+    }
+
+    /** Adopts an owner set elsewhere (staff lab command) without announcing or pushing it back. */
+    void syncTerritory(String id, String gangId) {
+        String old = root.territories.get(id);
+        if (java.util.Objects.equals(old, gangId)) return;
+        if (gangId == null) root.territories.remove(id);
+        else root.territories.put(id, gangId);
+        dirty();
+    }
+
+    private static void pushLab(String id, Gang g) {
+        Services.find(dev.spacepunk.prison.api.UndercroftService.class).ifPresent(u -> {
+            if (u.lab(id).isPresent()) u.setLabController(id, g == null ? null : g.id, g == null ? null : g.name, false);
+        });
     }
 
     Gang byName(String name) {
@@ -406,7 +433,12 @@ final class GangManager implements GangService {
             Bukkit.getPluginManager().callEvent(new GangMembershipEvent(m, g.id, GangMembershipEvent.Change.DISBANDED));
         }
         gangs.remove(g.id);
-        root.territories.values().removeIf(id -> id.equals(g.id));
+        for (String t : new ArrayList<>(root.territories.keySet())) {
+            if (g.id.equals(root.territories.get(t))) {
+                root.territories.remove(t);
+                pushLab(t, null);
+            }
+        }
         for (Map<String, Long> inv : invites.values()) inv.remove(g.id);
         dirty();
     }
