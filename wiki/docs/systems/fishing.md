@@ -18,8 +18,9 @@ The Shuttle Bay's **Fishing** airlock and the Shuttle Board both go there too. E
 ## Where to fish
 
 Fishing lives in its own world, the **station waters**. You arrive at the **Bilge Hub**, which has the Fish Market,
-the weekly biggest-catch board and the top anglers board. Five pools run east from it, joined by bridges, one per
-deck. Each has its deck's look and tinted water.
+the weekly biggest-catch board and the top anglers board. Each of the five pools is its own sealed deck module,
+built and decorated for its deck, and they are not connected: use the **Dock Terminal** (at the hub and on every
+pool's docking pad), `/waters` or the Shuttle Board to fly to a pool. Every pool also has a small Fish Market kiosk.
 
 | Pool | Deck | Opens at | Value multiplier |
 | --- | --- | --- | --- |

@@ -143,7 +143,7 @@ final class FishingCommands {
                 switch (sub) {
                     case "build" -> {
                         module.rebuild();
-                        Text.send(s, "<gray>Rebuilt the station waters (hub, bridges, " + module.cfg().areas.size() + " pools).");
+                        Text.send(s, "<gray>Rebuilt the station waters (hub and " + module.cfg().areas.size() + " pool modules).");
                     }
                     case "reload" -> {
                         module.reload();

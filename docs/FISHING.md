@@ -7,9 +7,15 @@ The station's flooded decks: a second way to earn and progress next to mining. M
 
 `station_waters` is its own void world (normal difficulty so sea creatures can fight; nothing spawns naturally,
 no hunger, no PvP, no block changes, keep-inventory). It is built automatically on first start: the **Bilge Hub**
-(Fish Market, weekly biggest-catch board, top anglers board) and one pool per deck in a row to the east, joined
-by bridges. Each pool has the deck's wall, floor and light blocks and its own biome so the water is tinted
-(swampy runoff, toxic sludge, cold stasis fluid, bright breach water, foundry quench tanks).
+(Fish Market stall, weekly biggest-catch board, top anglers board, Dock Terminal) and one sealed **deck module**
+per pool, 400 blocks apart along +X and not connected. Players fly to each one by warp: the Dock Terminal (hub and
+every module), `/waters`, or the Shuttle Board. Each module is a walled, roofed room around its pool with a docking
+pad (arrival), a Dock Terminal, a small Fish Market kiosk and its own biome-tinted water, decorated for its deck
+(`FishingBuilds`): scrap heaps, a gantry crane and a wrecked shuttle (Scrapyard); coolant tanks piped into the
+pool, hazard stripes and consoles (Sludge Tanks); stasis pods, ice crystals, snow and ice floes (Frozen Pools); a
+hull breach sealed by a force field with debris drifting in the void (Breach Flood); lava channels behind glass,
+casting molds and hanging castings (Quench Tanks). Layout v1 (bridged pools) is cleared automatically on upgrade.
+Falling into the void returns you to the module you fell from.
 
 | Pool | Deck | Clearance |
 | --- | --- | --- |

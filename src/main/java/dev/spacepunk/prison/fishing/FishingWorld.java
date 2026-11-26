@@ -38,13 +38,13 @@ import java.util.Set;
 import java.util.logging.Level;
 
 /**
- * The station waters: a void world with a hub platform and one pool per deck in a row along +X, joined by
- * bridges. Everything is computed from fishing.yml, so lookups need no stored regions. Signs, the leaderboard
+ * The station waters: a void world with the Bilge Hub and one sealed deck module per pool, far apart along +X and
+ * not connected (players fly between them from a Dock Terminal, /waters or the Shuttle Board). Everything is computed from fishing.yml, so lookups need no stored regions. Signs, the leaderboard
  * boards and the Fish Market are non-persistent display entities spawned on enable (their chunks are kept loaded).
  */
 final class FishingWorld {
-    static final int LAYOUT_VERSION = 1;
-    private static final int HUB_RADIUS = 7;
+    static final int LAYOUT_VERSION = 2;
+    private static final int HUB_RADIUS = 7; // v1 hub, for clearing the old layout
 
     private final Plugin plugin;
     private final NamespacedKey displayKey;
@@ -98,14 +98,15 @@ final class FishingWorld {
         return null;
     }
 
-    /** The area a player is standing at (pool plus its walkway), if any. */
+    /** The area whose module a player is in (pool, walkway and the room around it), if any. */
     Area areaNear(Location l) {
         if (l == null || !isWaters(l.getWorld())) return null;
         int x = l.getBlockX(), z = l.getBlockZ();
         for (Area a : cfg.areas.values()) {
             Pool p = pool(a);
-            if (x >= p.outerX0(cfg.walkway) - 2 && x <= p.outerX1(cfg.walkway) + 2
-                    && z >= p.outerZ0(cfg.walkway) - 2 && z <= p.outerZ1(cfg.walkway) + 2) return a;
+            int pad = FishingBuilds.MARGIN + 4;
+            if (x >= p.outerX0(cfg.walkway) - pad && x <= p.outerX1(cfg.walkway) + pad
+                    && z >= p.outerZ0(cfg.walkway) - pad && z <= p.outerZ1(cfg.walkway) + pad) return a;
         }
         return null;
     }
@@ -118,9 +119,8 @@ final class FishingWorld {
     /** Arrival point on the west walkway of a pool, facing the water. */
     Location arrival(Area a) {
         if (world == null) return null;
-        Pool p = pool(a);
-        double x = p.x0() - 1 - cfg.walkway / 2.0 + 0.5;
-        return new Location(world, x, cfg.baseY, 0.5, -90f, 10f);
+        FishingBuilds.Room r = new FishingBuilds(world, cfg).room(pool(a));
+        return new Location(world, r.x0() + 3.5, cfg.baseY, r.cz() + 0.5, -90f, 5f);
     }
 
     // ------------------------------------------------------------------ world
@@ -190,7 +190,7 @@ final class FishingWorld {
 
     // ------------------------------------------------------------------ building
 
-    /** Builds (or rebuilds) the hub, bridges and every pool. Main thread. */
+    /** Builds (or rebuilds) the hub and every pool module. Main thread. */
     void build() {
         if (world == null) return;
         long start = System.nanoTime();
@@ -207,51 +207,28 @@ final class FishingWorld {
 
     private void buildAll() {
         int y = cfg.baseY - 1;
-        // Hub
-        for (int x = -HUB_RADIUS; x <= HUB_RADIUS; x++) {
-            for (int z = -HUB_RADIUS; z <= HUB_RADIUS; z++) {
-                boolean edge = Math.abs(x) == HUB_RADIUS || Math.abs(z) == HUB_RADIUS;
-                boolean ring = Math.max(Math.abs(x), Math.abs(z)) == 3;
-                set(x, y, z, x == 0 && z == 0 ? Material.SEA_LANTERN : ring ? Material.SMOOTH_STONE : Material.POLISHED_ANDESITE);
-                set(x, y - 1, z, Material.POLISHED_DEEPSLATE);
-                if (edge) {
-                    boolean gap = x == HUB_RADIUS && Math.abs(z) <= 1;
-                    boolean corner = Math.abs(x) == HUB_RADIUS && Math.abs(z) == HUB_RADIUS;
-                    set(x, y + 1, z, gap ? Material.AIR : corner ? Material.SEA_LANTERN : Material.POLISHED_DEEPSLATE);
-                    if (corner) for (int k = 2; k <= 4; k++) set(x, y + k, z, k == 4 ? Material.SEA_LANTERN : Material.POLISHED_DEEPSLATE);
-                }
-            }
-        }
-        int prevEdge = HUB_RADIUS;
-        Material prevFloor = Material.POLISHED_ANDESITE;
-        Material prevWall = Material.POLISHED_DEEPSLATE;
+        if (YamlConfiguration.loadConfiguration(stateFile).getInt("built-layout", 0) == 1) clearLegacyLayout();
+        FishingBuilds builds = new FishingBuilds(world, cfg);
+        builds.hub(y);
         for (Area a : cfg.areas.values()) {
             Pool p = pool(a);
-            bridge(prevEdge + 1, p.outerX0(cfg.walkway) - 1, prevFloor, prevWall, a.floor(), a.wall(), a.light());
-            buildPool(p);
+            builds.module(p, y, () -> buildPool(p));
             biome(p);
-            prevEdge = p.outerX1(cfg.walkway);
-            prevFloor = a.floor();
-            prevWall = a.wall();
         }
         world.setSpawnLocation(hub());
     }
 
-    private void bridge(int fromX, int toX, Material floorA, Material wallA, Material floorB, Material wallB, Material light) {
-        int y = cfg.baseY - 1;
-        int mid = (fromX + toX) / 2;
-        for (int x = fromX; x <= toX; x++) {
-            Material floor = x <= mid ? floorA : floorB, wall = x <= mid ? wallA : wallB;
-            for (int z = -1; z <= 1; z++) {
-                set(x, y, z, floor);
-                set(x, y - 1, z, wall);
-            }
-            set(x, y, -2, wall);
-            set(x, y, 2, wall);
-            boolean post = (x - fromX) % 6 == 0;
-            set(x, y + 1, -2, post ? light : wall);
-            set(x, y + 1, 2, post ? light : wall);
-        }
+    /** Layout v1 put the pools 44 blocks apart along +X, joined to the hub by bridges. Clears all of it once. */
+    private void clearLegacyLayout() {
+        int oldSpacing = 44, half = Math.max(cfg.poolX, cfg.poolZ) / 2 + 1 + cfg.walkway + 2;
+        int xMax = (cfg.areas.size() + 1) * oldSpacing + half;
+        for (int x = -HUB_RADIUS - 2; x <= xMax; x++)
+            for (int z = -half; z <= half; z++)
+                for (int yy = cfg.baseY - cfg.poolDepth - 4; yy <= cfg.baseY + 6; yy++) {
+                    var b = world.getBlockAt(x, yy, z);
+                    if (!b.getType().isAir()) b.setType(Material.AIR, false);
+                }
+        plugin.getLogger().info("[fishing] cleared the old bridged layout");
     }
 
     private void buildPool(Pool p) {
@@ -262,6 +239,9 @@ final class FishingWorld {
         for (int x = ox0; x <= ox1; x++)
             for (int z = oz0; z <= oz1; z++)
                 for (int yy = y + 1; yy <= y + 6; yy++) set(x, yy, z, Material.AIR);
+        // Open the water surface (the module shell floors the whole room first)
+        for (int x = p.x0(); x <= p.x1(); x++)
+            for (int z = p.z0(); z <= p.z1(); z++) set(x, y, z, Material.AIR);
         // Basin: floor, walls, water
         for (int x = p.x0() - 1; x <= p.x1() + 1; x++) {
             for (int z = p.z0() - 1; z <= p.z1() + 1; z++) {
@@ -308,7 +288,7 @@ final class FishingWorld {
     private void biome(Pool p) {
         Biome b = biome(p.area().biome());
         if (b == null) return;
-        int pad = cfg.walkway + 3;
+        int pad = cfg.walkway + FishingBuilds.MARGIN + 3;
         Set<Long> chunks = new HashSet<>();
         for (int x = p.x0() - pad; x <= p.x1() + pad; x += 2) {
             for (int z = p.z0() - pad; z <= p.z1() + pad; z += 2) {
@@ -352,36 +332,67 @@ final class FishingWorld {
         if (world == null) return;
         keepLoaded(0, 0);
         int y = cfg.baseY;
-        // Fish Market on the west side of the hub
-        Location market = new Location(world, -4.5, y, 0.5);
-        Interaction hit = world.spawn(market, Interaction.class, e -> {
-            e.setInteractionWidth(2.0f);
-            e.setInteractionHeight(2.5f);
-            e.setResponsive(true);
-            tag(e, "market");
-        });
-        displays.add(hit);
-        ItemDisplay fish = world.spawn(market.clone().add(0, 1.4, 0), ItemDisplay.class, e -> {
-            e.setItemStack(marketIcon);
-            e.setBillboard(Display.Billboard.VERTICAL);
-            e.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(1.6f, 1.6f, 1.6f), new AxisAngle4f()));
-            tag(e, "market_icon");
-        });
-        displays.add(fish);
-        displays.add(text(market.clone().add(0, 2.8, 0), "<#5fb4c8><bold>FISH MARKET</bold>\n<gray>Right-click to sell, gut,\n<gray>buy bait and upgrade your rod", 1.0f));
-        displays.add(text(new Location(world, 0.5, y + 2.6, 0.5), cfg.hubName + "\n<gray>Pools are east across the bridges\n<dark_gray>/waters · /fish · /rod", 1.0f));
+        // Hub: Fish Market stall on the west side, Dock Terminal on the east, boards north and south
+        market(new Location(world, -4.5, y, 0.5), marketIcon, true);
+        double[] ht = FishingBuilds.hubTerminal();
+        terminal(new Location(world, ht[0], y + 1, ht[1]), "<gray>Right-click to fly to a pool");
+        displays.add(text(new Location(world, 0.5, y + 2.6, 0.5), cfg.hubName
+                + "\n<gray>Each pool is its own deck module.\n<gray>Fly there from the <white>Dock Terminal</white> (east)\n<dark_gray>/waters · /fish · /rod", 1.0f));
         weeklyBoard = text(new Location(world, 0.5, y + 2.2, -5.5), "<gray>Loading…", 0.9f);
         levelBoard = text(new Location(world, 0.5, y + 2.2, 6.5), "<gray>Loading…", 0.9f);
         displays.add(weeklyBoard);
         displays.add(levelBoard);
+        FishingBuilds b = new FishingBuilds(world, cfg);
         for (Area a : cfg.areas.values()) {
             Pool p = pool(a);
-            keepLoaded(p.cx() >> 4, 0);
-            keepLoaded(p.outerX0(cfg.walkway) >> 4, 0);
-            displays.add(text(new Location(world, p.outerX0(cfg.walkway) + 0.5, y + 3.2, 0.5),
+            FishingBuilds.Room r = b.room(p);
+            keepLoaded((r.x0() + 3) >> 4, r.cz() >> 4);
+            keepLoaded(p.outerX0(cfg.walkway) >> 4, r.cz() >> 4);
+            double[] t = FishingBuilds.terminalSpot(r), mk = FishingBuilds.marketSpot(r);
+            terminal(new Location(world, t[0], y + 1, t[1]), "<gray>Right-click to travel:\n<gray>other pools or the " + cfg.hubName);
+            market(new Location(world, mk[0], y + 1, mk[1]), marketIcon, false);
+            displays.add(text(new Location(world, p.outerX0(cfg.walkway) + 0.5, y + 3.2, r.cz() + 0.5),
                     a.color() + "<bold>" + a.name().toUpperCase() + "</bold>\n<gray>Grade " + a.grade() + "+ · fishing deck "
                             + (a.index() + 1) + "\n<#8a8070><i>" + a.description(), 1.0f));
         }
+    }
+
+    /** A Fish Market: click box, a floating fish and its label. */
+    private void market(Location at, ItemStack icon, boolean big) {
+        float box = big ? 2.0f : 1.2f;
+        displays.add(world.spawn(at, Interaction.class, e -> {
+            e.setInteractionWidth(box);
+            e.setInteractionHeight(big ? 2.5f : 1.8f);
+            e.setResponsive(true);
+            tag(e, "market");
+        }));
+        float s = big ? 1.6f : 0.9f;
+        displays.add(world.spawn(at.clone().add(0, big ? 1.4 : 0.9, 0), ItemDisplay.class, e -> {
+            e.setItemStack(icon);
+            e.setBillboard(Display.Billboard.VERTICAL);
+            e.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(s, s, s), new AxisAngle4f()));
+            tag(e, "market_icon");
+        }));
+        displays.add(text(at.clone().add(0, big ? 2.8 : 1.7, 0),
+                big ? "<#5fb4c8><bold>FISH MARKET</bold>\n<gray>Right-click to sell, gut,\n<gray>buy bait and upgrade your rod"
+                        : "<#5fb4c8><bold>FISH MARKET</bold>\n<gray>Right-click to sell", big ? 1.0f : 0.8f));
+    }
+
+    /** A Dock Terminal: opens the travel menu. */
+    private void terminal(Location at, String hint) {
+        displays.add(world.spawn(at.clone().add(0, -1, 0), Interaction.class, e -> {
+            e.setInteractionWidth(1.2f);
+            e.setInteractionHeight(2.6f);
+            e.setResponsive(true);
+            tag(e, "terminal");
+        }));
+        displays.add(world.spawn(at.clone().add(0, 0.6, 0), ItemDisplay.class, e -> {
+            e.setItemStack(new ItemStack(Material.RECOVERY_COMPASS));
+            e.setBillboard(Display.Billboard.VERTICAL);
+            e.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(0.9f, 0.9f, 0.9f), new AxisAngle4f()));
+            tag(e, "terminal_icon");
+        }));
+        displays.add(text(at.clone().add(0, 1.3, 0), "<#ffb43a><bold>DOCK TERMINAL</bold>\n" + hint, 0.8f));
     }
 
     void boards(String weekly, String levels) {
@@ -411,8 +422,11 @@ final class FishingWorld {
     }
 
     boolean isMarket(Entity e) {
-        String s = e.getPersistentDataContainer().get(displayKey, PersistentDataType.STRING);
-        return "market".equals(s);
+        return "market".equals(e.getPersistentDataContainer().get(displayKey, PersistentDataType.STRING));
+    }
+
+    boolean isTerminal(Entity e) {
+        return "terminal".equals(e.getPersistentDataContainer().get(displayKey, PersistentDataType.STRING));
     }
 
     private void keepLoaded(int cx, int cz) {
