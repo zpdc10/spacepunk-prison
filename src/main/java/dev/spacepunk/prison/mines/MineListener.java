@@ -1,6 +1,8 @@
 package dev.spacepunk.prison.mines;
 
+import dev.spacepunk.prison.api.HudService;
 import dev.spacepunk.prison.api.MineService;
+import dev.spacepunk.prison.api.Services;
 import dev.spacepunk.prison.util.Text;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -48,12 +50,16 @@ final class MineListener implements Listener {
         if (mine == null) {
             if (manager.config().settings().protectWorld() && inMinesWorld(block) && !p.hasPermission(MineManager.BUILD_PERMISSION)) {
                 event.setCancelled(true);
+                deny(p, "<gray>Station hull. Only the ore inside a mine pit can be mined.");
             }
             return;
         }
         // We remove the block ourselves: no vanilla drops, xp, durability or physics.
         event.setCancelled(true);
-        if (mine.refilling()) return;
+        if (mine.refilling()) {
+            deny(p, "<yellow>" + mine.displayName() + " <gray>is refilling. Give it a few seconds.");
+            return;
+        }
         if (!manager.canAccess(p, mine)) {
             deny(p, "<red>You need <white>Grade " + mine.requiredGrade() + "</white> to mine in " + mine.displayName() + ".");
             return;
@@ -121,6 +127,8 @@ final class MineListener implements Listener {
         Long last = lastDenied.get(p.getUniqueId());
         if (last != null && now - last < 2000) return;
         lastDenied.put(p.getUniqueId(), now);
-        Text.send(p, msg);
+        var hud = Services.find(HudService.class);
+        if (hud.isPresent()) hud.get().flash(p, msg);
+        else Text.send(p, msg);
     }
 }

@@ -1,0 +1,51 @@
+# Player HUD: sidebar scoreboard, action bar, tab list and the cargo hold boss bar.
+# Text is MiniMessage. Reload with /hud reload.
+
+sidebar:
+  enabled: true
+  title: "<#c8743a><bold>SPACEPUNK</bold></#c8743a> <dark_gray>//</dark_gray> <#8a7a66>PRISON"
+  # Last line of the sidebar.
+  footer: "<#4a4038>/sell  /cargo  /rankup  /drill"
+  # Ticks between sidebar refreshes (only changed lines are sent).
+  refresh-ticks: 10
+
+tab:
+  enabled: true
+  refresh-ticks: 40
+  # Placeholders: {online} {max} {ping} {tps} {credits} {tokens} {shards} {grade} {prestige}
+  header: |-
+
+    <#c8743a><bold>⚙ SPACEPUNK PRISON ⚙</bold></#c8743a>
+    <#5a4e44>orbital ore station · sector 7 · do not lean on the hull
+  footer: |-
+
+    <gold>¢ {credits}</gold>  <dark_gray>|</dark_gray>  <aqua>✦ {tokens}</aqua>  <dark_gray>|</dark_gray>  <light_purple>◆ {shards}</light_purple>
+    <gray>Crew online <white>{online}</white><dark_gray>/</dark_gray>{max}  <dark_gray>·</dark_gray>  Ping <white>{ping}ms</white>  <dark_gray>·</dark_gray>  TPS <white>{tps}</white>
+
+action-bar:
+  # How long the "+14 Iron Ore +3 Tokens" mining summary stays up after the last gain. Gains inside this
+  # window add up.
+  gain-seconds: 2.5
+  # How long a flash notice (enchant procs, vents, warnings) stays up.
+  flash-seconds: 2.0
+
+cargo-bar:
+  enabled: true
+  # The cargo hold boss bar shows while mining and for this long after the last block.
+  linger-seconds: 20
+  # Fill share where the bar turns yellow, then red.
+  warn-at: 0.6
+  danger-at: 0.9
+
+mining:
+  # A soft pickup click on every block that goes into the hold (to the miner only).
+  sounds: true
+  # Sparks from the broken block toward the player (to the miner only).
+  particles: true
+  # Blocks whose id contains any of these get a brighter sparkle and chime (ore, not filler rock).
+  valuable-match: ["_ore", "_block", "ancient_debris", "gilded_blackstone", "crying_obsidian"]
+  # Seconds between repeated "cargo full" alarms while the player keeps mining.
+  full-warning-seconds: 4
+
+# Chat line on join explaining where mined ore goes.
+join-hint: true

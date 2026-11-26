@@ -55,6 +55,8 @@ final class CargoHold {
     }
 
     private void warnFull(Player player, long cap) {
+        // The HUD module shows its own cargo-full warning (action bar, boss bar, sound).
+        if (dev.spacepunk.prison.api.Services.find(dev.spacepunk.prison.api.HudService.class).isPresent()) return;
         long now = System.currentTimeMillis();
         Long last = lastFullWarning.get(player.getUniqueId());
         if (last != null && now - last < progression.cfg().fullWarningSeconds * 1000L) return;

@@ -20,6 +20,18 @@ public interface ProgressionService {
     /** Credits needed to go from current grade to the next. -1 at max grade. */
     long nextGradeCost(UUID player);
 
+    /** Display name of a grade as MiniMessage, e.g. "Grade 3". */
+    String gradeName(int grade);
+
+    /** Display name of the deck a grade belongs to as MiniMessage, e.g. "&lt;#9c8a6e&gt;Scrapyard". */
+    String deckName(int grade);
+
+    /** True if mined ore is sold on pickup by the Auto-Seller instead of stored in the cargo hold. */
+    boolean autoSelling(UUID player);
+
+    /** Total cargo hold capacity in units (used + free). 0 if not loaded. */
+    long cargoCapacity(UUID player);
+
     /** Permanent sell-price multiplier from grade + prestige (1.0 = no bonus). */
     double sellMultiplier(UUID player);
 

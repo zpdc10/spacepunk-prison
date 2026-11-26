@@ -28,7 +28,8 @@ public final class SpacepunkPrison extends JavaPlugin {
             "dev.spacepunk.prison.resourcepack.ResourcePackModule",
             "dev.spacepunk.prison.mines.MinesModule",
             "dev.spacepunk.prison.progression.ProgressionModule",
-            "dev.spacepunk.prison.drill.DrillModule"
+            "dev.spacepunk.prison.drill.DrillModule",
+            "dev.spacepunk.prison.hud.HudModule"
     );
 
     private final List<FeatureModule> modules = new ArrayList<>();

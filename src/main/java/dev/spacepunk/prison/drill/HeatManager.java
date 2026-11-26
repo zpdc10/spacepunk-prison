@@ -1,5 +1,7 @@
 package dev.spacepunk.prison.drill;
 
+import dev.spacepunk.prison.api.HudService;
+import dev.spacepunk.prison.api.Services;
 import dev.spacepunk.prison.util.Text;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -71,6 +73,11 @@ public final class HeatManager {
 
     /** Short message shown on the action bar next to the heat gauge for a moment. */
     public void flash(Player p, String miniMessage) {
+        HudService hud = Services.find(HudService.class).orElse(null);
+        if (hud != null) {
+            hud.flash(p, miniMessage);
+            return;
+        }
         State s = state(p);
         s.flash = miniMessage;
         s.flashUntil = System.currentTimeMillis() + 1800;
@@ -218,7 +225,14 @@ public final class HeatManager {
 
             boolean active = s.heat > 0.01 || s.stallUntil > now || s.overclockUntil > now || s.burstUntil > now
                     || s.flashUntil > now;
-            if (active && drills.holdingOwnDrill(p)) {
+            HudService hud = Services.find(HudService.class).orElse(null);
+            boolean show = active && drills.holdingOwnDrill(p);
+            if (hud != null) {
+                // The HUD owns the action bar; the gauge is one segment of it.
+                if (show) hud.segment(p, "heat", actionBar(s, eff, now));
+                else if (s.shownLastTick) hud.segment(p, "heat", null);
+                s.shownLastTick = show;
+            } else if (show) {
                 p.sendActionBar(Text.mm(actionBar(s, eff, now)));
                 s.shownLastTick = true;
             } else if (s.shownLastTick) {
