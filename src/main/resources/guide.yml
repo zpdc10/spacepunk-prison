@@ -576,7 +576,7 @@ chapters:
       - "<gray><white>/rod</white> for a rod. Cast, wait for the flash, right-click."
       - "<gray>Fish fight back: <white>hold sneak</white> to keep the XP bar"
       - "<gray>(line tension) in the middle."
-      - "<gray>Pools run east, one per deck."
+      - "<gray>Fly to a pool from the <white>Dock Terminal</white> or <white>/waters</white>."
       - "<#e0b354>Right-click the ⓘ for the full guide"
     pages:
       - |
@@ -614,7 +614,7 @@ chapters:
       - |
         <h>MORE</h>
 
-        Five pools, one per deck, each with its own fish.
+        Five pools, one per deck, each with its own fish. Fly there from the <em>Dock Terminal</em> or [[/waters]].
         <em>Sea creatures</em> (3.5% of bites) fight; bosses drop the best loot.
         Treasure, bait, lures, collections and a weekly biggest-catch board.
       - |
