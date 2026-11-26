@@ -52,6 +52,10 @@ final class GangsConfig {
     final List<String> incomeReasons;
     final Map<String, String> territories = new LinkedHashMap<>();
 
+    final int captureRadius, captureSeconds, labPayoutMinutes;
+    final List<Long> labIncome = new ArrayList<>();
+    final long capturePoints, creditsPerDose, killPoints;
+
     record UpgradeDef(String id, String name, Material icon, String description, int maxLevel, long baseCost,
                       double growth, double value, List<Integer> minGangLevel) {
         long cost(int level) { return Math.round(baseCost * Math.pow(growth, level - 1)); }
@@ -152,6 +156,14 @@ final class GangsConfig {
         List<String> inc = y.getStringList("points.income-reasons");
         incomeReasons = inc.isEmpty() ? List.of("sell:", "income:") : List.copyOf(inc);
 
+        captureRadius = Math.max(1, y.getInt("turf.capture-radius", 6));
+        captureSeconds = y.getInt("turf.capture-seconds", 60);
+        labPayoutMinutes = y.getInt("turf.payout-minutes", 60);
+        for (Object o : y.getList("turf.lab-income", List.of())) if (o instanceof Number n) labIncome.add(n.longValue());
+        capturePoints = y.getLong("turf.capture-points", 500);
+        creditsPerDose = y.getLong("turf.credits-per-dose", 12000);
+        killPoints = y.getLong("turf.kill-points", 15);
+
         ConfigurationSection ts = y.getConfigurationSection("territories");
         if (ts != null) for (String k : ts.getKeys(false)) territories.put(k, ts.getString(k, k));
     }
@@ -200,6 +212,11 @@ final class GangsConfig {
         if (reason == null) return false;
         for (String r : incomeReasons) if (reason.startsWith(r)) return true;
         return false;
+    }
+
+    long labIncome(int ring) {
+        if (labIncome.isEmpty()) return 0;
+        return labIncome.get(Math.max(0, Math.min(labIncome.size(), ring) - 1));
     }
 
     String territoryName(String id) { return territories.getOrDefault(id, id); }

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "spacepunk:block/workshop/radiator_side",
+    "north": "spacepunk:block/workshop/radiator_front",
+    "south": "spacepunk:block/workshop/radiator_side",
+    "east": "spacepunk:block/workshop/radiator_side",
+    "west": "spacepunk:block/workshop/radiator_side",
+    "up": "spacepunk:block/workshop/radiator_top",
+    "down": "spacepunk:block/workshop/radiator_bottom"
+  }
+}

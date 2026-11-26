@@ -37,6 +37,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `fishing/` + `fishing.yml` | fishing | `FishingService`, fires `FishCaughtEvent` / `SeaCreatureKilledEvent`; the `station_waters` world (hub + one pool per deck), catches, reel-in minigame, soulbound rod (tiers, enchants, lures, bait), sea creatures, collections, weekly leaderboard, `/fish` `/rod` `/waters` `/fishadmin`. See `docs/FISHING.md` |
 | `undercroft/` + `undercroft.yml` | undercroft | `UndercroftService` (PvP zones, drug labs for gangs), the Undercroft world: prestige-gated rings, grace + combat tag, death drops, bounty tags, hot ore, labs + stims, supply drops, checkpoint scan/bribe, `/fence`, `/undercroft`. Warp `undercroft`. See `docs/UNDERCROFT.md` |
 | `guns/` + `guns.yml` | guns | `GunService`, fires `GunHitEvent`; guns, ammo, gun parts, reload/recoil/spread/scopes, `/gunsmith`, `/gun` |
+| `workshop/` + `workshop.yml` | workshop | `WorkshopService`, private hull bays (own void world, plot grid), machines, power/heat/coolant, conveyors, Bay Locker, daily goods market, Assembly Bench, `/ws` `/wsadmin`, warp `workshop`. See `docs/WORKSHOP.md` |
 | `station/` + `station.yml` | station | Hub world + layout, `WarpService` (warps, hub spawn), terminals, `/hub` `/warp` `/warps` `/stationadmin`. See `docs/STATION.md` |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
@@ -45,7 +46,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, station, progression, drill, gangs, hud, fishing, raredrops, auction, undercroft, guns. Missing classes are skipped, so each module can
+Load order: resourcepack, mines, station, progression, drill, gangs, hud, fishing, raredrops, auction, undercroft, guns, workshop. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -136,6 +137,10 @@ here in the same PR that needs them, and the pack falls back to a vanilla look u
 | `spacepunk:contraband/sludge`, `contraband/rust_flakes`, `contraband/cryo_gel`, `contraband/volt_salt` | Stim ingredients |
 | `spacepunk:contraband/hot_scrap`, `contraband/hot_crystal`, `contraband/hot_core` | Hot ore |
 | `spacepunk:contraband/bounty_tag`, `contraband/lining`, `contraband/tech_crate` | Bounty tag, Smuggler's Lining, Smuggled Tech Crate |
+| `spacepunk:workshop/machine/intake`, `spacepunk:workshop/machine/crusher`, `spacepunk:workshop/machine/generator`, `spacepunk:workshop/machine/depot`, `spacepunk:workshop/machine/radiator`, `spacepunk:workshop/machine/washer`, `spacepunk:workshop/machine/pump`, `spacepunk:workshop/machine/furnace`, `spacepunk:workshop/machine/chute`, `spacepunk:workshop/machine/forge`, `spacepunk:workshop/machine/fabricator` | Workshop machines: 3D cube models (front = north) shown by item displays and in hand |
+| `spacepunk:workshop/conveyor` | Conveyor item (the pack also restyles the repeater block as an animated belt: `minecraft:blockstates/repeater.json`) |
+| `spacepunk:workshop/goods/copper_ingot`, `spacepunk:workshop/goods/wiring_harness` (and one per good in `workshop.yml`) | Workshop goods and components, drawn by `tools/resourcepack/workshop_art.py` |
+| `spacepunk:workshop/ui/bay`, `spacepunk:workshop/ui/locker`, `spacepunk:workshop/ui/market`, `spacepunk:workshop/ui/shop` (plus assembly, machines, expand, access, input, output, rotate, toggle_on, toggle_off, source, filter, pickup, decor) | Workshop menu icons |
 | `spacepunk:raredrop/<drop_id>` | Rare drop items from `raredrops.yml` (art in `tools/resourcepack/raredrops_art.py`): `scrap_cache`, `sealed_crate`, `armored_strongbox`, `vault_core`, `fragment_common`, `fragment_rare`, `fragment_epic`, `fragment_legendary`, relics `inmate_tag` ... `warden_key` |
 
 UI icons available as `spacepunk:ui/<name>`: `panel` (default filler), `panel_rust`, `panel_hazard`, `divider`,

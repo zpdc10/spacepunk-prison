@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=south": {
+      "model": "spacepunk:block/workshop/conveyor"
+    },
+    "facing=west": {
+      "model": "spacepunk:block/workshop/conveyor",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "spacepunk:block/workshop/conveyor",
+      "y": 180
+    },
+    "facing=east": {
+      "model": "spacepunk:block/workshop/conveyor",
+      "y": 270
+    }
+  }
+}

@@ -86,8 +86,8 @@ final class GangMenu implements Listener {
         if (g.perksSuspended) head.add("<red>Perks offline: the bank couldn't pay upkeep.");
         if (!gangs.territories().isEmpty()) {
             List<String> held = new ArrayList<>();
-            for (var e : gangs.territories().entrySet()) if (e.getValue().equals(g.id)) held.add(c.territoryName(e.getKey()));
-            if (!held.isEmpty()) head.add("<gray>Turf <#c8743a>" + String.join(", ", held));
+            for (var e : gangs.territories().entrySet()) if (e.getValue().equals(g.id)) held.add(gangs.territoryName(e.getKey()));
+            if (!held.isEmpty()) head.add("<gray>Turf " + String.join("<gray>, ", held));
         }
         if (!g.motd.isBlank()) {
             head.add("");
