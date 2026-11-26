@@ -16,6 +16,7 @@ import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -56,11 +57,11 @@ final class RareListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onUse(PlayerInteractEvent e) {
-        if (e.getHand() != EquipmentSlot.HAND) return;
         ItemStack item = e.getItem();
         Drop drop = rare.items().drop(item);
         if (drop == null) return;
         e.setCancelled(true); // rare items are never placed, eaten, thrown or used as their base item
+        if (e.getHand() != EquipmentSlot.HAND) return;
         if (e.getAction() != Action.RIGHT_CLICK_AIR && e.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         Player p = e.getPlayer();
         switch (drop.type()) {
@@ -80,6 +81,11 @@ final class RareListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onInteractEntity(PlayerInteractEntityEvent e) {
         if (rare.items().dropId(e.getPlayer().getInventory().getItem(e.getHand())) != null) e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onConsume(PlayerItemConsumeEvent e) {
+        if (rare.items().dropId(e.getItem()) != null) e.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
