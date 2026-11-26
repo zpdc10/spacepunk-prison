@@ -1,6 +1,8 @@
 package dev.spacepunk.prison.progression;
 
+import dev.spacepunk.prison.api.Currency;
 import dev.spacepunk.prison.api.ProgressionService;
+import dev.spacepunk.prison.api.event.CurrencyChangeEvent;
 import dev.spacepunk.prison.api.event.GradeChangeEvent;
 import dev.spacepunk.prison.api.event.MineBlocksBrokenEvent;
 import dev.spacepunk.prison.data.ProfileLoadedEvent;
@@ -42,6 +44,11 @@ final class ProgressionListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onMine(MineBlocksBrokenEvent e) {
         cargo.deposit(e.player(), e.ores());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onCurrency(CurrencyChangeEvent e) {
+        if (e.currency() == Currency.CREDITS) progression.recordIncome(e.player(), e.newBalance() - e.oldBalance(), e.reason());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

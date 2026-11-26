@@ -102,6 +102,24 @@ final class ProgressionManager implements ProgressionService {
         return cargo.remove(player, d, itemId.toLowerCase(Locale.ROOT), amount);
     }
 
+    /**
+     * Counts a Credits gain toward this run's earnings if its reason is server income (see
+     * prestige.rewards.income-reasons). Player-to-player money (pay, trades, auctions, gang bank) never matches.
+     */
+    void recordIncome(UUID player, long gained, String reason) {
+        if (gained <= 0 || reason == null || !cfg().isServerIncome(reason)) return;
+        CargoStore.Data d = cargo.get(player);
+        if (d == null) return;
+        d.runEarnings = ProgressionConfig.clamp((double) d.runEarnings + gained);
+        cargo.markDirty(player);
+    }
+
+    /** Credits earned from the server (not other players) since the last prestige. */
+    long runEarnings(UUID player) {
+        CargoStore.Data d = cargo.get(player);
+        return d == null ? 0 : d.runEarnings;
+    }
+
     // ---- Grades ----
 
     enum RankUpResult { OK, MAX_GRADE, TOO_POOR, NOT_LOADED }
@@ -155,11 +173,15 @@ final class ProgressionManager implements ProgressionService {
         long credits = economy.balance(id, Currency.CREDITS);
         if (credits > 0) economy.take(id, Currency.CREDITS, credits, "prestige");
         CargoStore.Data d = cargo.get(id);
-        if (d != null) cargo.drain(id, d);
+        long earned = d == null ? 0 : d.runEarnings;
+        if (d != null) {
+            cargo.drain(id, d);
+            d.runEarnings = 0;
+        }
         ProgressionConfig c = cfg();
         long shards = c.shardsFor(newPrestige);
         if (shards > 0) economy.give(id, Currency.SHARDS, shards, "prestige");
-        long tokens = c.tokensFor(newPrestige);
+        long tokens = c.tokensFor(newPrestige, earned);
         if (tokens > 0) economy.give(id, Currency.TOKENS, tokens, "prestige");
         setGrade(player, p, 1, newPrestige);
         for (String cmd : c.prestigeCommands) {

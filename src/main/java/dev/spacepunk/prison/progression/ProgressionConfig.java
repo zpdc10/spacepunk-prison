@@ -26,6 +26,9 @@ final class ProgressionConfig {
     final long shardsPerLevel;
     final long tokensBase;
     final double tokensGrowth;
+    final double earningsExponent;
+    final double earningsCap;
+    final List<String> incomeReasons;
     final List<String> prestigeCommands;
     final int confirmSeconds;
 
@@ -74,6 +77,10 @@ final class ProgressionConfig {
         shardsPerLevel = Math.max(0, y.getLong("prestige.rewards.shards-per-level", 2));
         tokensBase = Math.max(0, y.getLong("prestige.rewards.tokens-base", 25000));
         tokensGrowth = Math.max(1.0, y.getDouble("prestige.rewards.tokens-growth", 1.35));
+        earningsExponent = Math.clamp(y.getDouble("prestige.rewards.earnings-exponent", 0.5), 0.05, 1.0);
+        earningsCap = Math.max(0, y.getDouble("prestige.rewards.earnings-cap", 4.0));
+        incomeReasons = y.getStringList("prestige.rewards.income-reasons").stream()
+                .map(r -> r.toLowerCase(Locale.ROOT)).toList();
         prestigeCommands = List.copyOf(y.getStringList("prestige.rewards.commands"));
         confirmSeconds = Math.max(5, y.getInt("prestige.confirm-seconds", 30));
 
@@ -146,7 +153,39 @@ final class ProgressionConfig {
 
     long shardsFor(int newPrestige) { return shardsBase + shardsPerLevel * newPrestige; }
 
-    long tokensFor(int newPrestige) { return clamp(tokensBase * Math.pow(tokensGrowth, Math.max(0, newPrestige - 1))); }
+    /** Base Token cache for reaching this prestige, before the earnings multiplier. */
+    long tokenCache(int newPrestige) { return clamp(tokensBase * Math.pow(tokensGrowth, Math.max(0, newPrestige - 1))); }
+
+    /** Credits a full grade 1 to 25 run costs at this prestige. */
+    long runCost(int prestige) {
+        double sum = 0;
+        for (int g = 1; g < ProgressionService.MAX_GRADE; g++) sum += gradeCost(g, prestige);
+        return clamp(sum);
+    }
+
+    /**
+     * Token payout multiplier from Credits earned from the server during the run:
+     * min(cap, earned / runCost)^exponent. Only server income counts (selling, later workshop, fishing,
+     * contracts), never player-to-player money, so moving money to alts, items or banks can't raise it. A normal run earns about 1x its run cost (multiplier ~1.0);
+     * the square root and the cap make extra grinding at grade 25 pay off less and less.
+     */
+    double earningsMultiplier(int newPrestige, long earnedThisRun) {
+        long run = runCost(Math.max(0, newPrestige - 1));
+        if (run <= 0) return 1.0;
+        double ratio = Math.min(earningsCap, Math.max(0, (double) earnedThisRun / run));
+        return Math.pow(ratio, earningsExponent);
+    }
+
+    /** True if a Credits gain with this EconomyService reason is income from the server itself. */
+    boolean isServerIncome(String reason) {
+        String r = reason.toLowerCase(Locale.ROOT);
+        for (String prefix : incomeReasons) if (r.startsWith(prefix)) return true;
+        return false;
+    }
+
+    long tokensFor(int newPrestige, long earnedThisRun) {
+        return clamp(tokenCache(newPrestige) * earningsMultiplier(newPrestige, earnedThisRun));
+    }
 
     double sellMultiplier(int grade, int prestige) {
         return Math.max(0, 1 + bonusPerGrade * (grade - 1) + bonusPerPrestige * prestige);
