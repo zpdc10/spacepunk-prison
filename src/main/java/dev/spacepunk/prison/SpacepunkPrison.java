@@ -26,10 +26,13 @@ public final class SpacepunkPrison extends JavaPlugin {
     /** Load order matters: services a module needs must be registered by an earlier module. */
     private static final List<String> MODULE_CLASSES = List.of(
             "dev.spacepunk.prison.resourcepack.ResourcePackModule",
+            // Quests first so every later module can register its quest objective types from enable().
+            "dev.spacepunk.prison.quests.QuestsModule",
             "dev.spacepunk.prison.mines.MinesModule",
             "dev.spacepunk.prison.progression.ProgressionModule",
             "dev.spacepunk.prison.drill.DrillModule",
-            "dev.spacepunk.prison.hud.HudModule"
+            "dev.spacepunk.prison.hud.HudModule",
+            "dev.spacepunk.prison.parkour.ParkourModule"
     );
 
     private final List<FeatureModule> modules = new ArrayList<>();
