@@ -4,3 +4,6 @@ storage:
 worlds:
   # No rain or thunder in any world, ever (the station has no sky).
   disable-weather: true
+  # Switch off vanilla mechanics that don't fit the station: natural mob spawning (and remove stray mobs),
+  # daylight cycle, phantoms, patrols, traders, raids, mob griefing, fire spread and advancement chat.
+  vanilla-cleanup: true

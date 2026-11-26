@@ -101,7 +101,9 @@ public final class SpacepunkPrison extends JavaPlugin {
             }
         });
 
-        new dev.spacepunk.prison.core.WorldRules(getConfig().getBoolean("worlds.disable-weather", true)).start(this);
+        new dev.spacepunk.prison.core.WorldRules(this, getConfig().getBoolean("worlds.disable-weather", true),
+                getConfig().getBoolean("worlds.vanilla-cleanup", true)).start();
+        new dev.spacepunk.prison.core.SafeZones(this).start();
         profileManager.start(getConfig().getInt("storage.autosave-seconds", 120));
     }
 

@@ -25,7 +25,7 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 
 | Package / path | Owner workstream | Provides |
 | --- | --- | --- |
-| `api/`, `core/`, `data/`, `economy/`, `util/`, `SpacepunkPrison.java`, `build.gradle.kts` | core (main thread) | Services registry, profiles, 3-currency economy, `/balance`, `/eco` |
+| `api/`, `core/`, `data/`, `economy/`, `util/`, `SpacepunkPrison.java`, `build.gradle.kts` | core (main thread) | Services registry, profiles, 3-currency economy, `/balance`, `/eco`; `core/SafeZones` (no damage/hunger/death drops outside `UndercroftService#pvpAllowed`), `core/WorldRules` (weather off, vanilla mob spawning + stray mobs, daylight, phantoms, raids, fire spread, advancement chat off in every world) |
 | `mines/` + `mines.yml` | mines | `MineService`, fires `MineBlocksBrokenEvent`, mine refills, `/mine` |
 | `progression/` + `progression.yml` | progression | `ProgressionService`, grades 1-25, prestige, cargo hold, selling, `/rankup` `/prestige` `/sell` |
 | `drill/` + `drill.yml` | drill | The drill item, frames, enchants, modules, heat, drill menu |
