@@ -184,13 +184,13 @@ final class GangMenu implements Listener {
             lore.add("<gray>Points <white>" + Numbers.shortFormat(m.pointsEarned) + "</white> <dark_gray>(" + Numbers.shortFormat(m.weeklyPoints) + " this week)");
             lore.add("<gray>Deposited <white>" + Numbers.shortFormat(m.deposited));
             lore.add("<dark_gray>Joined " + df.format(new Date(m.joined)));
-            ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-            SkullMeta sm = (SkullMeta) head.getItemMeta();
+            ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
+            SkullMeta sm = (SkullMeta) skull.getItemMeta();
             sm.setPlayerProfile(Bukkit.createProfile(mid, m.name));
             sm.displayName(Text.item((online ? "<green>● " : "<dark_gray>● ") + "<white>" + m.name));
             sm.lore(Text.lore(lore));
-            head.setItemMeta(sm);
-            inv.setItem(slot++, head);
+            skull.setItemMeta(sm);
+            inv.setItem(slot++, skull);
         }
 
         boolean chat = gangs.chatToggled(id);
