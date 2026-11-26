@@ -30,7 +30,13 @@ Design doc (source of truth for gameplay): https://claude.ai/artifact/AJtY7m7ZK2
 | `progression/` + `progression.yml` | progression | `ProgressionService`, grades 1-25, prestige, cargo hold, selling, `/rankup` `/prestige` `/sell` |
 | `drill/` + `drill.yml` | drill | The drill item, frames, enchants, modules, heat, drill menu |
 | `hud/` + `hud.yml` | hud | `HudService` (shared action bar), sidebar, tab list, cargo boss bar, per-break feedback, `/hud` |
+| `gangs/` + `gangs.yml` | gangs | `GangService`, crews and ranks, gang bank (prestige lock), crew chat, upgrades, weekly contracts and leaderboard, turf ownership, `/gang` `/gc` |
 | `resourcepack/` (Java) + `/resourcepack/` (pack sources) | resource pack | Pack build + hosting + required-pack prompt on join; all textures/models |
+| `raredrops/` + `raredrops.yml` | rare drops | Tiered finds while mining, relic collections (sell bonus via `OreSellEvent`), salvage caches, blueprint fragments → drill modules, `/salvage` |
+| `auction/` + `auction.yml` | auction house | The Black Market: buy-it-now + escrowed auctions, fees/tax sink, `auctions.json`, `/ah`; blocks prestige while the player leads a bid (`PrestigeAttemptEvent`) |
+| `quests/` + `quests.yml` | quests | `QuestService` + `ObjectiveTypes` (generic objective API), story questline, tutorials, daily/weekly contracts, monthly Contract Track, quest NPCs, sidebar tracker, `/quests` `/contracts` `/questadmin`. See `docs/QUESTS.md` |
+| `parkour/` + `parkour.yml` | parkour | Daily maintenance run per mine (generated next to it), reward rolls, best times/records, `parkour-<mine>` warps, `/parkour` `/parkouradmin` |
+| `station/` + `station.yml` | station | Hub world + layout, `WarpService` (warps, hub spawn), terminals, `/hub` `/warp` `/warps` `/stationadmin`. See `docs/STATION.md` |
 
 Changing anything in `api/` (new method, new event) affects everyone: keep it additive, and mention it
 in your PR description. If you need something from another module, add an interface method or event in
@@ -38,7 +44,7 @@ in your PR description. If you need something from another module, add an interf
 
 Modules are discovered by class name in `SpacepunkPrison.MODULE_CLASSES`
 (`dev.spacepunk.prison.<id>.<Name>Module`, implementing `core.FeatureModule` with a no-arg constructor).
-Load order: resourcepack, mines, progression, drill, hud. Missing classes are skipped, so each module can
+Load order: resourcepack, quests, mines, station, progression, drill, gangs, hud, raredrops, auction, parkour. Missing classes are skipped, so each module can
 land independently.
 
 ## Event flow when a player mines
@@ -52,14 +58,46 @@ land independently.
 4. HUD (HIGH snapshot, MONITOR): measures what actually went into the hold, then shows it on the action bar
    (`⛏ +14 Iron Ore → hold  +3 ✦`), plays a pickup click and sparks for the miner, and raises the cargo-full alarm.
 
+## Quest objectives (any module)
+
+Report what players do with `Objectives.report(player, ObjectiveTypes.X, amount, targets...)` (no-op without
+the quests module) and call `Objectives.register(type, "Display name")` once from your `enable()`; quests and
+contracts that use a type stay hidden until it is registered. The type list and targets are in `api/ObjectiveTypes`.
+Quest, contract and parkour Credits pay with reasons `income:quest`, `income:contract`, `income:parkour`.
+
 ## Screen ownership (HUD)
 
 The hud module owns the action bar. Never call `sendActionBar` directly when `HudService` is registered:
 use `HudService#flash` for a short notice, or `HudService#segment(player, key, text)` for a persistent part
-(the drill's heat gauge is segment `heat`). Fall back to `sendActionBar` only if the service is missing.
+(the drill's heat gauge is segment `heat`, parkour's timer is segment `parkour`). Modules can add a few sidebar lines with
+`HudService#sidebarSection(player, key, lines)` (quests shows the tracked quest as section `quests`). Fall back to `sendActionBar` only if the service is missing.
 The sidebar uses a per-player scoreboard, so any future nametag/team feature must add its teams to each
 player's board (ask the hud module for a hook) instead of the main scoreboard. Boss bars: mines shows the
 current mine's fill, hud shows the cargo hold while mining.
+
+## Money that never counts toward prestige
+
+Prestige wipes Credits and pays Tokens for server income earned this run (EconomyService reasons starting
+`sell:` or `income:`). Player-to-player money must use any other reason: the auction house uses `auction:buy`,
+`auction:bid`, `auction:sale`, `auction:refund` and `auction:fee`. Anything that holds a player's Credits outside
+their balance (escrow, banks) must stop that money surviving a prestige: listen to `PrestigeAttemptEvent` and
+`deny(...)` it while the player has money held (the auction house does this for leading bids).
+
+## Gangs hooks
+
+`GangService` (see docs/GANGS.md): `gangOf`/`sameGang` for PvP and bounties (gangmates already can't hurt each
+other), `registerContractObjective` + `addContractProgress` to feed weekly gang contracts from any module
+(`fish_caught`, `goods_processed`, `pvp_kills`, `contraband_smuggled`, `parkour_runs`, `quests_done`),
+`addPoints` for the weekly leaderboard, `setTerritoryOwner` + `depositFromServer` for Undercroft labs. Gang bank
+moves use reasons `gang:deposit` / `gang:withdraw`, so they never count as server income for prestige.
+`GangMembershipEvent` fires on join/leave/rank/disband/recolor so tags can refresh.
+
+## Places and warps
+
+The station hub is the main hub (world `station`); everything else lives in its own area and is reached by a
+warp. Register destinations with `WarpService` (category `planetside`/`danger` show on the hub Shuttle Board,
+`private` for per-player places) and listen to `PlayerWarpEvent` to gate trips. Hub terminals and what they run
+are listed in `docs/STATION.md`.
 
 ## Currencies
 
@@ -93,6 +131,7 @@ here in the same PR that needs them, and the pack falls back to a vanilla look u
 | `spacepunk:currency/token` | Token item/icon |
 | `spacepunk:currency/shard` | Prestige Shard icon |
 | `spacepunk:currency/credit` | Credits (scrip) icon |
+| `spacepunk:raredrop/<drop_id>` | Rare drop items from `raredrops.yml` (art in `tools/resourcepack/raredrops_art.py`): `scrap_cache`, `sealed_crate`, `armored_strongbox`, `vault_core`, `fragment_common`, `fragment_rare`, `fragment_epic`, `fragment_legendary`, relics `inmate_tag` ... `warden_key` |
 
 UI icons available as `spacepunk:ui/<name>`: `panel` (default filler), `panel_rust`, `panel_hazard`, `divider`,
 `blank` (invisible), `back`, `previous`, `next`, `close`, `cancel`, `confirm`, `upgrade`, `add`, `info`, `sell`,

@@ -5,6 +5,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import dev.spacepunk.prison.api.Currency;
 import dev.spacepunk.prison.api.EconomyService;
+import dev.spacepunk.prison.api.GangService;
 import dev.spacepunk.prison.api.HudService;
 import dev.spacepunk.prison.api.MineService;
 import dev.spacepunk.prison.api.ObjectiveTypes;
@@ -12,6 +13,7 @@ import dev.spacepunk.prison.api.Objectives;
 import dev.spacepunk.prison.api.ProfileService;
 import dev.spacepunk.prison.api.ProgressionService;
 import dev.spacepunk.prison.api.Services;
+import dev.spacepunk.prison.api.WarpService;
 import dev.spacepunk.prison.data.PlayerProfile;
 import dev.spacepunk.prison.parkour.Course.Placed;
 import dev.spacepunk.prison.parkour.Course.Pos;
@@ -128,6 +130,30 @@ final class ParkourManager {
         reindex();
     }
 
+    /** Registers a station warp per built run (category "parkour"), if the station module is installed. */
+    void registerWarps() {
+        WarpService warps = Services.find(WarpService.class).orElse(null);
+        if (warps == null) return;
+        for (WarpService.Warp w : List.copyOf(warps.all())) {
+            if (w.id().startsWith("parkour-") && !courses.containsKey(w.id().substring("parkour-".length()))) warps.unregister(w.id());
+        }
+        for (Course c : courses.values()) {
+            String id = c.mineId;
+            warps.register(new WarpService.Warp("parkour-" + id, deckColor(c.grade) + mineName(id) + " run", WarpService.PARKOUR,
+                    org.bukkit.Material.LADDER, List.of("<gray>Grade " + c.grade + " · " + c.jumps + " jumps · " + c.checkpoints.size()
+                            + " checkpoints", "<gray>One reward roll a day"),
+                    p -> {
+                        Course now = courses.get(id);
+                        World w = now == null ? null : now.bukkitWorld();
+                        return w == null ? null : now.respawns.get(0).at(w);
+                    },
+                    p -> {
+                        Course now = courses.get(id);
+                        return now == null || canRun(p, now) ? null : "<red>Needs Grade " + now.grade;
+                    }));
+        }
+    }
+
     private void save() {
         YamlConfiguration y = new YamlConfiguration();
         y.options().setHeader(List.of("Built parkour courses (written by /parkouradmin). Edit parkour.yml instead and regenerate."));
@@ -193,6 +219,7 @@ final class ParkourManager {
         courses.put(c.mineId, c);
         reindex();
         save();
+        registerWarps();
         return null;
     }
 
@@ -251,6 +278,7 @@ final class ParkourManager {
         }
         reindex();
         save();
+        registerWarps();
         return true;
     }
 
@@ -387,6 +415,7 @@ final class ParkourManager {
         if (s != null && !today().equals(s.rewardDay)) {
             s.rewardDay = today();
             roll(p, c, mineName);
+            Services.find(GangService.class).ifPresent(g -> g.addContractProgress(p.getUniqueId(), "parkour_runs", 1));
             Objectives.report(p, ObjectiveTypes.PARKOUR_COMPLETE, 1, "mine:" + c.mineId, "deck:" + ParkourConfig.deckOf(c.grade));
         } else {
             Text.send(p, "<gray>Finished in <white>" + time(millis) + "</white>" + (s != null && s.best > 0 ? " <dark_gray>(best "

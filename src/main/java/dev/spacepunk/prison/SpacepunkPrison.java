@@ -29,9 +29,13 @@ public final class SpacepunkPrison extends JavaPlugin {
             // Quests first so every later module can register its quest objective types from enable().
             "dev.spacepunk.prison.quests.QuestsModule",
             "dev.spacepunk.prison.mines.MinesModule",
+            "dev.spacepunk.prison.station.StationModule",
             "dev.spacepunk.prison.progression.ProgressionModule",
             "dev.spacepunk.prison.drill.DrillModule",
+            "dev.spacepunk.prison.gangs.GangsModule",
             "dev.spacepunk.prison.hud.HudModule",
+            "dev.spacepunk.prison.raredrops.RareDropsModule",
+            "dev.spacepunk.prison.auction.AuctionModule",
             "dev.spacepunk.prison.parkour.ParkourModule"
     );
 
@@ -79,6 +83,7 @@ public final class SpacepunkPrison extends JavaPlugin {
             for (PendingCommand c : commands) event.registrar().register(c.label, c.description, c.aliases, c.command);
         });
 
+        new dev.spacepunk.prison.core.WorldRules(getConfig().getBoolean("worlds.disable-weather", true)).start(this);
         profileManager.start(getConfig().getInt("storage.autosave-seconds", 120));
     }
 

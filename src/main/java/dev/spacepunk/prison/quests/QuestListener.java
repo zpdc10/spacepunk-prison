@@ -3,6 +3,7 @@ package dev.spacepunk.prison.quests;
 import dev.spacepunk.prison.api.Currency;
 import dev.spacepunk.prison.api.ObjectiveTypes;
 import dev.spacepunk.prison.api.event.CurrencyChangeEvent;
+import dev.spacepunk.prison.api.event.GangMembershipEvent;
 import dev.spacepunk.prison.api.event.GradeChangeEvent;
 import dev.spacepunk.prison.api.event.MineBlocksBrokenEvent;
 import dev.spacepunk.prison.data.ProfileLoadedEvent;
@@ -74,6 +75,13 @@ final class QuestListener implements Listener {
                 quests.progress(p, ObjectiveTypes.AUTOSELL_UNLOCK, 1);
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onGang(GangMembershipEvent e) {
+        if (e.change() != GangMembershipEvent.Change.JOINED || e.player() == null) return;
+        Player p = Bukkit.getPlayer(e.player());
+        if (p != null) quests.progress(p, ObjectiveTypes.GANG_JOIN, 1, "gang:" + e.gangId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

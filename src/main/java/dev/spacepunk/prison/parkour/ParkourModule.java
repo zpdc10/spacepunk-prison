@@ -1,6 +1,7 @@
 package dev.spacepunk.prison.parkour;
 
 import dev.spacepunk.prison.SpacepunkPrison;
+import dev.spacepunk.prison.api.GangService;
 import dev.spacepunk.prison.api.ObjectiveTypes;
 import dev.spacepunk.prison.api.Objectives;
 import dev.spacepunk.prison.api.ProfileService;
@@ -47,6 +48,12 @@ public final class ParkourModule implements FeatureModule {
         plugin.addCommand("parkouradmin", "Build and manage parkour runs", List.of("pkadmin"), commands.admin());
         ticker = Bukkit.getScheduler().runTaskTimer(plugin, manager::tick, 2L, 2L);
         Objectives.register(ObjectiveTypes.PARKOUR_COMPLETE, "Finish maintenance runs");
+
+        // One tick later every module is up: station warps and gang contract objectives.
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            manager.registerWarps();
+            Services.find(GangService.class).ifPresent(g -> g.registerContractObjective("parkour_runs", "Maintenance runs finished"));
+        });
 
         ProfileService profiles = Services.get(ProfileService.class);
         for (Player p : Bukkit.getOnlinePlayers()) profiles.get(p.getUniqueId()).ifPresent(prof -> manager.loadPlayer(p.getUniqueId(), prof));

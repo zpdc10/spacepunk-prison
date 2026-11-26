@@ -319,4 +319,19 @@ public final class DrillManager implements DrillService {
     }
 
     @Override public boolean isDrill(ItemStack item) { return items.isDrill(item); }
+
+    @Override public java.util.Map<String, Double> moduleWeights(String rarity) {
+        java.util.Map<String, Double> out = new java.util.LinkedHashMap<>();
+        for (ModuleDef m : cfg.modules.values()) {
+            if (m.rarity().name().equalsIgnoreCase(rarity) && m.weight() > 0) out.put(m.id(), m.weight());
+        }
+        return out;
+    }
+
+    @Override public ItemStack createModuleItem(String moduleId) {
+        ModuleDef m = cfg.module(moduleId);
+        return m == null ? null : items.module(m);
+    }
+
+    @Override public boolean isModule(ItemStack item) { return items.moduleId(item) != null; }
 }

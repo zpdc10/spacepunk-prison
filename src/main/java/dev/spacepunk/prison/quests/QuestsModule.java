@@ -1,6 +1,8 @@
 package dev.spacepunk.prison.quests;
 
 import dev.spacepunk.prison.SpacepunkPrison;
+import dev.spacepunk.prison.api.GangService;
+import dev.spacepunk.prison.api.ObjectiveTypes;
 import dev.spacepunk.prison.api.ProfileService;
 import dev.spacepunk.prison.api.QuestService;
 import dev.spacepunk.prison.api.Services;
@@ -55,8 +57,12 @@ public final class QuestsModule implements FeatureModule {
         tasks.add(Bukkit.getScheduler().runTaskTimer(plugin, manager::flush, 600L, 600L));
         tasks.add(Bukkit.getScheduler().runTaskTimer(plugin, manager::minuteTick, 1200L, 1200L));
 
-        // /reload safety: players already online with loaded profiles (one tick later, after every module is up).
+        // One tick later, after every module is up: hooks into installed systems, then players already online (/reload).
         Bukkit.getScheduler().runTask(plugin, () -> {
+            Services.find(GangService.class).ifPresent(g -> {
+                manager.registerObjectiveType(ObjectiveTypes.GANG_JOIN, "Join a gang");
+                g.registerContractObjective("quests_done", "Quests and contracts finished");
+            });
             ProfileService profiles = Services.get(ProfileService.class);
             for (Player p : Bukkit.getOnlinePlayers()) profiles.get(p.getUniqueId()).ifPresent(prof -> manager.load(p, prof));
         });

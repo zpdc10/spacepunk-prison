@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import dev.spacepunk.prison.api.Currency;
 import dev.spacepunk.prison.api.EconomyService;
+import dev.spacepunk.prison.api.GangService;
 import dev.spacepunk.prison.api.HudService;
 import dev.spacepunk.prison.api.MineService;
 import dev.spacepunk.prison.api.ObjectiveTypes;
@@ -293,9 +294,10 @@ final class QuestManager implements QuestService {
 
     private void complete(Player p, QuestData d, Active a) {
         a.done = true;
+        Services.find(GangService.class).ifPresent(g -> g.addContractProgress(p.getUniqueId(), "quests_done", 1));
         QuestKind kind = kindOf(a);
         QuestDef def = cfg().byKey(kind, a.id);
-        String rewards = pay(p, d, a.credits, a.tokens, a.shards, a.points, def == null ? List.of() : def.rewards().commands(),
+        String rewards = pay(p, d, a.credits, a.tokens, a.shards, a.points, def == null ? List.<QuestConfig.CommandReward>of() : def.rewards().commands(),
                 kind.contract() ? "income:contract" : "income:quest", "quest:" + kind.key);
         switch (kind) {
             case STORY -> {

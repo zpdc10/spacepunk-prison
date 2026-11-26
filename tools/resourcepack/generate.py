@@ -1090,6 +1090,10 @@ def main():
     ui()
     currency()
     mine_extras()
+    # Rare drop items (raredrops module); art lives in raredrops_art.py.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import raredrops_art
+    raredrops_art.raredrops(sys.modules[__name__])
     pack_meta()
     print(f"wrote {len(written)} files under {ROOT}")
 
