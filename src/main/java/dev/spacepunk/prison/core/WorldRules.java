@@ -9,7 +9,15 @@ import org.bukkit.entity.Mob;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.entity.ExperienceOrb;
+import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerExpChangeEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.weather.ThunderChangeEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
@@ -29,6 +37,11 @@ import java.util.Set;
  *       the daylight cycle is frozen at whatever each world set, and phantoms, patrols, wandering traders, raids,
  *       mob griefing, fire spread and advancement chat are switched off.</li>
  * </ul>
+ * <ul>
+ *   <li>No vanilla XP: enchanting isn't used and the XP bar belongs to the fishing minigame (which draws it with
+ *       client-only packets). No orbs ever spawn, no XP is gained, everyone's XP is zeroed on join, and enchanting
+ *       tables, anvils and grindstones don't open.</li>
+ * </ul>
  * Mobs the plugin spawns itself (quest NPCs, fishing sea creatures) use the CUSTOM spawn reason and are left alone.
  */
 public final class WorldRules implements Listener {
@@ -43,16 +56,19 @@ public final class WorldRules implements Listener {
     private final Plugin plugin;
     private final boolean disableWeather;
     private final boolean vanillaCleanup;
+    private final boolean disableXp;
 
-    public WorldRules(Plugin plugin, boolean disableWeather, boolean vanillaCleanup) {
+    public WorldRules(Plugin plugin, boolean disableWeather, boolean vanillaCleanup, boolean disableXp) {
         this.plugin = plugin;
         this.disableWeather = disableWeather;
         this.vanillaCleanup = vanillaCleanup;
+        this.disableXp = disableXp;
     }
 
     public void start() {
         Bukkit.getPluginManager().registerEvents(this, plugin);
         Bukkit.getWorlds().forEach(this::apply);
+        if (disableXp) Bukkit.getOnlinePlayers().forEach(WorldRules::clearXp);
         // Worlds built by modules on first start may still be loading; sweep again once everything is up.
         Bukkit.getScheduler().runTaskLater(plugin, () -> Bukkit.getWorlds().forEach(this::apply), 100L);
     }
@@ -81,6 +97,40 @@ public final class WorldRules implements Listener {
         if (!vanillaCleanup) return;
         List<Entity> list = e.getEntities();
         Bukkit.getScheduler().runTask(plugin, () -> list.forEach(this::removeIfStray));
+    }
+
+    // ------------------------------------------------------------------ no vanilla XP
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onOrb(EntitySpawnEvent e) {
+        if (disableXp && e.getEntity() instanceof ExperienceOrb) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onExpGain(PlayerExpChangeEvent e) { if (disableXp) e.setAmount(0); }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onBreakXp(BlockBreakEvent e) { if (disableXp) e.setExpToDrop(0); }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onDeathXp(EntityDeathEvent e) { if (disableXp) e.setDroppedExp(0); }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onJoin(PlayerJoinEvent e) { if (disableXp) clearXp(e.getPlayer()); }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onXpStation(InventoryOpenEvent e) {
+        if (!disableXp) return;
+        switch (e.getInventory().getType().name()) {
+            case "ENCHANTING", "ANVIL", "GRINDSTONE" -> e.setCancelled(true);
+            default -> { }
+        }
+    }
+
+    private static void clearXp(Player p) {
+        p.setLevel(0);
+        p.setExp(0);
+        p.setTotalExperience(0);
     }
 
     private void apply(World w) {
