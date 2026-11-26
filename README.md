@@ -7,6 +7,7 @@ Players need only a vanilla client; the server sends a required resource pack on
 - Gameplay: one custom plugin (this repo)
 - Design doc: https://claude.ai/artifact/AJtY7m7ZK2CK9ygxJhHukC
 - Architecture and module boundaries: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Player wiki (every system, with real numbers): [wiki/](wiki/README.md), hosted on the Unraid server at port 8085
 
 ## Build
 

@@ -32,6 +32,19 @@ jobs:
             build/resourcepack/spacepunk-pack.zip.sha1
           if-no-files-found: error
 
+  wiki:
+    # The server wiki (wiki/, MkDocs Material). Fails on broken links or nav so a bad page never reaches the site.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build wiki
+        run: |
+          pip install -r wiki/requirements.txt
+          mkdocs build --strict -f wiki/mkdocs.yml
+
   publish-latest:
     # Every green build of main is published as the "latest" pre-release, which the server downloads on restart.
     needs: plugin
