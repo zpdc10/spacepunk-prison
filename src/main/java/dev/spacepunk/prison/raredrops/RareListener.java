@@ -45,7 +45,12 @@ final class RareListener implements Listener {
         rare.load(e.profile());
         RareData d = rare.data(e.player().getUniqueId());
         if (d != null && !d.stash.isEmpty()) {
-            Text.send(e.player(), "<gray>You have <white>" + d.stashed() + "</white> rare drops waiting in <white>/salvage</white>.");
+            // Older builds parked overflow in a stash: move it into the real inventory now.
+            long moved = rare.claimStash(e.player());
+            if (moved > 0) Text.send(e.player(), "<gray>Moved <white>" + moved + "</white> stashed rare drops into your inventory.");
+            if (!d.stash.isEmpty()) {
+                Text.send(e.player(), "<gray>You have <white>" + d.stashed() + "</white> more rare drops waiting in <white>/salvage</white> (make some room).");
+            }
         }
     }
 

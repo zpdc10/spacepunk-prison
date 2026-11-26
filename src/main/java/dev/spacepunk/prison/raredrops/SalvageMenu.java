@@ -93,8 +93,9 @@ final class SalvageMenu implements Listener {
                 asm.add("<#c8743a>Click to open");
                 inv.setItem(12, rare.items().icon(Material.SMITHING_TABLE, "ui/upgrade", "<#c8743a>Assembly Bay", asm));
                 long stashed = d.stashed();
-                inv.setItem(14, rare.items().icon(Material.CHEST, "ui/cargo", "<#c8743a>Overflow Stash", List.of(
-                        "<gray>Drops that didn't fit in your", "<gray>inventory wait here.", "",
+                inv.setItem(14, rare.items().icon(Material.CHEST, null, "<#c8743a>Overflow Stash", List.of(
+                        "<gray>Rare drops always go to your inventory", "<gray>(or your feet when it's full). Older",
+                        "<gray>overflow waits here.", "",
                         stashed > 0 ? "<white>" + stashed + "</white> <gray>waiting. <#c8743a>Click to collect" : "<dark_gray>Empty")));
                 inv.setItem(16, oddsIcon(p));
                 inv.setItem(22, rare.items().icon(Material.BARRIER, "ui/close", "<red>Close", List.of()));
