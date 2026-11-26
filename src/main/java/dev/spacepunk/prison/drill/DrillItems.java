@@ -119,7 +119,7 @@ public final class DrillItems {
         ItemMeta meta = item.getItemMeta();
         meta.getPersistentDataContainer().set(moduleKey, PersistentDataType.STRING, m.id());
         meta.displayName(Text.item(m.coloredName()));
-        if (cfg.useItemModels) meta.setItemModel(new NamespacedKey(NS, "module/" + m.id()));
+        if (cfg.useItemModels) meta.setItemModel(new NamespacedKey(NS, "module/" + m.model()));
         meta.setMaxStackSize(1);
         meta.setEnchantmentGlintOverride(true);
         meta.lore(Text.lore(moduleLore(m, true)));

@@ -15,12 +15,21 @@ jobs:
           distribution: temurin
           java-version: '25'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Check resource pack
+        run: python3 tools/resourcepack/validate.py
       - name: Build plugin
         run: ./gradlew build --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: SpacepunkPrison
           path: build/libs/SpacepunkPrison.jar
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spacepunk-pack
+          path: |
+            build/resourcepack/spacepunk-pack.zip
+            build/resourcepack/spacepunk-pack.zip.sha1
           if-no-files-found: error
 
   publish-latest:
@@ -34,10 +43,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: SpacepunkPrison
+      - uses: actions/download-artifact@v4
+        with:
+          name: spacepunk-pack
       - name: Update latest release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
-          gh release create latest SpacepunkPrison.jar --repo "$GITHUB_REPOSITORY" --prerelease \
+          gh release create latest SpacepunkPrison.jar spacepunk-pack.zip spacepunk-pack.zip.sha1 --repo "$GITHUB_REPOSITORY" --prerelease \
             --title "Latest build" --notes "Automatic build of main at $GITHUB_SHA" --target "$GITHUB_SHA"

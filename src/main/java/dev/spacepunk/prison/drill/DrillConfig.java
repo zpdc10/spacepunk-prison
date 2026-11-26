@@ -117,7 +117,7 @@ public final class DrillConfig {
                     if (s.isDouble(k) || s.isInt(k) || s.isLong(k)) params.put(k, s.getDouble(k));
                 }
                 ml.put(id, new ModuleDef(id, s.getString("name", id), r, Math.max(0, s.getDouble("weight", 10)),
-                        material(s.getString("material"), Material.PRISMARINE_SHARD, log), s.getString("lore", ""),
+                        material(s.getString("material"), Material.PRISMARINE_SHARD, log), s.getString("model", id), s.getString("lore", ""),
                         s.getStringList("pros"), s.getStringList("cons"), Map.copyOf(params)));
             }
         }
@@ -216,7 +216,7 @@ public final class DrillConfig {
         }
     }
 
-    public record ModuleDef(String id, String name, Rarity rarity, double weight, Material material, String lore,
+    public record ModuleDef(String id, String name, Rarity rarity, double weight, Material material, String model, String lore,
                             List<String> pros, List<String> cons, Map<String, Double> params) {
         public double p(String key, double def) { return params.getOrDefault(key, def); }
 

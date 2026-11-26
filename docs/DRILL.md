@@ -32,4 +32,4 @@ Prototype ~72M Tokens.
 ## Admin
 
 `/drill admin give|module|frame|level|heat|reset <player> ...`, `/drill admin reload`. Permission `spacepunk.admin`.
-Set `item.use-item-models: false` in drill.yml while the resource pack lacks the `spacepunk:*` models.
+Set `item.use-item-models: false` in drill.yml while the resource pack lacks the `spacepunk:*` models. Modules without pack art (token_condenser, seismic_dampener) use `module/unknown`.

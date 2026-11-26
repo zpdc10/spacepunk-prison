@@ -73,15 +73,31 @@ here in the same PR that needs them, and the pack falls back to a vanilla look u
 | `spacepunk:drill/industrial` | Drill, Industrial frame |
 | `spacepunk:drill/military` | Drill, Military frame |
 | `spacepunk:drill/prototype` | Drill, Prototype frame |
-| `spacepunk:module/<module_id>` | Drill modules (e.g. `magnet_coil`, `plasma_cutter`, `scavenger_rig`) |
-| `spacepunk:ui/<name>` | Menu icons and filler panes (e.g. `ui/panel`, `ui/back`, `ui/heat_gauge`) |
-| `spacepunk:ui/enchant/<enchant_id>` | Drill bay enchant icons (`bore_speed`, `yield`, `token_siphon`, `shaped_charge`, `jackhammer`, `cutting_laser`, `overclock`, `salvage_sense`, `coolant`, plus `locked`) |
-| `spacepunk:ui/socket_empty`, `ui/socket_locked`, `ui/modules`, `ui/frame_upgrade`, `ui/close` | Drill bay sockets and buttons |
+| `spacepunk:module/<module_id>` | Drill modules: `magnet_coil`, `plasma_cutter`, `scavenger_rig`, `coolant_loop`, `overcharger`, `unknown` (fallback for modules without art yet) |
+| `spacepunk:ui/<name>` | Menu icons and filler panes, see the list below |
+| `spacepunk:ui/heat_gauge` | Heat gauge, 9 stages: set `custom_model_data` floats `[heat 0.0-1.0]` |
 | `spacepunk:currency/token` | Token item/icon |
 | `spacepunk:currency/shard` | Prestige Shard icon |
+| `spacepunk:currency/credit` | Credits (scrip) icon |
 
-Mine blocks are vanilla blocks; the pack retextures them (e.g. stone → slag, copper ore → copper scrap)
-so the mines look grungy for everyone.
+UI icons available as `spacepunk:ui/<name>`: `panel` (default filler), `panel_rust`, `panel_hazard`, `divider`,
+`blank` (invisible), `back`, `previous`, `next`, `close`, `cancel`, `confirm`, `upgrade`, `add`, `info`, `sell`,
+`locked`, `socket_empty`, `cargo`, `rank`, `prestige`, `enchant`, `vent`. Put them on any item (paper or a
+glass pane is a good base) with `item_model`; set `hide_tooltip` for fillers. A key with no art shows the
+missing-model cube, so add new keys here and ask the resource pack workstream (or run
+`tools/resourcepack/generate.py` after adding the art there).
+
+Mine blocks are vanilla blocks; the pack retextures them so the mines look grungy for everyone:
+stone → slag, cobblestone → slag rubble, deepslate → hull plating, every ore (stone and deepslate variants)
+→ scrap/conduit/crystal versions, packed and blue ice → cryo panels, amethyst block → void crystal,
+obsidian and crying obsidian → void glass, ancient debris and netherite block → neutronium, andesite/tuff/
+calcite/blackstone/basalt/quartz/gem blocks, raw ore blocks, plus every deck shell block in `mines.yml`
+(wall, rim and light per deck: cut copper, polished stones, blackstone bricks, froglights, sea lantern,
+shroomlight). The matching drop items (coal, raw copper, diamond, ...) are retextured too. Prefer these blocks
+when building mines.
+
+The pack is built from `/resourcepack` by Gradle (`resourcePackZip`), embedded in the jar, and served by the
+plugin's own HTTP server (`resourcepack.yml`, default port 25580). See `resourcepack/README.md`.
 
 ## Branches and PRs
 
